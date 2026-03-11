@@ -38,56 +38,49 @@ class ToggleSwitch extends HTMLElement {
     render() {
 
         const checkedClass = this.checked ? "checked" : ""
+        const accent = this.getAttribute("accent") || "var(--accent)"
 
         this.shadow.innerHTML = `
 
       <style>
 
         .switch {
-
-          width: 42px;
-          height: 24px;
-
+          width: 32px;
+          height: 18px;
           background: var(--border-color);
-
-          border-radius: 20px;
-
+          border-radius: 18px;
           position: relative;
-
           cursor: pointer;
-
           transition: background 0.2s ease;
-
+          box-shadow:
+            inset 0 2px 4px rgba(0,0,0,0.22),
+            inset 0 1px 2px rgba(0,0,0,0.15);
         }
 
         .switch.checked {
-
-          background: var(--accent);
-
+          background: ${accent};
+          box-shadow:
+            inset 0 2px 4px rgba(0,0,0,0.28),
+            inset 0 1px 2px rgba(0,0,0,0.18);
         }
 
         .knob {
-
-          width: 18px;
-          height: 18px;
-
+          width: 14px;
+          height: 14px;
           background: white;
-
           border-radius: 50%;
-
           position: absolute;
-
-          top: 3px;
-          left: 3px;
-
+          top: 2px;
+          left: 2px;
           transition: transform 0.2s ease;
-
+          box-shadow:
+            0 1px 4px rgba(0,0,0,0.30),
+            0 0 0 0.5px rgba(0,0,0,0.10),
+            inset 0 1px 0 rgba(255,255,255,0.85);
         }
 
         .switch.checked .knob {
-
-          transform: translateX(18px);
-
+          transform: translateX(14px);
         }
 
       </style>
@@ -99,7 +92,10 @@ class ToggleSwitch extends HTMLElement {
 
         const switchEl = this.shadow.querySelector(".switch") as HTMLElement
 
-        switchEl.onclick = () => this.toggle()
+        switchEl.onclick = (e) => {
+            e.stopPropagation()
+            this.toggle()
+        }
 
     }
 

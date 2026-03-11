@@ -3,13 +3,16 @@ import { callService } from "../services/ha-service"
 import type { HAEntity } from "../types/homeassistant"
 
 class LightPopup extends HTMLElement {
+
     private shadow: ShadowRoot
     private entityId = ""
     private entity?: HAEntity
 
     private brightnessTimer: number | null = null
     private tempTimer: number | null = null
-    private unsubscribeBoundEntity = ""
+    private colorTimer: number | null = null
+    private isDragging = false
+    private tempInitRaf = 0  // rAF ID for initial thumb placement
 
     constructor() {
         super()
@@ -21,19 +24,16 @@ class LightPopup extends HTMLElement {
     }
 
     open(entityId: string) {
+
         this.entityId = entityId
         this.entity = getEntity(entityId)
 
         this.style.display = "block"
 
-        if (this.unsubscribeBoundEntity !== entityId) {
-            this.unsubscribeBoundEntity = entityId
-
-            subscribeEntity(entityId, (entity: HAEntity) => {
-                this.entity = entity
-                this.update()
-            })
-        }
+        subscribeEntity(entityId, (e: HAEntity) => {
+            this.entity = e
+            this.update()
+        })
 
         this.update()
     }
@@ -42,483 +42,433 @@ class LightPopup extends HTMLElement {
         this.style.display = "none"
     }
 
-    private debounceBrightness(value: number) {
-        if (this.brightnessTimer) {
-            window.clearTimeout(this.brightnessTimer)
-        }
+    /* ---------- services ---------- */
+
+    private setBrightness(v: number) {
+
+        if (this.brightnessTimer) clearTimeout(this.brightnessTimer)
 
         this.brightnessTimer = window.setTimeout(() => {
+
             callService("light", "turn_on", {
                 entity_id: this.entityId,
-                brightness: value
+                brightness: v
             })
-        }, 80)
+
+        }, 60)
     }
 
-    private debounceTempKelvin(value: number) {
-        if (this.tempTimer) {
-            window.clearTimeout(this.tempTimer)
-        }
+    private setTempKelvin(v: number) {
+
+        if (this.tempTimer) clearTimeout(this.tempTimer)
 
         this.tempTimer = window.setTimeout(() => {
+
             callService("light", "turn_on", {
                 entity_id: this.entityId,
-                color_temp_kelvin: value
+                color_temp_kelvin: v
             })
+
+        }, 60)
+    }
+
+    private setHsColor(h: number, s: number) {
+
+        if (this.colorTimer) clearTimeout(this.colorTimer)
+
+        this.colorTimer = window.setTimeout(() => {
+
+            callService("light", "turn_on", {
+                entity_id: this.entityId,
+                hs_color: [Math.round(h), Math.round(s)]
+            })
+
         }, 80)
+
     }
 
-    private setXYColor(x: number, y: number) {
-        callService("light", "turn_on", {
-            entity_id: this.entityId,
-            xy_color: [x, y]
-        })
+    private clamp(v: number, min: number, max: number) {
+        return Math.max(min, Math.min(max, v))
     }
 
-    private supportsBrightness(attr: Record<string, any>) {
-        return attr.brightness !== undefined
-    }
-
-    private supportsTemperature(attr: Record<string, any>) {
-        const modes: string[] = attr.supported_color_modes || []
-        return modes.includes("color_temp")
-    }
-
-    private supportsColor(attr: Record<string, any>) {
-        const modes: string[] = attr.supported_color_modes || []
-        return modes.includes("xy")
-    }
+    /* ---------- update ---------- */
 
     update() {
+
         if (!this.entity) return
+        if (this.isDragging) return
 
         const attr = this.entity.attributes
-        const name = attr.friendly_name ?? this.entityId
-
-        const supportsBrightness = this.supportsBrightness(attr)
-        const supportsTemp = this.supportsTemperature(attr)
-        const supportsColor = this.supportsColor(attr)
-
-        const brightness = attr.brightness ?? 255
-        const kelvin =
-            attr.color_temp_kelvin ??
-            (attr.color_temp ? Math.round(1000000 / attr.color_temp) : null)
-
-        const minKelvin = attr.min_color_temp_kelvin ?? 2000
-        const maxKelvin = attr.max_color_temp_kelvin ?? 6500
-
-        const xy: [number, number] | null = Array.isArray(attr.xy_color)
-            ? [attr.xy_color[0], attr.xy_color[1]]
-            : null
 
         const title = this.shadow.querySelector(".title") as HTMLElement
         const controls = this.shadow.querySelector(".controls") as HTMLElement
 
+        const name = attr.friendly_name ?? this.entityId
+        const brightness = attr.brightness ?? 255
+
+        const kelvin = attr.color_temp_kelvin ?? 3000
+        const minK = attr.min_color_temp_kelvin ?? 2000
+        const maxK = attr.max_color_temp_kelvin ?? 6500
+
+        const hs: [number, number] = Array.isArray(attr.hs_color)
+            ? [Number(attr.hs_color[0]), Number(attr.hs_color[1])]
+            : [0, 100]
+
         title.textContent = name
-        controls.innerHTML = ""
 
-        if (supportsBrightness) {
-            controls.innerHTML += `
-        <section class="control-section">
-          <div class="label-row">
-            <label>Ljusstyrka</label>
-            <span class="value">${Math.round((brightness / 255) * 100)}%</span>
-          </div>
-          <input
-            type="range"
-            min="1"
-            max="255"
-            value="${brightness}"
-            class="slider brightness"
-          />
-        </section>
-      `
+        controls.innerHTML = `
+
+<div class="control">
+<div class="label-row">
+<label>Ljusstyrka</label>
+<span class="value">${Math.round((brightness / 255) * 100)}%</span>
+</div>
+<div class="bright-slider"><div class="bright-thumb"></div></div>
+</div>
+
+
+<div class="control">
+<div class="label-row">
+<label>Temperatur</label>
+<span class="value">${kelvin}K</span>
+</div>
+
+<div class="temp-slider"><div class="temp-thumb"></div></div>
+</div>
+
+
+<div class="control">
+
+<label>Färg</label>
+
+<div class="wheel-wrap">
+<div class="color-wheel">
+<div class="wheel-white"></div>
+<div class="picker"></div>
+</div>
+</div>
+
+</div>
+`
+
+        /* ---------- brightness (custom div slider) ---------- */
+
+        const brightSlider = controls.querySelector(".bright-slider") as HTMLElement
+        const brightThumb = controls.querySelector(".bright-thumb") as HTMLElement
+
+        requestAnimationFrame(() => {
+            const w = brightSlider.offsetWidth
+            const frac = (brightness - 1) / (255 - 1)
+            brightThumb.style.left = (frac * w) + "px"
+        })
+
+        const doBrightMove = (offsetX: number) => {
+            const w = brightSlider.offsetWidth
+            const frac = Math.max(0, Math.min(1, offsetX / w))
+            brightThumb.style.left = (frac * w) + "px"
+            const v = Math.round(1 + frac * 254)
+            brightSlider.closest(".control")!.querySelector(".value")!.textContent = Math.round((v / 255) * 100) + "%"
+            this.setBrightness(v)
         }
 
-        if (supportsTemp && kelvin) {
-            controls.innerHTML += `
-        <section class="control-section">
-          <div class="label-row">
-            <label>Temperatur</label>
-            <span class="value">${kelvin}K</span>
-          </div>
-          <input
-            type="range"
-            min="${minKelvin}"
-            max="${maxKelvin}"
-            value="${kelvin}"
-            class="slider temperature"
-          />
-        </section>
-      `
-        }
-
-        if (supportsColor) {
-            controls.innerHTML += `
-        <section class="control-section">
-          <div class="label-row">
-            <label>Färg</label>
-          </div>
-          <div class="wheel-wrap">
-            <div class="color-wheel">
-              <div class="wheel-inner"></div>
-              <div class="picker"></div>
-            </div>
-          </div>
-        </section>
-      `
-        }
-
-        const bright = controls.querySelector(".brightness") as HTMLInputElement | null
-        const temp = controls.querySelector(".temperature") as HTMLInputElement | null
-        const wheel = controls.querySelector(".color-wheel") as HTMLElement | null
-        const picker = controls.querySelector(".picker") as HTMLElement | null
-
-        if (bright) {
-            const valueLabel = bright
-                .closest(".control-section")
-                ?.querySelector(".value") as HTMLElement | null
-
-            const updateBrightnessFill = () => {
-                const percent = ((Number(bright.value) - 1) / (255 - 1)) * 100
-                bright.style.setProperty("--fill", `${percent}%`)
-                if (valueLabel) {
-                    valueLabel.textContent = `${Math.round((Number(bright.value) / 255) * 100)}%`
-                }
-            }
-
-            updateBrightnessFill()
-
-            bright.addEventListener("input", () => {
-                updateBrightnessFill()
-                this.debounceBrightness(Number(bright.value))
-            })
-        }
-
-        if (temp) {
-            const valueLabel = temp
-                .closest(".control-section")
-                ?.querySelector(".value") as HTMLElement | null
-
-            const updateTempFill = () => {
-                const min = Number(temp.min)
-                const max = Number(temp.max)
-                const val = Number(temp.value)
-                const percent = ((val - min) / (max - min)) * 100
-                temp.style.setProperty("--fill", `${percent}%`)
-                if (valueLabel) {
-                    valueLabel.textContent = `${val}K`
-                }
-            }
-
-            updateTempFill()
-
-            temp.addEventListener("input", () => {
-                updateTempFill()
-                this.debounceTempKelvin(Number(temp.value))
-            })
-        }
-
-        if (wheel && picker) {
-            const placePickerFromXY = (x: number, y: number) => {
-                const rect = wheel.getBoundingClientRect()
-                const size = rect.width
-                const cx = size / 2
-                const cy = size / 2
-                const radius = size / 2
-
-                const dx = (x - 0.5) * 2 * radius
-                const dy = (0.5 - y) * 2 * radius
-
-                const px = cx + dx
-                const py = cy - dy
-
-                picker.style.left = `${px}px`
-                picker.style.top = `${py}px`
-            }
-
-            if (xy) {
-                placePickerFromXY(xy[0], xy[1])
-            } else {
-                picker.style.left = "50%"
-                picker.style.top = "50%"
-            }
-
-            const handleWheelPoint = (clientX: number, clientY: number) => {
-                const rect = wheel.getBoundingClientRect()
-                const size = rect.width
-                const cx = size / 2
-                const cy = size / 2
-                const radius = size / 2
-
-                let dx = clientX - rect.left - cx
-                let dy = clientY - rect.top - cy
-
-                const distance = Math.sqrt(dx * dx + dy * dy)
-
-                if (distance > radius) {
-                    const scale = radius / distance
-                    dx *= scale
-                    dy *= scale
-                }
-
-                const px = cx + dx
-                const py = cy + dy
-
-                picker.style.left = `${px}px`
-                picker.style.top = `${py}px`
-
-                const x = Math.max(0, Math.min(1, 0.5 + dx / (2 * radius)))
-                const y = Math.max(0, Math.min(1, 0.5 - dy / (2 * radius)))
-
-                this.setXYColor(Number(x.toFixed(4)), Number(y.toFixed(4)))
-            }
-
-            wheel.onpointerdown = (e: PointerEvent) => {
-                e.preventDefault()
-                handleWheelPoint(e.clientX, e.clientY)
-
-                const move = (ev: PointerEvent) => {
-                    handleWheelPoint(ev.clientX, ev.clientY)
-                }
-
-                const up = () => {
-                    window.removeEventListener("pointermove", move)
-                    window.removeEventListener("pointerup", up)
-                }
-
-                window.addEventListener("pointermove", move)
-                window.addEventListener("pointerup", up)
+        brightSlider.onpointerdown = (e) => {
+            this.isDragging = true
+            e.preventDefault()
+            brightSlider.setPointerCapture(e.pointerId)
+            doBrightMove(e.offsetX)
+            brightSlider.onpointermove = (ev) => doBrightMove(ev.offsetX)
+            brightSlider.onpointerup = () => {
+                brightSlider.onpointermove = null
+                brightSlider.onpointerup = null
+                window.setTimeout(() => { this.isDragging = false }, 350)
             }
         }
+
+        /* ---------- temperature (custom div slider) ---------- */
+        // Uses offsetX + offsetWidth instead of getBoundingClientRect + clientX.
+        // offsetX is always in the element's OWN coordinate space, so it is
+        // immune to CSS transforms on ancestors (the sheet has translateX(-50%)).
+        //   frac 0 → left → blue → cool → maxK
+        //   frac 1 → right → orange → warm → minK
+
+        const tempSlider = controls.querySelector(".temp-slider") as HTMLElement
+        const tempThumb = controls.querySelector(".temp-thumb") as HTMLElement
+
+        cancelAnimationFrame(this.tempInitRaf)
+        this.tempInitRaf = requestAnimationFrame(() => {
+            this.tempInitRaf = 0
+            const w = tempSlider.offsetWidth
+            const frac = (maxK - kelvin) / (maxK - minK)
+            tempThumb.style.left = (frac * w) + "px"
+        })
+
+        const doTempMove = (offsetX: number) => {
+            const w = tempSlider.offsetWidth
+            const frac = Math.max(0, Math.min(1, offsetX / w))
+            tempThumb.style.left = (frac * w) + "px"
+            const k = Math.round(maxK - frac * (maxK - minK))
+            tempSlider.closest(".control")!.querySelector(".value")!.textContent = k + "K"
+            this.setTempKelvin(k)
+        }
+
+        tempSlider.onpointerdown = (e) => {
+            cancelAnimationFrame(this.tempInitRaf)
+            this.tempInitRaf = 0
+            this.isDragging = true
+            e.preventDefault()
+            tempSlider.setPointerCapture(e.pointerId)
+            doTempMove(e.offsetX)
+            tempSlider.onpointermove = (ev) => doTempMove(ev.offsetX)
+            tempSlider.onpointerup = () => {
+                tempSlider.onpointermove = null
+                tempSlider.onpointerup = null
+                // Keep isDragging for 350ms so HA state round-trip can't reset thumb
+                window.setTimeout(() => { this.isDragging = false }, 350)
+            }
+        }
+
+        /* ---------- color wheel ---------- */
+
+        const wheel = controls.querySelector(".color-wheel") as HTMLElement
+        const picker = controls.querySelector(".picker") as HTMLElement
+
+        // Initial picker placement — uses offsetWidth (element-local, transform-proof)
+        requestAnimationFrame(() => {
+            const size = wheel.offsetWidth
+            const radius = size / 2
+            const dist = (hs[1] / 100) * radius
+            const rad = (hs[0] - 90) * Math.PI / 180
+            picker.style.left = (radius + Math.cos(rad) * dist) + "px"
+            picker.style.top = (radius + Math.sin(rad) * dist) + "px"
+        })
+
+        const handleWheelPointer = (ox: number, oy: number) => {
+            const size = wheel.offsetWidth
+            const radius = size / 2
+            let dx = ox - radius
+            let dy = oy - radius
+            const d = Math.sqrt(dx * dx + dy * dy)
+            if (d > radius) {
+                const s = radius / d
+                dx *= s
+                dy *= s
+            }
+            const hue = (Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360
+            const sat = this.clamp((Math.sqrt(dx * dx + dy * dy) / radius) * 100, 0, 100)
+            picker.style.left = (radius + dx) + "px"
+            picker.style.top = (radius + dy) + "px"
+            this.setHsColor(hue, sat)
+        }
+
+        wheel.onpointerdown = e => {
+            this.isDragging = true
+            e.preventDefault()
+            wheel.setPointerCapture(e.pointerId)
+            handleWheelPointer(e.offsetX, e.offsetY)
+
+            wheel.onpointermove = (ev) => handleWheelPointer(ev.offsetX, ev.offsetY)
+            wheel.onpointerup = () => {
+                wheel.onpointermove = null
+                wheel.onpointerup = null
+                window.setTimeout(() => { this.isDragging = false }, 350)
+            }
+
+        }
+
     }
 
     render() {
+
         this.shadow.innerHTML = `
-      <style>
-        :host {
-          position: fixed;
-          inset: 0;
-          display: none;
-          background: rgba(0, 0, 0, 0.56);
-          backdrop-filter: blur(10px);
-          z-index: 1000;
-        }
 
-        .sheet {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: var(--color-card);
-          border-radius: 28px 28px 0 0;
-          padding: 20px 20px 28px;
-          box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
-        }
+<style>
 
-        .grabber {
-          width: 42px;
-          height: 5px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.15);
-          margin: 0 auto 16px;
-        }
+:host{
+position:fixed;
+inset:0;
+display:none;
+background:var(--color-overlay);
+backdrop-filter:blur(12px);
+-webkit-backdrop-filter:blur(12px);
+z-index:1000;
+}
 
-        .header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-        }
+.sheet{
+position:absolute;
+top:32px;
+left:50%;
+transform:translateX(-50%);
+width:calc(100% - 32px);
+max-width:460px;
+background:var(--color-card);
+border-radius:28px;
+padding:24px;
+box-shadow:0 12px 48px rgba(0,0,0,0.22);
+max-height:calc(100dvh - 64px);
+overflow-y:auto;
+box-sizing:border-box;
+}
 
-        .title {
-          font-size: 1.2rem;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
-        .close {
-          appearance: none;
-          border: 0;
-          background: transparent;
-          color: var(--text-primary);
-          font-size: 1.8rem;
-          line-height: 1;
-          cursor: pointer;
-          padding: 0;
-        }
+.title{
+font-size:1.2rem;
+font-weight:700;
+color:var(--text-primary);
+}
 
-        .controls {
-          margin-top: 22px;
-          display: flex;
-          flex-direction: column;
-          gap: 26px;
-        }
+.close{
+font-size:28px;
+cursor:pointer;
+}
 
-        .control-section {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
+.controls{
+margin-top:24px;
+display:flex;
+flex-direction:column;
+gap:28px;
+}
 
-        .label-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
+.control{
+display:flex;
+flex-direction:column;
+gap:10px;
+}
 
-        label {
-          color: var(--text-primary);
-          font-size: 1rem;
-          font-weight: 600;
-        }
+.label-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
-        .value {
-          color: var(--text-secondary);
-          font-size: 0.95rem;
-        }
+label{
+font-size:0.9rem;
+font-weight:600;
+color:var(--text-primary);
+}
 
-        .slider {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 100%;
-          height: 18px;
-          border-radius: 999px;
-          outline: none;
-          background:
-            linear-gradient(to right,
-              var(--track-fill-start),
-              var(--track-fill-end)
-            ) 0 / var(--fill, 50%) 100% no-repeat,
-            rgba(255,255,255,0.14);
-        }
+.value{
+font-size:0.85rem;
+color:var(--text-secondary);
+}
 
-        .brightness {
-          --track-fill-start: #f5d000;
-          --track-fill-end: #ffd84d;
-        }
+/* ── Custom div sliders (shared) ─────────────────────── */
 
-        .temperature {
-          --track-fill-start: #6cb2ff;
-          --track-fill-end: #ff9a1f;
-        }
+.bright-slider,
+.temp-slider{
+position:relative;
+height:34px;
+border-radius:999px;
+cursor:pointer;
+touch-action:none;
+user-select:none;
+-webkit-user-select:none;
+}
 
-        .slider::-webkit-slider-runnable-track {
-          height: 18px;
-          background: transparent;
-          border-radius: 999px;
-        }
+.bright-slider{
+background:linear-gradient(to right,#e8920a,#ffeaa0);
+}
 
-        .slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          border: 2px solid rgba(0,0,0,0.28);
-          background: #fff;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-          margin-top: -2px;
-          cursor: pointer;
-        }
+.temp-slider{
+background:linear-gradient(to right,#5ea8ff,#e0e0e0,#ff9c3a);
+}
 
-        .slider::-moz-range-track {
-          height: 18px;
-          background: transparent;
-          border-radius: 999px;
-        }
+.bright-thumb,
+.temp-thumb{
+position:absolute;
+top:50%;
+width:26px;
+height:26px;
+border-radius:50%;
+background:white;
+border:2px solid rgba(0,0,0,0.55);
+box-shadow:0 2px 8px rgba(0,0,0,0.35);
+transform:translate(-50%,-50%);
+pointer-events:none;
+will-change:left;
+}
 
-        .slider::-moz-range-thumb {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          border: 2px solid rgba(0,0,0,0.28);
-          background: #fff;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-          cursor: pointer;
-        }
+.wheel-wrap{
+display:flex;
+justify-content:center;
+}
 
-        .wheel-wrap {
-          display: flex;
-          justify-content: center;
-          padding-top: 4px;
-        }
+.color-wheel{
+position:relative;
+width:240px;
+height:240px;
+border-radius:50%;
+background:conic-gradient(
+red,
+yellow,
+lime,
+cyan,
+blue,
+magenta,
+red
+);
+cursor:crosshair;
+}
 
-        .color-wheel {
-          position: relative;
-          width: 230px;
-          height: 230px;
-          border-radius: 50%;
-          background: conic-gradient(
-            red,
-            yellow,
-            lime,
-            cyan,
-            blue,
-            magenta,
-            red
-          );
-          overflow: hidden;
-          cursor: crosshair;
-        }
+.wheel-white{
+position:absolute;
+inset:0;
+border-radius:50%;
+background:radial-gradient(
+circle at center,
+white 0%,
+rgba(255,255,255,0.8) 20%,
+rgba(255,255,255,0) 70%
+);
+pointer-events:none;
+}
 
-        .wheel-inner {
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background:
-            radial-gradient(circle at center,
-              rgba(255,255,255,0.95) 0%,
-              rgba(255,255,255,0) 58%
-            );
-          mix-blend-mode: screen;
-          pointer-events: none;
-        }
+.picker{
+position:absolute;
+width:18px;
+height:18px;
+border-radius:50%;
+background:white;
+border:2px solid rgba(0,0,0,0.55);
+box-shadow:0 2px 8px rgba(0,0,0,0.35);
+transform:translate(-50%,-50%);
+pointer-events:none;
+}
 
-        .picker {
-          position: absolute;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #fff;
-          border: 2px solid rgba(0,0,0,0.55);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-          transform: translate(-50%, -50%);
-          pointer-events: none;
-        }
-      </style>
+</style>
 
-      <div class="sheet">
-        <div class="grabber"></div>
+<div class="sheet">
 
-        <div class="header">
-          <div class="title"></div>
-          <button class="close" aria-label="Stäng">×</button>
-        </div>
+<div class="header">
+<div class="title"></div>
+<div class="close">×</div>
+</div>
 
-        <div class="controls"></div>
-      </div>
-    `
+<div class="controls"></div>
+
+</div>
+`
 
         const host = this.shadow.host
         const sheet = this.shadow.querySelector(".sheet") as HTMLElement
-        const closeBtn = this.shadow.querySelector(".close") as HTMLElement
+        const close = this.shadow.querySelector(".close") as HTMLElement
 
-        sheet.addEventListener("click", (e) => {
-            e.stopPropagation()
-        })
+        sheet.onclick = e => e.stopPropagation()
 
-        host.addEventListener("click", (e) => {
-            if (e.target === host) {
-                this.close()
-            }
-        })
+        host.onclick = e => {
 
-        closeBtn.addEventListener("click", () => {
-            this.close()
-        })
+            if (e.target === host) this.close()
+
+        }
+
+        close.onclick = () => this.close()
+
     }
+
 }
 
 customElements.define("light-popup", LightPopup)

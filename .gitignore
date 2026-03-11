@@ -47,3 +47,8 @@ src/config/local-config.js
 # TypeScript
 # -----------------------------
 *.tsbuildinfo
+
+# -----------------------------
+# Lovelace config
+# -----------------------------
+lovelace.yaml
