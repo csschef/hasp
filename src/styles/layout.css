@@ -1,0 +1,21 @@
+body {
+
+    margin: 0;
+    font-family: var(--font-main);
+
+    background: var(--color-bg);
+    color: var(--text-primary);
+
+}
+
+.dashboard {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: var(--space-md);
+
+    padding: var(--space-md);
+
+}
