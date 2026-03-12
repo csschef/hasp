@@ -632,9 +632,12 @@ class WeatherCard extends HTMLElement {
         const fileName = this.imageMap[finalKey]
 
         if (fileName) {
+            // Use Vite's built-in detection to handle paths correctly in both environments
+            const iconUrl = `weather/${fileName}`
+            
             return `
                 <div class="icon-wrapper" style="width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
-                    <img src="/weather/${fileName}" 
+                    <img src="${iconUrl}" 
                          style="width: 100%; height: 100%; object-fit: contain;" 
                          loading="lazy"
                     />

@@ -1,7 +1,14 @@
 import { setEntity, setEntities } from "../store/entity-store"
 import { registerSocket } from "./ha-service"
 
-export const HA_URL = import.meta.env.VITE_HA_URL
+// Detect HA_URL dynamically. If running inside HA (as /local/ or via UI), 
+// we use the current browser's origin. This fixed the Companion App issue 
+// where the app might be using a public/internal URL different from the dev env.
+const rawUrl = import.meta.env.VITE_HA_URL
+export const HA_URL = (window.location.port === "5173" || window.location.port === "5174")
+    ? rawUrl 
+    : window.location.origin
+
 const HA_TOKEN = import.meta.env.VITE_HA_TOKEN
 
 let socket: WebSocket | null = null
