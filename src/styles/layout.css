@@ -1,3 +1,7 @@
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
     margin: 0;
     font-family: var(--font-main);
@@ -8,10 +12,15 @@ body {
 
 /* ── Top bar ── */
 .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--color-bg);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: var(--space-lg) var(--space-md) var(--space-sm);
+    transition: background 0.25s ease;
 }
 
 .topbar-title {
@@ -20,7 +29,31 @@ body {
     letter-spacing: -0.02em;
     color: var(--text-primary);
     flex-grow: 1;
-    /* allow it to take up space between buttons */
+}
+
+/* ── Subview header ── */
+.subview-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    padding: var(--space-lg) var(--space-md) var(--space-sm);
+    cursor: pointer;
+    transition: background 0.25s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.subview-header:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+.subview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
 }
 
 .back-btn {
@@ -30,17 +63,11 @@ body {
     border: none;
     background: transparent;
     color: var(--text-primary);
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: var(--space-sm);
     padding: 0;
-    transition: background 0.15s ease;
-}
-
-.back-btn:hover {
-    background: var(--accent-muted);
 }
 
 .theme-btn {
@@ -78,4 +105,39 @@ body {
 
 room-divider {
     grid-column: 1 / -1;
+}
+
+/* ── View Transitions ── */
+
+.view:not(#home) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--color-bg);
+    z-index: 30;
+    overflow-y: auto;
+
+    /* Visual emphasis while sliding like a modal sheet */
+    border-top: 1px solid var(--border-color);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    /* Subtly detach it from the background */
+
+    transform: translateY(100vh);
+    transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1), border-top-color 0.4s ease, border-radius 0.4s ease, box-shadow 0.4s ease;
+    pointer-events: none;
+    padding-bottom: 2rem;
+    /* safe scroll padding */
+}
+
+.view:not(#home).active-subview {
+    transform: translateY(0);
+    pointer-events: auto;
+
+    /* Blend completely flat and flush once engaged */
+    border-top-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
 }

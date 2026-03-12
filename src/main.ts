@@ -40,9 +40,9 @@ btn?.addEventListener("click", () => {
 
 /* ── Hash Router for Subviews ── */
 
+/* ── Hash Router for Subviews ── */
+
 const views = document.querySelectorAll(".view")
-const pageTitle = document.getElementById("pageTitle")
-const backBtn = document.getElementById("backBtn")
 
 function handleRoute() {
     const hash = window.location.hash || "#home"
@@ -54,32 +54,30 @@ function handleRoute() {
         targetView = document.getElementById("home")
     }
 
-    // Hide all, show target
-    views.forEach(v => (v as HTMLElement).style.display = "none")
-    if (targetView) targetView.style.display = "block"
+    // Toggle active-subview classes, clean up old inline display attributes
+    views.forEach(v => {
+        v.classList.remove("slide-up", "fade-in", "active")
+            ; (v as HTMLElement).style.display = ""
 
-    // Update topbar UI
-    if (hash === "#home" || hash === "") {
-        if (backBtn) backBtn.style.display = "none"
-        if (pageTitle) pageTitle.textContent = "Hem"
-    } else {
-        if (backBtn) backBtn.style.display = "flex"
-        // VERY simple logic: capitalise route name for title
-        if (pageTitle) pageTitle.textContent = targetId.charAt(0).toUpperCase() + targetId.slice(1)
-    }
+        if (v.id !== "home") {
+            if (v === targetView) {
+                v.classList.add("active-subview")
+            } else {
+                v.classList.remove("active-subview")
+            }
+        }
+    })
 }
 
 window.addEventListener("hashchange", handleRoute)
 // Trigger once on load
 handleRoute()
 
-if (backBtn) {
-    backBtn.addEventListener("click", () => {
-        // Simple back action (defaults to home if no history)
+    // Make goBack available globally for inline onclick triggers
+    ; (window as any).goBack = function () {
         if (window.history.length > 2) {
             window.history.back()
         } else {
             window.location.hash = "#home"
         }
-    })
-}
+    }
