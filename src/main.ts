@@ -7,6 +7,7 @@ import "./components/base-card"
 import "./components/room-divider"
 import "./components/light-card"
 import "./components/light-popup"
+import "./components/history-popup"
 
 import { connectHA } from "./services/ha-client"
 
@@ -81,3 +82,10 @@ handleRoute()
             window.location.hash = "#home"
         }
     }
+
+document.addEventListener("show-history", (e: any) => {
+    const pop = document.getElementById("historyPopup") as any
+    if (pop && e.detail && e.detail.entity) {
+        pop.open(e.detail.entity, e.detail.customTitle, e.detail.customSubtitle)
+    }
+})

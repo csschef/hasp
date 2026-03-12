@@ -110,14 +110,14 @@ class RoomDivider extends HTMLElement {
         const tempBtn = this.shadowRoot!.getElementById("tempBtn")
         if (tempBtn) {
             tempBtn.onclick = () => {
-                this.dispatchEvent(new CustomEvent("show-history", { bubbles: true, composed: true, detail: { entity: this.tempEntity } }))
+                this.dispatchEvent(new CustomEvent("show-history", { bubbles: true, composed: true, detail: { entity: this.tempEntity, customTitle: this.roomTitle, customSubtitle: "Temperatur" } }))
             }
         }
 
         const humidityBtn = this.shadowRoot!.getElementById("humidityBtn")
         if (humidityBtn) {
             humidityBtn.onclick = () => {
-                this.dispatchEvent(new CustomEvent("show-history", { bubbles: true, composed: true, detail: { entity: this.humidityEntity } }))
+                this.dispatchEvent(new CustomEvent("show-history", { bubbles: true, composed: true, detail: { entity: this.humidityEntity, customTitle: this.roomTitle, customSubtitle: "Luftfuktighet" } }))
             }
         }
     }

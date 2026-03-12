@@ -29,6 +29,11 @@ class LightPopup extends HTMLElement {
         this.entity = getEntity(entityId)
 
         this.style.display = "block"
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.classList.add("active")
+            })
+        })
 
         subscribeEntity(entityId, (e: HAEntity) => {
             this.entity = e
@@ -39,7 +44,10 @@ class LightPopup extends HTMLElement {
     }
 
     close() {
-        this.style.display = "none"
+        this.classList.remove("active")
+        setTimeout(() => {
+            this.style.display = "none"
+        }, 300)
     }
 
     /* ---------- services ---------- */
@@ -314,13 +322,21 @@ background:var(--color-overlay);
 backdrop-filter:blur(12px);
 -webkit-backdrop-filter:blur(12px);
 z-index:1000;
+opacity: 0;
+transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+pointer-events: none;
+}
+:host(.active) {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .sheet{
 position:absolute;
 top:32px;
 left:50%;
-transform:translateX(-50%);
+transform:translate(-50%, 20px);
+opacity: 0;
 width:calc(100% - 32px);
 max-width:460px;
 background:var(--color-card);
@@ -330,6 +346,11 @@ box-shadow:0 12px 48px rgba(0,0,0,0.22);
 max-height:calc(100dvh - 64px);
 overflow-y:auto;
 box-sizing:border-box;
+transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+:host(.active) .sheet {
+    transform: translate(-50%, 0);
+    opacity: 1;
 }
 
 .header{
