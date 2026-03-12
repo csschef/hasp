@@ -83,11 +83,21 @@ export function getCardColor(entity: HAEntity): { r: number; g: number; b: numbe
         return { r, g, b }
     }
 
-    // Fallback: light is "on" but reports no colour attributes at all
-    // (simple on/off switch, fairy lights, etc.).
-    // Use 2700 K — closest to what incandescent/warm-white LEDs actually emit.
-    // 2700 K ≈ 370 mireds → t ≈ 0.626 on the gradient → warm amber-white.
-    const FALLBACK_MIRED = 1_000_000 / 2700   // ≈ 370.4
+    // ── Fallback guard ────────────────────────────────────────────────────────
+    // Only use the warm-white fallback for lights that are truly on/off-only
+    // (no colour capability). If `supported_color_modes` includes any real
+    // colour mode, the light DOES have colour — it just hasn't reported it yet
+    // because it was off. Return null and let the HA confirmation push supply
+    // the real colour, avoiding the warm-yellow flash on colour-capable lights.
+    const COLOR_MODES = ["color_temp", "xy", "rgb", "rgbw", "rgbww", "hs"]
+    const supportedModes: string[] = attr.supported_color_modes || []
+    if (supportedModes.some((m: string) => COLOR_MODES.includes(m))) {
+        return null  // colour-capable light — wait for real HA data
+    }
+
+    // Truly on/off-only light (e.g. fairy lights, simple switch).
+    // 2700 K ≈ 370 mireds → t ≈ 0.626 → warm amber-white on the gradient.
+    const FALLBACK_MIRED = 1_000_000 / 2700
     const minMF = 153
     const maxMF = 500
     const tFallback = (FALLBACK_MIRED - minMF) / (maxMF - minMF)
