@@ -7,15 +7,16 @@ import type { HAEntity } from "../types/homeassistant"
 // Lucide lightbulb — stroke-width 1.5 on both states matches the card title’s font-weight 400.
 // The card background change is sufficient visual feedback for on/off.
 const BULB_PATHS = `<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>`
-const ICON_SVG  = (cls: string) => `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round">${BULB_PATHS}</svg>`
+const ICON_SVG = (cls: string) => `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round">${BULB_PATHS}</svg>`
 
-const ICON_ON  = ICON_SVG("card-icon")
+const ICON_ON = ICON_SVG("card-icon")
 const ICON_OFF = ICON_SVG("card-icon")
 
 class LightCard extends BaseCard {
 
     private entityId = ""
     private entity?: HAEntity
+    private subscribedChildren = new Set<string>()
 
     /** Optimistic visual state — flipped immediately on click, synced from HA otherwise */
     private visuallyOn = false
@@ -31,23 +32,42 @@ class LightCard extends BaseCard {
         subscribeEntity(this.entityId, (entity: HAEntity) => {
             this.entity = entity
 
+            // Subscribe to child entities (light groups) so their states are available
+            this.subscribeToChildren(entity)
+
             if (this.isToggling) {
-                // HA confirmed our optimistic prediction — accept immediately so
-                // we get the real colour attributes for the card background.
-                // (This is why card_mod feels instant: HA sends state + full attrs
-                // in one event and we call update() as soon as it matches.)
                 if ((entity.state === "on") === this.visuallyOn) {
                     clearTimeout(this.toggleTimeout)
                     this.isToggling = false
                     this.update()
                 }
-                // HA is still reporting the old state (mid-transition bounce) — ignore.
                 return
             }
 
             this.update()
         })
 
+    }
+
+    /** Subscribe to all child entities of a light group so getEntity() works for them */
+    private subscribeToChildren(entity: HAEntity) {
+        const raw = entity.attributes.entity_id
+        let childIds: string[] = []
+
+        if (Array.isArray(raw)) {
+            childIds = raw
+        } else if (typeof raw === "string" && raw.includes(",")) {
+            childIds = raw.split(",").map((s: string) => s.trim()).filter(Boolean)
+        }
+
+        for (const id of childIds) {
+            if (!this.subscribedChildren.has(id)) {
+                this.subscribedChildren.add(id)
+                subscribeEntity(id, () => {
+                    if (!this.isToggling) this.update()
+                })
+            }
+        }
     }
 
     supportsPopup(): boolean {
@@ -124,7 +144,7 @@ class LightCard extends BaseCard {
         const root = this.shadowRoot
         if (!root) return
 
-        const card   = root.querySelector(".card")   as HTMLElement | null
+        const card = root.querySelector(".card") as HTMLElement | null
         const header = root.querySelector(".header") as HTMLElement | null
         if (!card || !header) return
 
@@ -149,7 +169,7 @@ class LightCard extends BaseCard {
 
             // Light is on AND has a colour (color_temp / rgb)
             const { r, g, b } = cc
-            const l  = (v: number) => Math.min(255, Math.round(v + (255 - v) * 0.2))
+            const l = (v: number) => Math.min(255, Math.round(v + (255 - v) * 0.2))
             const dk = (v: number) => Math.round(v * 0.65)
 
             card.style.setProperty("--card-bg",
@@ -161,12 +181,12 @@ class LightCard extends BaseCard {
                 v = v / 255
                 return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
             }
-            const lum     = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+            const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
             const isLight = lum > 0.35
 
-            card.style.setProperty("--card-text-primary",   isLight ? "#1a1a1a" : "#ffffff")
+            card.style.setProperty("--card-text-primary", isLight ? "#1a1a1a" : "#ffffff")
             card.style.setProperty("--card-text-secondary", isLight ? "#333333" : "rgba(255,255,255,0.75)")
-            card.style.setProperty("--card-icon-fill",      isLight ? "#1a1a1a" : "#ffffff")
+            card.style.setProperty("--card-icon-fill", isLight ? "#1a1a1a" : "#ffffff")
 
         } else {
 
@@ -241,7 +261,7 @@ class LightCard extends BaseCard {
         if (!this.entity || !isOn) return "Av"
 
         const attr = this.entity.attributes
-        const raw  = attr.entity_id
+        const raw = attr.entity_id
         let childIds: string[] = []
 
         if (Array.isArray(raw)) {
@@ -251,7 +271,7 @@ class LightCard extends BaseCard {
         }
 
         if (childIds.length > 0) {
-            let onCount    = 0
+            let onCount = 0
             let totalBright = 0
 
             for (const id of childIds) {
@@ -265,12 +285,15 @@ class LightCard extends BaseCard {
 
             if (onCount > 0) {
                 const avgPct = Math.round(totalBright / onCount)
-                const label  = onCount === 1 ? "tänd" : "tända"
+                const label = onCount === 1 ? "tänd" : "tända"
                 return `${onCount} ${label} · ${avgPct}%`
             }
+
+            return "Av"
         }
 
-        const b   = attr.brightness
+        // Single light (not a group)
+        const b = attr.brightness
         const pct = b != null ? Math.round((b / 255) * 100) : 100
         return `På · ${pct}%`
 
