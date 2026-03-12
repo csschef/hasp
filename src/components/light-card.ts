@@ -39,7 +39,18 @@ class LightCard extends BaseCard {
 
     }
 
+    private isToggling = false
+    private toggleTimeout: any
+
     toggle() {
+        this.isToggling = true
+        clearTimeout(this.toggleTimeout)
+
+        // Lock UI updates for 800ms to prevent HA state bouncing
+        this.toggleTimeout = setTimeout(() => {
+            this.isToggling = false
+            this.update()
+        }, 800)
 
         callService("light", "toggle", {
             entity_id: this.entityId
@@ -58,6 +69,9 @@ class LightCard extends BaseCard {
     }
 
     update() {
+
+        // Ignore incoming backend states if we are waiting for a toggle to settle
+        if (this.isToggling) return
 
         if (!this.entity) {
             this.render("Loading...", "")
