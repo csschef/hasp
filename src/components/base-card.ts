@@ -71,8 +71,8 @@ export class BaseCard extends HTMLElement {
         }
 
         .card-icon {
-          fill: var(--card-icon-fill, var(--text-secondary));
-          transition: fill 0.35s ease;
+          color: var(--card-icon-fill, var(--text-primary));
+          transition: color 0.15s ease;
         }
 
         .subtitle.scrolling {

@@ -83,7 +83,16 @@ export function getCardColor(entity: HAEntity): { r: number; g: number; b: numbe
         return { r, g, b }
     }
 
-    return null
+    // Fallback: light is "on" but reports no colour attributes at all
+    // (simple on/off switch, fairy lights, etc.).
+    // Use 2700 K — closest to what incandescent/warm-white LEDs actually emit.
+    // 2700 K ≈ 370 mireds → t ≈ 0.626 on the gradient → warm amber-white.
+    const FALLBACK_MIRED = 1_000_000 / 2700   // ≈ 370.4
+    const minMF = 153
+    const maxMF = 500
+    const tFallback = (FALLBACK_MIRED - minMF) / (maxMF - minMF)
+    const [fr, fg, fb] = lerpGradient(tFallback)
+    return { r: fr, g: fg, b: fb }
 }
 
 /* ── Internals ─────────────────────────────────────────────────── */

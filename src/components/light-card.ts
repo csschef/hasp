@@ -4,9 +4,13 @@ import { callService } from "../services/ha-service"
 import { getCardColor } from "../utils/light-color"
 import type { HAEntity } from "../types/homeassistant"
 
-// Font Awesome 6 lightbulb paths — defined once at module level
-const FA_SOLID = 'M272 384c9.6-31.9 29.5-59.1 49.2-86.2c5.2-7.1 10.4-14.2 15.4-21.4c19.8-28.5 31.4-63 31.4-100.3C368 78.8 289.2 0 192 0S16 78.8 16 176c0 37.3 11.6 71.9 31.4 100.3c5 7.2 10.2 14.3 15.4 21.4c19.8 27.1 39.7 54.4 49.2 86.2H272zM192 512c44.2 0 80-35.8 80-80V384H112v48c0 44.2 35.8 80 80 80zM112 176c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-61.9 50.1-112 112-112c8.8 0 16 7.2 16 16s-7.2 16-16 16c-44.2 0-80 35.8-80 80z'
-const FA_REG   = 'M297.2 248.9C311.6 228.3 320 203.2 320 176c0-70.7-57.3-128-128-128S64 105.3 64 176c0 27.2 8.4 52.3 22.8 72.9c3.7 5.3 8.1 11.3 12.8 17.7c0 0 0 0 0 0c12.9 17.7 28.3 38.9 39.8 59.8c10.4 19 15.7 38.8 18.3 57.5L109 384c-2.2-12-5.9-23.7-11.8-34.5c-9.9-18-22.2-34.9-34.5-51.8c0 0 0 0 0 0s0 0 0 0c-5.2-7.1-10.4-14.2-15.4-21.4C27.6 247.9 16 213.3 16 176C16 78.8 94.8 0 192 0s176 78.8 176 176c0 37.3-11.6 71.9-31.4 100.3c-5 7.2-10.2 14.3-15.4 21.4c0 0 0 0 0 0s0 0 0 0s0 0 0 0c-12.3 16.8-24.6 33.7-34.5 51.8c-5.9 10.8-9.6 22.5-11.8 34.5l-48.6 0c2.6-18.7 7.9-38.6 18.3-57.5c11.5-20.9 26.9-42.1 39.8-59.8c0 0 0 0 0 0s0 0 0 0s0 0 0 0c4.7-6.4 9-12.4 12.7-17.7zM192 128c-26.5 0-48 21.5-48 48c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-44.2 35.8-80 80-80c8.8 0 16 7.2 16 16s-7.2 16-16 16zm0 384c-44.2 0-80-35.8-80-80l0-16 160 0 0 16c0 44.2-35.8 80-80 80z'
+// Lucide lightbulb — stroke-width 1.5 on both states matches the card title’s font-weight 400.
+// The card background change is sufficient visual feedback for on/off.
+const BULB_PATHS = `<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>`
+const ICON_SVG  = (cls: string) => `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round">${BULB_PATHS}</svg>`
+
+const ICON_ON  = ICON_SVG("card-icon")
+const ICON_OFF = ICON_SVG("card-icon")
 
 class LightCard extends BaseCard {
 
@@ -189,9 +193,9 @@ class LightCard extends BaseCard {
             } else {
                 existingTs.removeAttribute("accent")
             }
-            // Update icon SVG path (solid ↔ outline)
-            const path = header.querySelector("svg.card-icon path")
-            if (path) path.setAttribute("d", isOn ? FA_SOLID : FA_REG)
+            // Update icon — replace whole wrapper div since ON (fill) and OFF (stroke) differ
+            const iconWrapper = header.querySelector("div") as HTMLElement | null
+            if (iconWrapper) iconWrapper.innerHTML = isOn ? ICON_ON : ICON_OFF
 
         } else {
             // Render path: header was just wiped by base-card's render() — rebuild fresh
@@ -214,8 +218,7 @@ class LightCard extends BaseCard {
      */
     private buildHeader(header: HTMLElement, isOn: boolean, accentColor: string) {
 
-        const iconPath = isOn ? FA_SOLID : FA_REG
-        const icon     = `<svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 384 512"><path d="${iconPath}"/></svg>`
+        const icon = isOn ? ICON_ON : ICON_OFF
 
         // Inline style pre-sets --toggle-accent BEFORE the shadow DOM is built,
         // which means the shadow stylesheet reads the right value on frame 1.
