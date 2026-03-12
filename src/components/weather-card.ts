@@ -168,6 +168,11 @@ class WeatherCard extends HTMLElement {
             locationName = "Lindsdal"
         }
 
+        const formatTime = (iso: string) => {
+            if (!iso) return "--:--"
+            return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+
         this.shadowRoot!.innerHTML = `
             <style>
                 :host {
@@ -177,8 +182,65 @@ class WeatherCard extends HTMLElement {
                     padding: var(--space-md);
                     color: var(--text-primary);
                     opacity: 0;
-                    transition: opacity 0.4s ease-out;
+                    transition: opacity 0.4s ease-out, background 0.3s ease;
+                    position: relative;
+                    overflow: hidden;
                 }
+
+                /* ── Sky Theme for Light Mode ── */
+                @media (prefers-color-scheme: light) {
+                    :host:not([data-theme="dark"]) {
+                        background: linear-gradient(180deg, rgba(51,140,210,1) 40%, rgba(89,179,224,1) 100%);
+                        color: #ffffff;
+                    }
+                    :host:not([data-theme="dark"]) .label,
+                    :host:not([data-theme="dark"]) .location,
+                    :host:not([data-theme="dark"]) .unit,
+                    :host:not([data-theme="dark"]) .f-temp.low,
+                    :host:not([data-theme="dark"]) .precip,
+                    :host:not([data-theme="dark"]) .sun-info {
+                        color: rgba(255, 255, 255, 0.8) !important;
+                    }
+                    :host:not([data-theme="dark"]) .tabs {
+                        background: rgba(255, 255, 255, 0.2);
+                        backdrop-filter: blur(4px);
+                    }
+                    :host:not([data-theme="dark"]) .tab {
+                        color: rgba(255, 255, 255, 0.7);
+                    }
+                    :host:not([data-theme="dark"]) .tab.active {
+                        background: #ffffff;
+                        color: #0088cc;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    }
+                }
+
+                /* Manual Light override */
+                :host-context([data-theme="light"]) {
+                    background: linear-gradient(180deg, rgba(51,140,210,1) 40%, rgba(89,179,224,1) 100%);
+                    color: #ffffff;
+                }
+                :host-context([data-theme="light"]) .label,
+                :host-context([data-theme="light"]) .location,
+                :host-context([data-theme="light"]) .unit,
+                :host-context([data-theme="light"]) .f-temp.low,
+                :host-context([data-theme="light"]) .precip,
+                :host-context([data-theme="light"]) .sun-info {
+                    color: rgba(255, 255, 255, 0.8) !important;
+                }
+                :host-context([data-theme="light"]) .tabs {
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(4px);
+                }
+                :host-context([data-theme="light"]) .tab {
+                    color: rgba(255, 255, 255, 0.7);
+                }
+                :host-context([data-theme="light"]) .tab.active {
+                    background: #ffffff;
+                    color: #0088cc;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
                 :host([loaded]) {
                     opacity: 1;
                 }
@@ -200,9 +262,9 @@ class WeatherCard extends HTMLElement {
                     line-height: 1;
                 }
                 .unit {
-                    font-size: 24px;
+                    font-size: 32px;
                     font-weight: 500;
-                    margin-top: 8px;
+                    margin-top: 6px;
                     opacity: 0.5;
                 }
                 .meta {
@@ -218,13 +280,34 @@ class WeatherCard extends HTMLElement {
                     display: flex;
                     align-items: center;
                     gap: 4px;
+                    margin-top: 10px;
                     font-size: 14px;
                     color: var(--text-secondary);
+                }
+                .sun-info {
+                    display: flex;
+                    gap: 12px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                    font-weight: 500;
+                }
+                .sun-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
                 }
                 .weather-icon-large {
                     color: var(--accent);
                 }
                 
+                :host-context([data-theme="light"]) .weather-icon-large,
+                @media (prefers-color-scheme: light) {
+                    :host:not([data-theme="dark"]) .weather-icon-large {
+                        color: #ffffff;
+                    }
+                }
+
                 .tabs {
                     display: flex;
                     background: var(--color-card-alt);
@@ -284,7 +367,18 @@ class WeatherCard extends HTMLElement {
                     <span class="condition">${condition}</span>
                     <span class="location">
                         ${this.localWeather ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>` : ''}
-                        ${locationName}</span>
+                        ${locationName}
+                    </span>
+                    <div class="sun-info">
+                        <div class="sun-item">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V3"/><path d="m9 6 3-3 3 3"/><path d="M18 18a6 6 0 0 0-12 0"/><path d="M2 21h20"/></svg>
+                            ${formatTime(sun?.attributes.next_rising)}
+                        </div>
+                        <div class="sun-item">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="m15 9-3 3-3-3"/><path d="M18 18a6 6 0 0 0-12 0"/><path d="M2 21h20"/></svg>
+                            ${formatTime(sun?.attributes.next_setting)}
+                        </div>
+                    </div>
                 </div>
                 <div class="weather-icon-large">
                     ${this.getWeatherIcon(condition, 80, isNight)}
