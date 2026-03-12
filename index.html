@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>HA Dashboard</title>
+    <style>
+        /* Critical: applied synchronously before Vite JS/CSS loads.
+           Keeps subviews off-screen from the very first paint — no FOUC flash. */
+        .view:not(#home) {
+            position: fixed;
+            inset: 0;
+            transform: translateY(100vh);
+            pointer-events: none;
+            overflow: hidden;
+        }
+    </style>
 </head>
 
 <body>
@@ -14,23 +25,197 @@
         <button class="theme-btn" id="themeBtn" title="Toggle theme">☀️</button>
     </div>
 
-    <!-- MAIN HOME VIEW (All rooms) -->
+    <!-- ═══════════════════════════════════════════════════════════
+         MAIN HOME VIEW
+    ════════════════════════════════════════════════════════════ -->
     <div class="view active" id="home">
         <div class="dashboard">
-            <!-- Hobbyrum Section -->
+
+            <!-- Entre -->
+            <room-divider title="Entre" temp="sensor.entre_temperatursensor_temperature"
+                humidity="sensor.entre_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.entre" navigate="#entre"></light-card>
+
+            <!-- Leias rum -->
+            <room-divider title="Leias rum" temp="sensor.leias_rum_temperatursensor_temperature"
+                humidity="sensor.leias_rum_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.leias_rum" navigate="#leias-rum"></light-card>
+
+            <!-- Elises rum -->
+            <room-divider title="Elises rum" temp="sensor.elises_rum_temperatursensor_temperature"
+                humidity="sensor.elises_rum_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.elises_rum" navigate="#elises-rum"></light-card>
+
+            <!-- Vardagsrum -->
+            <room-divider title="Vardagsrum" temp="sensor.vardagsrum_temperatursensor_temperature"
+                humidity="sensor.vardagsrum_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
+
+            <!-- Kök -->
+            <room-divider title="Kök" temp="sensor.vardagsrum_temperatursensor_temperature"
+                humidity="sensor.vardagsrum_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.kok" navigate="#kok"></light-card>
+
+            <!-- Sovrum -->
+            <room-divider title="Sovrum" temp="sensor.sovrum_temperatursensor_temperature"
+                humidity="sensor.sovrum_temperatursensor_humidity">
+            </room-divider>
+            <light-card name="Lampor" entity="light.sovrum" navigate="#sovrum"></light-card>
+
+            <!-- Hobbyrum -->
             <room-divider title="Hobbyrum" temp="sensor.hobbyrum_temperatursensor_temperature"
                 humidity="sensor.hobbyrum_temperatursensor_humidity"
                 motion="binary_sensor.hobbyrum_rorelsesensor_motion">
             </room-divider>
             <light-card name="Lampor" entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
 
-            <!-- Example of another section to show the grid styling working correctly! -->
-            <room-divider title="Vardagsrum"></room-divider>
-            <light-card entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
         </div>
     </div>
 
-    <!-- HOBBYRUM SUBVIEW -->
+    <!-- ═══════════════════════════════════════════════════════════
+         ENTRÉ SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="entre">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Entré</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.entre"></light-card>
+            <light-card name="Ljusstake" entity="light.entre_ljusstake"></light-card>
+            <light-card name="Svamplampa" entity="light.entre_svamplampa"></light-card>
+            <light-card name="Spot 1" entity="light.entre_taklampa_spot_1"></light-card>
+            <light-card name="Spot 2" entity="light.entre_taklampa_spot_2"></light-card>
+            <light-card name="Spot 3" entity="light.entre_taklampa_spot_3"></light-card>
+            <light-card name="Spot 4" entity="light.entre_taklampa_spot_4"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VARDAGSRUM SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="vardagsrum">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Vardagsrum</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.vardagsrum"></light-card>
+            <light-card name="Fönsterlampa" entity="light.vardagsrum_fonsterlampa"></light-card>
+            <light-card name="Golvlampa" entity="light.vardagsrum_golvlampa"></light-card>
+            <light-card name="Klotlampa" entity="light.vardagsrum_klotlampa"></light-card>
+            <light-card name="Stjärna" entity="light.vardagsrum_stjarna"></light-card>
+            <light-card name="TV-bänk" entity="light.vardagsrum_tv_bank"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         KÖK SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="kok">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Kök</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.kok"></light-card>
+            <light-card name="Fönster" entity="light.kok_fonster"></light-card>
+            <light-card name="Matbord" entity="light.kok_matbord"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SOVRUM SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="sovrum">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Sovrum</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.sovrum"></light-card>
+            <light-card name="Saras sänglampa" entity="light.sovrum_saras_sanglampa"></light-card>
+            <light-card name="Sebbes sänglampa" entity="light.sovrum_sebbes_sanglampa"></light-card>
+            <light-card name="Taklampa" entity="light.sovrum_taklampa"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ELISES RUM SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="elises-rum">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Elises rum</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.elises_rum"></light-card>
+            <light-card name="Klotlampa" entity="light.elises_rum_klotlampa"></light-card>
+            <light-card name="Ljusslinga" entity="light.elises_rum_ljusslinga"></light-card>
+            <light-card name="Skrivbordslampa" entity="light.elises_rum_skrivbordslampa"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LEIAS RUM SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="leias-rum">
+        <div class="subview-header"
+            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
+            <button class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+            <span class="subview-title">Leias rum</span>
+        </div>
+        <div class="dashboard">
+            <light-card name="Hela rummet" entity="light.leias_rum"></light-card>
+            <light-card name="Fönsterlampa" entity="light.leias_rum_fonsterlampa"></light-card>
+            <light-card name="Ljusslinga" entity="light.leias_rum_ljusslinga"></light-card>
+            <light-card name="Taklampa" entity="light.leias_rum_taklampa"></light-card>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         HOBBYRUM SUBVIEW
+    ════════════════════════════════════════════════════════════ -->
     <div class="view" id="hobbyrum">
         <div class="subview-header"
             onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
@@ -43,10 +228,7 @@
             <span class="subview-title">Hobbyrum</span>
         </div>
         <div class="dashboard">
-            <!-- Master group card (opens popup as usual) -->
             <light-card name="Hela rummet" entity="light.hobbyrum"></light-card>
-
-            <!-- Individual room lights -->
             <light-card name="Play 1" entity="light.hobbyrum_play_1"></light-card>
             <light-card name="Play 2" entity="light.hobbyrum_play_2"></light-card>
             <light-card name="Play 3" entity="light.hobbyrum_play_3"></light-card>
