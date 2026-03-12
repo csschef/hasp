@@ -8,6 +8,7 @@ import "./components/room-divider"
 import "./components/light-card"
 import "./components/light-popup"
 import "./components/history-popup"
+import "./components/weather-card"
 
 import { connectHA } from "./services/ha-client"
 
