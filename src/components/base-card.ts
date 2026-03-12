@@ -18,19 +18,12 @@ export class BaseCard extends HTMLElement {
 
           padding: var(--space-md);
 
-          box-shadow:
-          0 4px 12px rgba(0,0,0,0.2);
-
           transition:
-          transform 0.15s ease,
-          box-shadow 0.15s ease;
+          transform 0.15s ease;
 
         }
 
         .card:active {
-
-        box-shadow:
-        0 2px 6px rgba(0,0,0,0.3);
 
         }
 

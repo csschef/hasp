@@ -49,7 +49,7 @@ class RoomDivider extends HTMLElement {
                 }
                 .title {
                     font-size: 1.25rem;
-                    font-weight: 700;
+                    font-weight: 500;
                     color: var(--text-primary);
                     letter-spacing: -0.01em;
                 }
