@@ -22,7 +22,7 @@
                 humidity="sensor.hobbyrum_temperatursensor_humidity"
                 motion="binary_sensor.hobbyrum_rorelsesensor_motion">
             </room-divider>
-            <light-card entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
+            <light-card name="Lampor" entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
 
             <!-- Example of another section to show the grid styling working correctly! -->
             <room-divider title="Vardagsrum"></room-divider>
@@ -44,12 +44,17 @@
         </div>
         <div class="dashboard">
             <!-- Master group card (opens popup as usual) -->
-            <light-card entity="light.hobbyrum"></light-card>
+            <light-card name="Hela rummet" entity="light.hobbyrum"></light-card>
 
             <!-- Individual room lights -->
-            <light-card entity="light.hobbyrum_play_1"></light-card>
-            <light-card entity="light.hobbyrum_play_2"></light-card>
-            <light-card entity="light.hobbyrum_play_3"></light-card>
+            <light-card name="Play 1" entity="light.hobbyrum_play_1"></light-card>
+            <light-card name="Play 2" entity="light.hobbyrum_play_2"></light-card>
+            <light-card name="Play 3" entity="light.hobbyrum_play_3"></light-card>
+            <light-card name="Skrivbord" entity="light.hobbyrum_skrivbord"></light-card>
+            <light-card name="Hektor 1" entity="light.hobbyrum_golvlampa_lampa_1"></light-card>
+            <light-card name="Hektor 2" entity="light.hobbyrum_golvlampa_lampa_2"></light-card>
+            <light-card name="Hektor 3" entity="light.hobbyrum_golvlampa_lampa_3"></light-card>
+            <light-card name="Golvlampa" entity="light.hobbyrum_golvlampa_2"></light-card>
         </div>
     </div>
 
