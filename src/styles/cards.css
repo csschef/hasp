@@ -20,9 +20,135 @@
 
 /* Icon inside a card — colour driven by CSS custom property */
 .card .card-icon {
-    fill: var(--card-icon-fill, var(--text-secondary));
-    transition: fill 0.15s ease;
+    color: var(--card-icon-fill, var(--text-primary));
+    transition: color 0.15s ease;
 }
+
+/* Weather Card Specifics */
+.weather-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px 20px 4px;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.weather-hero .temp {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -2px;
+  color: var(--text-primary);
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-info .condition {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.weather-info .location {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.weather-icon-large {
+  color: var(--accent);
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+}
+
+.forecast-controls {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.forecast-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.forecast-tab.active {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.forecast-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.forecast-scroll::-webkit-scrollbar {
+  height: 0;
+}
+
+.forecast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 48px;
+  scroll-snap-align: start;
+}
+
+.f-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.f-temp {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.f-temps {
+   display: flex;
+   gap: 6px;
+}
+
+.f-temp.muted {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.f-precip {
+  font-size: 10px;
+  font-weight: 600;
+  color: #3498db;
+}
+
+weather-card {
+  grid-column: span 2;
+}
+
+
 
 /* Title/subtitle colour transitions */
 .card .title {

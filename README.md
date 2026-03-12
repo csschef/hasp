@@ -51,7 +51,7 @@ The dashboard is built as a Single Page Application (SPA) where each UI element 
 
 ## Joint Development Workflow
 
-This project is a collaborative effort between the **me** and an **AI Coding Agent (Antigravity)**. It represents a modern approach to software development where human creative direction and architectural oversight are paired with agentic AI execution.
+This project is a collaborative effort between **me** and an **AI Coding Agent (Antigravity)**. It represents a modern approach to software development where human creative direction and architectural oversight are paired with agentic AI execution.
 
 Core areas of collaboration:
 - **Human-Directed Design**: Aesthetic decisions, layout structure, and premium feel driven by human vision.
