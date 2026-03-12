@@ -147,7 +147,16 @@
 weather-card {
   grid-column: span 2;
 }
+.person-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    grid-column: span 2;
+}
 
+person-card {
+    display: block;
+}
 
 
 /* Title/subtitle colour transitions */

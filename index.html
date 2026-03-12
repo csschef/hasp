@@ -32,6 +32,11 @@
         <div class="dashboard">
             <weather-card></weather-card>
 
+            <div class="person-row">
+                <person-card person="person.sebastian" battery="sensor.cph2581_battery_level"></person-card>
+                <person-card person="person.sara" battery="sensor.sara_battery_level"></person-card>
+            </div>
+
             <!-- Entre -->
             <room-divider title="Entre" temp="sensor.entre_temperatursensor_temperature"
                 humidity="sensor.entre_temperatursensor_humidity">
@@ -241,6 +246,7 @@
 
     <light-popup id="lightPopup"></light-popup>
     <history-popup id="historyPopup"></history-popup>
+    <person-popup id="personPopup"></person-popup>
     <script type="module" src="/src/main.ts"></script>
 
 </body>

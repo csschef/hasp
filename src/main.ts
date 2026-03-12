@@ -9,6 +9,8 @@ import "./components/light-card"
 import "./components/light-popup"
 import "./components/history-popup"
 import "./components/weather-card"
+import "./components/person-card"
+import "./components/person-popup"
 
 import { connectHA } from "./services/ha-client"
 

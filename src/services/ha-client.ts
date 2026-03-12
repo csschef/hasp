@@ -1,7 +1,7 @@
 import { setEntity, setEntities } from "../store/entity-store"
 import { registerSocket } from "./ha-service"
 
-const HA_URL = import.meta.env.VITE_HA_URL
+export const HA_URL = import.meta.env.VITE_HA_URL
 const HA_TOKEN = import.meta.env.VITE_HA_TOKEN
 
 let socket: WebSocket | null = null
