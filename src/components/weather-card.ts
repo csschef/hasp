@@ -15,6 +15,7 @@ class WeatherCard extends HTMLElement {
     private lastCoords: string = ""
     private localWeather: any = null
     private localLocation: string = "Lindsdal"
+    private isExpanded: boolean = false
 
     // Image mapping to match your folder structure
     private imageMap: Record<string, string> = {
@@ -72,6 +73,12 @@ class WeatherCard extends HTMLElement {
                 this.requestBrowserLocation()
             }
         })
+
+        // 4. Click to toggle expansion
+        this.addEventListener("click", () => {
+            this.isExpanded = !this.isExpanded;
+            this.render();
+        });
 
         this.handleUpdate()
     }
@@ -185,6 +192,7 @@ class WeatherCard extends HTMLElement {
                     transition: opacity 0.4s ease-out, background 0.3s ease;
                     position: relative;
                     overflow: hidden;
+                    cursor: pointer;
                 }
 
                 /* ── Sky Theme for Light Mode ── */
@@ -246,59 +254,51 @@ class WeatherCard extends HTMLElement {
                 }
                 .hero {
                     display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
+                    align-items: flex-start;
+                    gap: 16px;
                 }
                 .temp-group {
                     display: flex;
                     align-items: flex-start;
-                    gap: 4px;
+                    gap: 2px;
                 }
                 .temp {
                     font-size: 56px;
                     font-weight: 600;
                     letter-spacing: -3px;
-                    line-height: 1;
+                    line-height: 0.9;
                 }
                 .unit {
                     font-size: 32px;
                     font-weight: 500;
-                    margin-top: 6px;
+                    margin-top: 4px;
                     opacity: 0.5;
                 }
                 .meta {
                     display: flex;
                     flex-direction: column;
+                    justify-content: flex-start;
+                    flex: 1;
+                    padding-top: 4px;
                 }
                 .condition {
                     font-size: 18px;
-                    font-weight: 500;
+                    font-weight: 600;
                     text-transform: capitalize;
+                    line-height: 1.2;
                 }
                 .location {
                     display: flex;
                     align-items: center;
                     gap: 4px;
-                    margin-top: 10px;
+                    margin-top: 4px;
                     font-size: 14px;
                     color: var(--text-secondary);
-                }
-                .sun-info {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 8px;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    font-weight: 500;
-                }
-                .sun-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
+                    opacity: 0.8;
                 }
                 .weather-icon-large {
                     color: var(--accent);
+                    margin-top: -10px; /* Perfectly align with the caps of the temperature digits */
                 }
                 
                 :host-context([data-theme="light"]) .weather-icon-large,
@@ -306,6 +306,24 @@ class WeatherCard extends HTMLElement {
                     :host:not([data-theme="dark"]) .weather-icon-large {
                         color: #ffffff;
                     }
+                }
+
+                /* ── Expandable Section ── */
+                .expander {
+                    display: grid;
+                    grid-template-rows: 0fr;
+                    transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                :host([expanded]) .expander,
+                .expander.expanded {
+                    grid-template-rows: 1fr;
+                }
+                .expander-content {
+                    overflow: hidden;
+                }
+
+                .content-inner {
+                    padding-top: 24px;
                 }
 
                 .tabs {
@@ -356,42 +374,74 @@ class WeatherCard extends HTMLElement {
                 .f-temps { display: flex; gap: 6px; }
                 .f-temp.low { opacity: 0.5; }
                 .precip { font-size: 11px; font-weight: 500; color: var(--text-secondary); opacity: 0.9; }
+
+                .sun-info {
+                    display: flex;
+                    justify-content: center;
+                    gap: 32px;
+                    margin-bottom: 24px;
+                    padding-bottom: 20px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    font-size: 13px;
+                    color: var(--text-secondary);
+                    font-weight: 500;
+                }
+                .sun-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                /* Ensure the expanded state looks balanced */
+                :host([expanded]) .hero,
+                .hero.expanded {
+                    margin-bottom: 0px;
+                }
             </style>
             
             <div class="hero">
+                <div class="temp-group">
+                    <span class="temp">${temp}</span>
+                    <span class="unit">°</span>
+                </div>
+                
                 <div class="meta">
-                    <div class="temp-group">
-                        <span class="temp">${temp}</span>
-                        <span class="unit">°</span>
-                    </div>
-                    <span class="condition">${condition}</span>
-                    <span class="location">
+                    <div class="condition">${condition}</div>
+                    <div class="location">
                         ${this.localWeather ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:1px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>` : ''}
                         ${locationName}
-                    </span>
-                    <div class="sun-info">
-                        <div class="sun-item">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V3"/><path d="m9 6 3-3 3 3"/><path d="M18 18a6 6 0 0 0-12 0"/><path d="M2 21h20"/></svg>
-                            ${formatTime(sun?.attributes.next_rising)}
+                    </div>
+                </div>
+
+                <div class="weather-icon-large">
+                    ${this.getWeatherIcon(condition, 74, isNight)}
+                </div>
+            </div>
+
+            <div class="expander ${this.isExpanded ? 'expanded' : ''}">
+                <div class="expander-content">
+                    <div class="content-inner">
+                        <div class="sun-info">
+                            <div class="sun-item">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 11V3.5"/><path d="m9 6.5 3-3 3 3"/><path d="M18 20a6 6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
+                                Soluppgång ${formatTime(sun?.attributes.next_rising)}
+                            </div>
+                            <div class="sun-item">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 3.5v7.5"/><path d="m15 8-3 3-3-3"/><path d="M18 20a6 6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
+                                Solnedgång ${formatTime(sun?.attributes.next_setting)}
+                            </div>
                         </div>
-                        <div class="sun-item">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="m15 9-3 3-3-3"/><path d="M18 18a6 6 0 0 0-12 0"/><path d="M2 21h20"/></svg>
-                            ${formatTime(sun?.attributes.next_setting)}
+
+                        <div class="tabs">
+                            <button class="tab ${!isDaily ? 'active' : ''}" id="btn-hourly">Timvis</button>
+                            <button class="tab ${isDaily ? 'active' : ''}" id="btn-daily">Dygn</button>
+                        </div>
+
+                        <div class="scroll">
+                            ${isDaily ? this.renderDaily(daily) : this.renderHourly(hourly)}
                         </div>
                     </div>
                 </div>
-                <div class="weather-icon-large">
-                    ${this.getWeatherIcon(condition, 80, isNight)}
-                </div>
-            </div>
-
-            <div class="tabs">
-                <button class="tab ${!isDaily ? 'active' : ''}" id="btn-hourly">Timvis</button>
-                <button class="tab ${isDaily ? 'active' : ''}" id="btn-daily">Dygn</button>
-            </div>
-
-            <div class="scroll">
-                ${isDaily ? this.renderDaily(daily) : this.renderHourly(hourly)}
             </div>
         `
 
@@ -411,29 +461,25 @@ class WeatherCard extends HTMLElement {
             const timeseries = this.localWeather.properties.timeseries
             const now = new Date()
             
-            let html = ""
-            timeseries.slice(0, 24).forEach((t: any) => {
-                const date = new Date(t.time)
-                if (date < now && (now.getTime() - date.getTime()) > 3600000) return
+            // Filter only future points and take next 24
+            const futurePoints = timeseries.filter((ts: any) => new Date(ts.time) > now)
 
-                const timeStr = date.getHours().toString().padStart(2, '0') + ":00"
-                const hour = date.getHours()
-                const isNight = hour > 20 || hour < 6
-                const symbol = t.data.next_1_hours?.summary?.symbol_code || t.data.next_6_hours?.summary?.symbol_code
+            return futurePoints.slice(0, 24).map((ts: any) => {
+                const date = new Date(ts.time)
+                const temp = Math.round(ts.data.instant.details.air_temperature)
+                const symbol = ts.data.next_1_hours?.summary?.symbol_code || ts.data.next_6_hours?.summary?.symbol_code
                 const cond = this.getMetState(symbol)
-                const temp = Math.round(t.data.instant.details.air_temperature)
-                const precip = t.data.next_1_hours?.data?.details?.precipitation_amount || 0
-
-                html += `
+                const precip = ts.data.next_1_hours?.details?.precipitation_amount || 0
+                
+                return `
                     <div class="item">
-                        <span class="label">${timeStr}</span>
-                        ${this.getWeatherIcon(cond, 26, isNight)}
+                        <span class="label">${date.getHours()}:00</span>
+                        ${this.getWeatherIcon(cond, 24, date.getHours() > 20 || date.getHours() < 6)}
                         <span class="f-temp">${temp}°</span>
                         <span class="precip">${precip > 0 ? precip.toFixed(1) + ' mm' : '&nbsp;'}</span>
                     </div>
                 `
-            })
-            return html
+            }).join("")
         }
 
         const forecast = entity?.attributes.forecast || []
@@ -458,28 +504,56 @@ class WeatherCard extends HTMLElement {
         if (this.localWeather) {
             const timeseries = this.localWeather.properties.timeseries
             const days = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"]
-            const dailyData: any[] = []
             
-            // Yr.no returns everything as points, grouped by day manually
-            const processedDays = new Set()
+            // 1. Group all points by local date
+            const dailyGroups: Record<string, any[]> = {}
             timeseries.forEach((ts: any) => {
-                const date = new Date(ts.time).toLocaleDateString()
-                if (!processedDays.has(date) && dailyData.length < 8) {
-                    processedDays.add(date)
-                    const data = ts.data.next_6_hours || ts.data.next_12_hours
-                    if (data) {
-                        dailyData.push({
-                            time: ts.time,
-                            tempMax: ts.data.instant.details.air_temperature,
-                            tempMin: ts.data.instant.details.air_temperature, // Simplified for compact view
-                            symbol: data.summary.symbol_code,
-                            precip: data.details?.precipitation_amount || 0
-                        })
-                    }
-                }
+                const dateKey = new Date(ts.time).toLocaleDateString()
+                if (!dailyGroups[dateKey]) dailyGroups[dateKey] = []
+                dailyGroups[dateKey].push(ts)
             })
 
-            return dailyData.map((d: any, i: number) => {
+            const dailyData: any[] = []
+            Object.keys(dailyGroups).forEach(dateKey => {
+                const group = dailyGroups[dateKey]
+                
+                // Get all temperatures for this day
+                const temps = group.map(ts => ts.data.instant.details.air_temperature)
+                
+                // Find a midday point (around 12:00 local) for the day's icon
+                let midDayPoint = group.find(ts => new Date(ts.time).getHours() === 12) || group[Math.floor(group.length / 2)]
+                
+                // Sum precipitation for the whole day
+                // MET Norway provides non-overlapping windows. We prefer 1h windows, fall back to 6h.
+                let totalPrecip = 0
+                let lastPrecipTime = 0
+                
+                group.forEach(ts => {
+                    const time = new Date(ts.time).getTime()
+                    const p1 = ts.data.next_1_hours?.details?.precipitation_amount
+                    const p6 = ts.data.next_6_hours?.details?.precipitation_amount
+                    
+                    if (p1 !== undefined) {
+                        totalPrecip += p1
+                    } else if (p6 !== undefined && time >= lastPrecipTime + 6 * 3600000) {
+                        // Only add 6h data if we haven't covered these hours with 1h points
+                        totalPrecip += p6
+                        lastPrecipTime = time
+                    }
+                })
+
+                dailyData.push({
+                    time: group[0].time,
+                    tempMax: Math.max(...temps),
+                    tempMin: Math.min(...temps),
+                    symbol: midDayPoint.data.next_6_hours?.summary?.symbol_code || midDayPoint.data.next_12_hours?.summary?.symbol_code || midDayPoint.data.next_1_hours?.summary?.symbol_code,
+                    precip: totalPrecip
+                })
+            })
+
+            // Skip "today" if it's late in the evening and user wants "tomorrow" as first forecast
+            // or just show the next 8 days available
+            return dailyData.slice(0, 8).map((d: any, i: number) => {
                 const date = new Date(d.time)
                 const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()]
                 let cond = this.getMetState(d.symbol)
@@ -490,9 +564,9 @@ class WeatherCard extends HTMLElement {
                         ${this.getWeatherIcon(cond, 26, false)}
                         <div class="f-temps">
                             <span class="f-temp">${Math.round(d.tempMax)}°</span>
-                            <span class="f-temp low">${Math.round(d.tempMin - 2)}°</span>
+                            <span class="f-temp low">${Math.round(d.tempMin)}°</span>
                         </div>
-                        <span class="precip">${d.precip > 0 ? d.precip.toFixed(1) + ' mm' : '&nbsp;'}</span>
+                        <span class="precip">${d.precip > 0.1 ? d.precip.toFixed(1) + ' mm' : '&nbsp;'}</span>
                     </div>
                 `
             }).join("")
