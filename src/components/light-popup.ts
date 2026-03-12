@@ -116,8 +116,24 @@ class LightPopup extends HTMLElement {
 
         title.textContent = name
 
-        controls.innerHTML = `
+        const supported = attr.supported_color_modes
 
+        const hasBrightness = supported
+            ? supported.some((m: string) => ["brightness", "color_temp", "hs", "xy", "rgb", "rgbw", "rgbww"].includes(m))
+            : attr.brightness !== undefined
+
+        const hasTemp = supported
+            ? supported.includes("color_temp")
+            : (attr.color_temp_kelvin !== undefined || attr.color_temp !== undefined)
+
+        const hasColor = supported
+            ? supported.some((m: string) => ["hs", "xy", "rgb", "rgbw", "rgbww"].includes(m))
+            : (attr.hs_color !== undefined || attr.rgb_color !== undefined)
+
+        let html = ""
+
+        if (hasBrightness) {
+            html += `
 <div class="control">
 <div class="label-row">
 <label>Ljusstyrka</label>
@@ -125,8 +141,11 @@ class LightPopup extends HTMLElement {
 </div>
 <div class="bright-slider"><div class="bright-thumb"></div></div>
 </div>
+`
+        }
 
-
+        if (hasTemp) {
+            html += `
 <div class="control">
 <div class="label-row">
 <label>Temperatur</label>
@@ -135,8 +154,11 @@ class LightPopup extends HTMLElement {
 
 <div class="temp-slider"><div class="temp-thumb"></div></div>
 </div>
+`
+        }
 
-
+        if (hasColor) {
+            html += `
 <div class="control">
 
 <label>Färg</label>
@@ -150,129 +172,130 @@ class LightPopup extends HTMLElement {
 
 </div>
 `
+        }
+
+        controls.innerHTML = html
 
         /* ---------- brightness (custom div slider) ---------- */
 
-        const brightSlider = controls.querySelector(".bright-slider") as HTMLElement
-        const brightThumb = controls.querySelector(".bright-thumb") as HTMLElement
+        const brightSlider = controls.querySelector(".bright-slider") as HTMLElement | null
+        const brightThumb = controls.querySelector(".bright-thumb") as HTMLElement | null
 
-        requestAnimationFrame(() => {
-            const w = brightSlider.offsetWidth
-            const frac = (brightness - 1) / (255 - 1)
-            brightThumb.style.left = (frac * w) + "px"
-        })
+        if (brightSlider && brightThumb) {
+            requestAnimationFrame(() => {
+                const w = brightSlider.offsetWidth
+                const frac = (brightness - 1) / (255 - 1)
+                brightThumb.style.left = (frac * w) + "px"
+            })
 
-        const doBrightMove = (offsetX: number) => {
-            const w = brightSlider.offsetWidth
-            const frac = Math.max(0, Math.min(1, offsetX / w))
-            brightThumb.style.left = (frac * w) + "px"
-            const v = Math.round(1 + frac * 254)
-            brightSlider.closest(".control")!.querySelector(".value")!.textContent = Math.round((v / 255) * 100) + "%"
-            this.setBrightness(v)
-        }
+            const doBrightMove = (offsetX: number) => {
+                const w = brightSlider.offsetWidth
+                const frac = Math.max(0, Math.min(1, offsetX / w))
+                brightThumb.style.left = (frac * w) + "px"
+                const v = Math.round(1 + frac * 254)
+                brightSlider.closest(".control")!.querySelector(".value")!.textContent = Math.round((v / 255) * 100) + "%"
+                this.setBrightness(v)
+            }
 
-        brightSlider.onpointerdown = (e) => {
-            this.isDragging = true
-            e.preventDefault()
-            brightSlider.setPointerCapture(e.pointerId)
-            doBrightMove(e.offsetX)
-            brightSlider.onpointermove = (ev) => doBrightMove(ev.offsetX)
-            brightSlider.onpointerup = () => {
-                brightSlider.onpointermove = null
-                brightSlider.onpointerup = null
-                window.setTimeout(() => { this.isDragging = false }, 350)
+            brightSlider.onpointerdown = (e) => {
+                this.isDragging = true
+                e.preventDefault()
+                brightSlider.setPointerCapture(e.pointerId)
+                doBrightMove(e.offsetX)
+                brightSlider.onpointermove = (ev) => doBrightMove(ev.offsetX)
+                brightSlider.onpointerup = () => {
+                    brightSlider.onpointermove = null
+                    brightSlider.onpointerup = null
+                    window.setTimeout(() => { this.isDragging = false }, 350)
+                }
             }
         }
 
         /* ---------- temperature (custom div slider) ---------- */
-        // Uses offsetX + offsetWidth instead of getBoundingClientRect + clientX.
-        // offsetX is always in the element's OWN coordinate space, so it is
-        // immune to CSS transforms on ancestors (the sheet has translateX(-50%)).
-        //   frac 0 → left → blue → cool → maxK
-        //   frac 1 → right → orange → warm → minK
 
-        const tempSlider = controls.querySelector(".temp-slider") as HTMLElement
-        const tempThumb = controls.querySelector(".temp-thumb") as HTMLElement
+        const tempSlider = controls.querySelector(".temp-slider") as HTMLElement | null
+        const tempThumb = controls.querySelector(".temp-thumb") as HTMLElement | null
 
-        cancelAnimationFrame(this.tempInitRaf)
-        this.tempInitRaf = requestAnimationFrame(() => {
-            this.tempInitRaf = 0
-            const w = tempSlider.offsetWidth
-            const frac = (maxK - kelvin) / (maxK - minK)
-            tempThumb.style.left = (frac * w) + "px"
-        })
-
-        const doTempMove = (offsetX: number) => {
-            const w = tempSlider.offsetWidth
-            const frac = Math.max(0, Math.min(1, offsetX / w))
-            tempThumb.style.left = (frac * w) + "px"
-            const k = Math.round(maxK - frac * (maxK - minK))
-            tempSlider.closest(".control")!.querySelector(".value")!.textContent = k + "K"
-            this.setTempKelvin(k)
-        }
-
-        tempSlider.onpointerdown = (e) => {
+        if (tempSlider && tempThumb) {
             cancelAnimationFrame(this.tempInitRaf)
-            this.tempInitRaf = 0
-            this.isDragging = true
-            e.preventDefault()
-            tempSlider.setPointerCapture(e.pointerId)
-            doTempMove(e.offsetX)
-            tempSlider.onpointermove = (ev) => doTempMove(ev.offsetX)
-            tempSlider.onpointerup = () => {
-                tempSlider.onpointermove = null
-                tempSlider.onpointerup = null
-                // Keep isDragging for 350ms so HA state round-trip can't reset thumb
-                window.setTimeout(() => { this.isDragging = false }, 350)
+            this.tempInitRaf = requestAnimationFrame(() => {
+                this.tempInitRaf = 0
+                const w = tempSlider.offsetWidth
+                const frac = (maxK - kelvin) / (maxK - minK)
+                tempThumb.style.left = (frac * w) + "px"
+            })
+
+            const doTempMove = (offsetX: number) => {
+                const w = tempSlider.offsetWidth
+                const frac = Math.max(0, Math.min(1, offsetX / w))
+                tempThumb.style.left = (frac * w) + "px"
+                const k = Math.round(maxK - frac * (maxK - minK))
+                tempSlider.closest(".control")!.querySelector(".value")!.textContent = k + "K"
+                this.setTempKelvin(k)
+            }
+
+            tempSlider.onpointerdown = (e) => {
+                cancelAnimationFrame(this.tempInitRaf)
+                this.tempInitRaf = 0
+                this.isDragging = true
+                e.preventDefault()
+                tempSlider.setPointerCapture(e.pointerId)
+                doTempMove(e.offsetX)
+                tempSlider.onpointermove = (ev) => doTempMove(ev.offsetX)
+                tempSlider.onpointerup = () => {
+                    tempSlider.onpointermove = null
+                    tempSlider.onpointerup = null
+                    window.setTimeout(() => { this.isDragging = false }, 350)
+                }
             }
         }
 
         /* ---------- color wheel ---------- */
 
-        const wheel = controls.querySelector(".color-wheel") as HTMLElement
-        const picker = controls.querySelector(".picker") as HTMLElement
+        const wheel = controls.querySelector(".color-wheel") as HTMLElement | null
+        const picker = controls.querySelector(".picker") as HTMLElement | null
 
-        // Initial picker placement — uses offsetWidth (element-local, transform-proof)
-        requestAnimationFrame(() => {
-            const size = wheel.offsetWidth
-            const radius = size / 2
-            const dist = (hs[1] / 100) * radius
-            const rad = (hs[0] - 90) * Math.PI / 180
-            picker.style.left = (radius + Math.cos(rad) * dist) + "px"
-            picker.style.top = (radius + Math.sin(rad) * dist) + "px"
-        })
+        if (wheel && picker) {
+            requestAnimationFrame(() => {
+                const size = wheel.offsetWidth
+                const radius = size / 2
+                const dist = (hs[1] / 100) * radius
+                const rad = (hs[0] - 90) * Math.PI / 180
+                picker.style.left = (radius + Math.cos(rad) * dist) + "px"
+                picker.style.top = (radius + Math.sin(rad) * dist) + "px"
+            })
 
-        const handleWheelPointer = (ox: number, oy: number) => {
-            const size = wheel.offsetWidth
-            const radius = size / 2
-            let dx = ox - radius
-            let dy = oy - radius
-            const d = Math.sqrt(dx * dx + dy * dy)
-            if (d > radius) {
-                const s = radius / d
-                dx *= s
-                dy *= s
-            }
-            const hue = (Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360
-            const sat = this.clamp((Math.sqrt(dx * dx + dy * dy) / radius) * 100, 0, 100)
-            picker.style.left = (radius + dx) + "px"
-            picker.style.top = (radius + dy) + "px"
-            this.setHsColor(hue, sat)
-        }
-
-        wheel.onpointerdown = e => {
-            this.isDragging = true
-            e.preventDefault()
-            wheel.setPointerCapture(e.pointerId)
-            handleWheelPointer(e.offsetX, e.offsetY)
-
-            wheel.onpointermove = (ev) => handleWheelPointer(ev.offsetX, ev.offsetY)
-            wheel.onpointerup = () => {
-                wheel.onpointermove = null
-                wheel.onpointerup = null
-                window.setTimeout(() => { this.isDragging = false }, 350)
+            const handleWheelPointer = (ox: number, oy: number) => {
+                const size = wheel.offsetWidth
+                const radius = size / 2
+                let dx = ox - radius
+                let dy = oy - radius
+                const d = Math.sqrt(dx * dx + dy * dy)
+                if (d > radius) {
+                    const s = radius / d
+                    dx *= s
+                    dy *= s
+                }
+                const hue = (Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360
+                const sat = this.clamp((Math.sqrt(dx * dx + dy * dy) / radius) * 100, 0, 100)
+                picker.style.left = (radius + dx) + "px"
+                picker.style.top = (radius + dy) + "px"
+                this.setHsColor(hue, sat)
             }
 
+            wheel.onpointerdown = e => {
+                this.isDragging = true
+                e.preventDefault()
+                wheel.setPointerCapture(e.pointerId)
+                handleWheelPointer(e.offsetX, e.offsetY)
+
+                wheel.onpointermove = (ev) => handleWheelPointer(ev.offsetX, ev.offsetY)
+                wheel.onpointerup = () => {
+                    wheel.onpointermove = null
+                    wheel.onpointerup = null
+                    window.setTimeout(() => { this.isDragging = false }, 350)
+                }
+            }
         }
 
     }
@@ -453,22 +476,19 @@ pointer-events:none;
 </div>
 `
 
-        const host = this.shadow.host
+
+        const host = this.shadow.host as HTMLElement
         const sheet = this.shadow.querySelector(".sheet") as HTMLElement
         const close = this.shadow.querySelector(".close") as HTMLElement
 
-        sheet.onclick = e => e.stopPropagation()
+        sheet.onclick = (e: MouseEvent) => e.stopPropagation()
 
-        host.onclick = e => {
-
+        host.onclick = (e: MouseEvent) => {
             if (e.target === host) this.close()
-
         }
 
         close.onclick = () => this.close()
-
     }
-
 }
 
 customElements.define("light-popup", LightPopup)

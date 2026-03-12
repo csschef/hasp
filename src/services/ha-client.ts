@@ -50,12 +50,24 @@ export function connectHA() {
 
         if (msg.type === "event" && msg.event?.event_type === "state_changed") {
             const entity = msg.event.data.new_state
-            setEntity(entity)
+            if (entity) {
+                setEntity(entity)
+            }
+            return
+        }
+
+        if (msg.type === "event" && msg.event?.event_type === "entity_registry_updated") {
+            console.log("HA Registry Updated - Fetching fresh states!")
+            getStates()
             return
         }
 
         if (msg.type === "result" && Array.isArray(msg.result)) {
             console.log("Received all states:", msg.result.length)
+
+            // Helpful Debugger: Search for what HA is actually naming the lights
+            const lights = msg.result.filter((r: any) => r.entity_id.startsWith("light.hobbyrum"))
+            console.log("Available Hobbyrum Lights in HA:", lights.map((l: any) => l.entity_id))
 
             setEntities(msg.result)
 
@@ -68,7 +80,8 @@ export function connectHA() {
     }
 
     socket.onclose = () => {
-        console.log("WebSocket closed")
+        console.log("WebSocket closed. Reconnecting in 3 seconds...")
+        setTimeout(() => connectHA(), 3000)
     }
 }
 
@@ -81,7 +94,17 @@ function subscribeStateChanges() {
         })
     )
 
-    console.log("Subscribed to state_changed events")
+    // Listen to entity registry updates as well. If the user adds a brand new device
+    // in Home Assistant, this event drops immediately, prompting us to fetch fresh states!
+    socket?.send(
+        JSON.stringify({
+            id: nextId(),
+            type: "subscribe_events",
+            event_type: "entity_registry_updated"
+        })
+    )
+
+    console.log("Subscribed to HA events")
 }
 
 function getStates() {

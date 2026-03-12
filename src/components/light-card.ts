@@ -11,7 +11,7 @@ class LightCard extends BaseCard {
 
     connectedCallback() {
 
-        this.entityId = this.getAttribute("entity") || ""
+        this.entityId = (this.getAttribute("entity") || "").trim()
 
         this.entity = getEntity(this.entityId)
 
@@ -79,7 +79,7 @@ class LightCard extends BaseCard {
         }
 
         const isOn = this.entity.state === "on"
-        const title = this.entity.attributes.friendly_name
+        const title = this.getAttribute("name") || this.entity.attributes.friendly_name
         const attr = this.entity.attributes
 
         let subtitle = "Av"
