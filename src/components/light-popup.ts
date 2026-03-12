@@ -361,7 +361,7 @@ align-items:center;
 
 .title{
 font-size:1.2rem;
-font-weight:700;
+font-weight:500;
 color:var(--text-primary);
 }
 
@@ -391,7 +391,7 @@ align-items:center;
 
 label{
 font-size:0.9rem;
-font-weight:600;
+font-weight:400;
 color:var(--text-primary);
 }
 

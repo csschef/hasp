@@ -1,12 +1,13 @@
 .card {
 
-    background: var(--color-card);
+    background: var(--card-bg, var(--color-card));
 
     border-radius: var(--radius-md);
 
     padding: var(--space-md);
 
     transition:
+        background 0.15s ease,
         transform 0.15s ease;
 
 }
@@ -15,4 +16,21 @@
 
     transform: scale(0.97);
 
+}
+
+/* Icon inside a card — colour driven by CSS custom property */
+.card .card-icon {
+    fill: var(--card-icon-fill, var(--text-secondary));
+    transition: fill 0.15s ease;
+}
+
+/* Title/subtitle colour transitions */
+.card .title {
+    color: var(--card-text-primary, var(--text-primary));
+    transition: color 0.15s ease;
+}
+
+.card .subtitle {
+    color: var(--card-text-secondary, var(--text-secondary));
+    transition: color 0.15s ease;
 }

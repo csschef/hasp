@@ -263,14 +263,14 @@ class HistoryPopup extends HTMLElement {
 
 .title {
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--text-primary);
 }
 
 .subtitle {
     font-size: 0.9rem;
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .current-value {
