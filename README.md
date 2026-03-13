@@ -1,32 +1,33 @@
-# HA Dashboard
+# HASP — Home Assistant Simplified Panel
 
-A performance-oriented, premium dashboard for **Home Assistant** built with **Vite, TypeScript, and Web Components**.
-Designed to provide a fast, responsive, and visually stunning alternative to the default Home Assistant UI.
+A **mobile-first**, performance-oriented dashboard for **Home Assistant** built with **Vite, TypeScript, and Web Components**.
+Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI — optimized for phones and tablets with the HA Companion App.
 
 ---
 
 ## About
 
-HA Dashboard is a custom frontend for Home Assistant that prioritizes speed and aesthetics. It uses a bespoke component architecture to ensure transitions are smooth and interactions feel instantaneous.
+HASP is a custom frontend for Home Assistant that prioritizes speed, aesthetics, and touch usability. It is built entirely from scratch using native browser technologies — no heavy frameworks, no unnecessary dependencies.
 
 Key design principles:
-- **Optimistic UI**: Visual states update immediately upon user interaction without waiting for server confirmation.
-- **Pure Web Components**: Built using native browser technologies for maximum performance and longevity.
-- **Custom Design System**: A cohesive visual language featuring subtle gradients, glassmorphism, and smooth animations.
+- **Optimistic UI**: Visual states update instantly on tap, never waiting for server confirmation.
+- **Pure Web Components**: Shadow DOM encapsulation for maximum performance and style isolation.
+- **Mobile-First**: Every layout, interaction, and animation is designed for finger-sized targets and small screens.
+- **Custom Design System**: A cohesive visual language with curated gradients, glassmorphism, and fluid micro-animations.
 
 ---
 
 ## Features
 
-- **Instant Feedback**: Light cards and toggles update on the same frame as the click.
-- **Dynamic Adaptive Backgrounds**: Cards automatically adjust their background color/gradient based on the light's current color temperature or RGB state.
+- **Instant Feedback**: Cards and toggles update on the same frame as the tap — zero perceptible latency.
+- **Dynamic Adaptive Backgrounds**: Cards automatically adjust their background gradient based on the light's color temperature or RGB state.
 - **Person Tracking & Maps**: Premium, Apple-style person cards with high-resolution satellite imagery (Esri World Imagery) and dynamic map markers.
-- **Advanced Weather Dashboard**: Intelligent weather component with dynamic icon mapping and real-time reverse geocoding for precise local forecasts.
-- **Lucide Iconography**: Integrated stroke-based icons for a clean, professional look.
-- **Subview Navigation**: Intelligent routing system for per-room details and controls.
-- **History Graphs**: Interactive popups showing historical data for temperature, humidity, and other sensors.
-- **Responsive Layout**: Bento-style grid system that adapts seamlessly to desktop, tablet, and mobile (HA Companion App).
-- **Theme Support**: Built-in toggle for light and dark modes with persistent storage.
+- **Advanced Weather Dashboard**: Intelligent weather component with dynamic icon mapping, calculated "feels like" temperature, and real-time reverse geocoding for precise local forecasts.
+- **TV Remote Popup**: A full-featured, premium in-app remote control with D-pad, volume oval, and app-switching.
+- **Lucide Iconography**: Consistent stroke-based SVG icons throughout for a clean, professional look.
+- **Subview Navigation**: Fluid per-room subview routing with sheet-style transitions.
+- **History Graphs**: Interactive popups showing historical sensor data (temperature, humidity, etc.).
+- **Theme Support**: Built-in light/dark mode toggle with persistent storage.
 
 ---
 
@@ -34,45 +35,41 @@ Key design principles:
 
 - **TypeScript**
 - **Vite** (Build tool and dev server)
-- **Vanilla CSS** (Custom CSS variables and utility-first tokens)
+- **Vanilla CSS** (Custom properties and design tokens — no Tailwind)
 - **Web Components** (Shadow DOM for style encapsulation)
 - **Home Assistant WebSocket API** (Real-time state synchronization)
-- **Lucide Icons**
+- **Lucide Icons** (Inline SVGs)
 
 ---
 
 ## Architecture
 
-The dashboard is built as a Single Page Application (SPA) where each UI element is a self-contained custom element.
+HASP is a Single Page Application (SPA) where every UI element is a fully self-contained custom element.
 
-- **Entity Store**: Manages state subscriptions and ensures components only re-render when necessary.
+- **Entity Store**: Manages WebSocket subscriptions and ensures components only re-render when their specific state changes.
 - **Optimistic Layer**: Intercepts user actions to patch the DOM instantly before sending commands to Home Assistant.
-- **Color Utility**: Sophisticated math-based color translation from mireds/RGB to UI-ready gradients.
-
----
-
-## Joint Development Workflow
-
-This project is a collaborative effort between **me** and an **AI Coding Agent (Antigravity)**. It represents a modern approach to software development where human creative direction and architectural oversight are paired with agentic AI execution.
-
-Core areas of collaboration:
-- **Human-Directed Design**: Aesthetic decisions, layout structure, and premium feel driven by human vision.
-- **AI-Agentic Implementation**: Core logic, component refactoring, and state management handled by the agent.
-- **Optimistic UI Logic**: Jointly refined to ensure zero-latency feedback on user interaction.
-- **Performance Optimization**: Deep-level DOM patching strategies implemented to eliminate re-renders.
-- **SVG Math & Utilities**: Collaborative refinement of color translation and gradient mapping.
-- **Project Structure**: Modularization of components and styles for long-term maintainability.
+- **Color Utility**: Math-based color translation from mireds/RGB to card-ready gradients, with smart fallbacks for mixed light groups.
 
 ---
 
 ## Project Structure
 
-- `src/components/`: Custom Web Components (LightCard, PersonCard, WeatherCard, etc.)
-- `src/store/`: State management and entity subscriptions.
-- `src/services/`: Home Assistant API and WebSocket interaction layer.
-- `src/utils/`: Helper functions for color translation, history processing, and data formatting.
-- `src/styles/`: Design tokens, layout definitions, and component-specific styles.
-- `public/`: Static assets including the custom high-resolution weather icon set.
+```
+src/
+├── components/   # Custom Web Components (LightCard, TvCard, WeatherCard, etc.)
+├── store/        # State management and entity subscriptions
+├── services/     # Home Assistant WebSocket API layer
+├── utils/        # Color translation, history processing, data formatting
+├── styles/       # Design tokens, layout, and global card styles
+public/
+└── weather/      # Custom high-resolution weather icon set
+```
+
+---
+
+## Joint Development
+
+HASP is a collaborative project between a human creative director and an **AI Coding Agent (Antigravity)**. Human vision drives aesthetics, UX direction, and product decisions. The AI handles implementation, component architecture, and state management logic.
 
 ---
 
@@ -81,34 +78,27 @@ Core areas of collaboration:
 ### Clone the repository
 
 ```bash
-git clone https://github.com/csschef/ha-dashboard.git
-cd ha-dashboard
+git clone https://github.com/csschef/hasp.git
+cd hasp
 npm install
 ```
 
-### Configuration
-Update the connection details in your configuration or environment setup to point to your Home Assistant instance.
-
-### Start the development server
+### Development server
 
 ```bash
-npm run dev
+npm run dev -- --host
 ```
 
----
-
-## Production Setup
-
-The application is optimized for persistent use on home tablets or wall-mounted displays.
+### Build for production
 
 ```bash
 npm run build
 ```
 
-The resulting `dist/` folder can be served by any static web server (NGINX, Apache) or integrated directly as a Home Assistant add-on.
+The `dist/` folder can be served by any static web server (NGINX, Apache) or deployed directly into Home Assistant as a frontend add-on.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

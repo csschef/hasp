@@ -1,7 +1,7 @@
 {
-  "name": "ha-dashboard",
+  "name": "hasp",
   "version": "1.0.0",
-  "description": "Custom Home Assistant dashboard frontend",
+  "description": "Home Assistant Simplified Panel — a mobile-first custom dashboard frontend",
   "private": true,
   "type": "module",
   "scripts": {
