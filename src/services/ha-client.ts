@@ -1,4 +1,4 @@
-import { setEntity, setEntities } from "../store/entity-store"
+import { setEntity, setEntities, setCurrentUser } from "../store/entity-store"
 import { registerSocket } from "./ha-service"
 
 // Detect HA_URL dynamically. If running inside HA (as /local/ or via UI), 
@@ -51,8 +51,22 @@ export function connectHA() {
 
             subscribeStateChanges()
             getStates()
+            
+            // Fetch current user
+            socket?.send(JSON.stringify({
+                id: nextId(),
+                type: "config/get_user"
+            }))
 
             return
+        }
+
+        if (msg.type === "result" && msg.id && msg.success && msg.result?.name) {
+            // Check if this looks like a user result
+            if (msg.result.id && typeof msg.result.is_admin === "boolean") {
+                setCurrentUser(msg.result)
+                console.log("Logged in as:", msg.result.name)
+            }
         }
 
         if (msg.type === "event" && msg.event?.event_type === "state_changed") {
