@@ -167,13 +167,14 @@ class PersonCard extends BaseCard {
                     align-items: center;
                     justify-content: center;
                     text-align: center;
-                    padding: 24px 16px;
+                    padding: var(--space-md);
                     cursor: pointer;
                     background: var(--color-card);
-                    border-radius: 24px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+                    border-radius: var(--radius-md);
+                    box-shadow: none !important;
+                    border: none !important;
                     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                    min-height: 220px; /* Base height for alignment */
+                    min-height: 200px; /* Base height for alignment */
                 }
                 .card:active {
                     transform: scale(0.96);
@@ -197,7 +198,8 @@ class PersonCard extends BaseCard {
                     background-size: cover;
                     background-position: center;
                     background-color: var(--color-card-alt);
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                    box-shadow: none !important;
+                    border: none !important;
                 }
                 .battery-pill {
                     position: absolute;
@@ -211,12 +213,11 @@ class PersonCard extends BaseCard {
                     -webkit-backdrop-filter: blur(8px);
                     padding: 4px 10px;
                     border-radius: 12px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    border: 1px solid rgba(0,0,0,0.05);
+                    box-shadow: none !important;
+                    border: none !important;
                 }
                 [data-theme="dark"] .battery-pill {
                     background: rgba(45, 45, 45, 0.9);
-                    border-color: rgba(255,255,255,0.1);
                 }
                 .battery-pill svg {
                     width: 14px;
