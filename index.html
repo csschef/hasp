@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     <title>HA Dashboard</title>
     <style>
         /* Critical: applied synchronously before Vite JS/CSS loads.
@@ -43,7 +44,9 @@
 
             <!-- Entre -->
             <room-divider title="Entre" temp="sensor.entre_temperatursensor_temperature"
-                humidity="sensor.entre_temperatursensor_humidity">
+                humidity="sensor.entre_temperatursensor_humidity"
+                motion="binary_sensor.entre_rorelsesensor_occupancy"
+                door="binary_sensor.entre_dorrsensor_contact">
             </room-divider>
             <light-card name="Lampor" entity="light.entre" navigate="#entre"></light-card>
 
@@ -61,26 +64,30 @@
 
             <!-- Vardagsrum -->
             <room-divider title="Vardagsrum" temp="sensor.vardagsrum_temperatursensor_temperature"
-                humidity="sensor.vardagsrum_temperatursensor_humidity">
+                humidity="sensor.vardagsrum_temperatursensor_humidity"
+                motion="binary_sensor.vardagsrum_rorelsesensor_occupancy"
+                door="binary_sensor.vardagsrum_dorrsensor_altan_contact">
             </room-divider>
             <light-card name="Lampor" entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
 
             <!-- Kök -->
             <room-divider title="Kök" temp="sensor.vardagsrum_temperatursensor_temperature"
-                humidity="sensor.vardagsrum_temperatursensor_humidity">
+                humidity="sensor.vardagsrum_temperatursensor_humidity"
+                motion="binary_sensor.kok_rorelsesensor_occupancy">
             </room-divider>
             <light-card name="Lampor" entity="light.kok" navigate="#kok"></light-card>
 
             <!-- Sovrum -->
             <room-divider title="Sovrum" temp="sensor.sovrum_temperatursensor_temperature"
-                humidity="sensor.sovrum_temperatursensor_humidity">
+                humidity="sensor.sovrum_temperatursensor_humidity"
+                motion="binary_sensor.sovrum_rorelsesensor_occupancy">
             </room-divider>
             <light-card name="Lampor" entity="light.sovrum" navigate="#sovrum"></light-card>
 
             <!-- Hobbyrum -->
             <room-divider title="Hobbyrum" temp="sensor.hobbyrum_temperatursensor_temperature"
                 humidity="sensor.hobbyrum_temperatursensor_humidity"
-                motion="binary_sensor.hobbyrum_rorelsesensor_motion">
+                motion="binary_sensor.hobbyrum_rorelsesensor_skrivbord_occupancy">
             </room-divider>
             <light-card name="Lampor" entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
 
