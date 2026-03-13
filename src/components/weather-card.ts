@@ -122,9 +122,25 @@ class WeatherCard extends HTMLElement {
             const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=sv`)
             const geoData = await geoRes.json()
             
-            // Prioritize specific locality/suburb names
-            const location = geoData.locality || geoData.village || geoData.suburb || geoData.city || "Okänd plats"
-            this.localLocation = location.replace(/ kommun$/i, "")
+            // Log for debugging types of names available
+            console.log("Geo Data:", geoData)
+
+            // HARD OVERRIDE: If very close to Lindsdal coordinates
+            const distToHome = Math.sqrt(Math.pow(lat - 56.726, 2) + Math.pow(lon - 16.326, 2))
+            if (distToHome < 0.01) {
+                this.localLocation = "Lindsdal"
+            } else {
+                // Better prioritizing for Swedish locations
+                // We want things like "Lindsdal" (locality) or "Södermalm" (suburb/district)
+                // but we need to clean up the long "stadsdelsområde" titles.
+                let location = geoData.locality || geoData.city || geoData.principalSubdivision || "Okänd"
+                
+                // If it's something like "Södermalms stadsdelsområde", just keep "Södermalm"
+                location = location.replace(/ stadsdelsområde$/i, "")
+                location = location.replace(/ kommun$/i, "")
+                
+                this.localLocation = location
+            }
 
             // 2. Get Weather - Yr.no (MET Norway)
             const weatherRes = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`, {
