@@ -1,6 +1,7 @@
-import { getEntity, subscribeEntity } from "../store/entity-store"
+import { getEntity, subscribeEntity, subscribeUser } from "../store/entity-store"
 import { callService } from "../services/ha-service"
 import type { HAEntity } from "../types/homeassistant"
+import type { HAUser } from "../store/entity-store"
 
 class WeatherCard extends HTMLElement {
     private weatherEntity = "weather.smhi_home"
@@ -17,7 +18,7 @@ class WeatherCard extends HTMLElement {
     private localLocation: string = "Hem"
     private isExpanded: boolean = false
 
-    // Image mapping to match your folder structure
+    // IMAGE MAPPING to match your folder structure
     private imageMap: Record<string, string> = {
         "stjärnklart": "Stjarnklart2.png",
         "molnigt": "Molnigt2.png",
@@ -60,17 +61,33 @@ class WeatherCard extends HTMLElement {
 
     connectedCallback() {
         // 1. Subscribe to HA sensors for fallback/home data
-        [this.weatherEntity, this.currentSensor, this.stateSensor, this.toggleEntity, this.hourlySensor, this.dailySensor, this.personEntity].forEach(id => {
+        const coreSensors = [this.weatherEntity, this.currentSensor, this.stateSensor, this.toggleEntity, this.hourlySensor, this.dailySensor]
+        coreSensors.forEach(id => {
             subscribeEntity(id, () => this.handleUpdate())
         })
 
-        // 2. Request Browser Location (The "Native App" feel)
-        this.requestBrowserLocation()
+        // 2. Subscribe to current user to detect who is logged in
+        subscribeUser((user: HAUser) => {
+            if (user && user.name) {
+                const name = user.name.toLowerCase()
+                let newPerson = "person.sebastian" // Default
+                if (name.includes("sara")) newPerson = "person.sara"
+                else if (name.includes("sebastian") || name.includes("sebbe")) newPerson = "person.sebastian"
+                
+                if (newPerson !== this.personEntity) {
+                    this.personEntity = newPerson
+                    console.log("Weather location now tracking:", this.personEntity)
+                }
+            }
+            // Ensure we subscribe to the person entity (old or new)
+            subscribeEntity(this.personEntity, () => this.handleUpdate())
+            this.handleUpdate()
+        })
         
         // 3. Refresh location when app comes back into focus (unlocking phone)
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
-                this.requestBrowserLocation()
+                this.handleUpdate()
             }
         })
 
@@ -83,32 +100,17 @@ class WeatherCard extends HTMLElement {
         this.handleUpdate()
     }
 
-    private requestBrowserLocation() {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    this.fetchLocalWeather(pos.coords.latitude, pos.coords.longitude)
-                },
-                (err) => {
-                    console.log("Browser location denied or unavailable, using HA Person fallback.")
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
-            )
-        }
-    }
-
     private handleUpdate() {
-        // If we already have a browser-based local weather, we don't need the person fallback
-        // unless the person moves significantly (but GPS is usually better anyway)
         const person = getEntity(this.personEntity)
         
-        if (!this.localWeather && person?.attributes.latitude && person?.attributes.longitude) {
-            const coords = `${person.attributes.latitude},${person.attributes.longitude}`
+        if (person?.attributes.latitude && person?.attributes.longitude) {
+            const coords = `${person.attributes.latitude.toFixed(4)},${person.attributes.longitude.toFixed(4)}`
             if (coords !== this.lastCoords) {
                 this.lastCoords = coords
                 this.fetchLocalWeather(person.attributes.latitude, person.attributes.longitude)
             }
         }
+        
         if (person || this.localWeather) {
             this.setAttribute("loaded", "")
         }
@@ -254,7 +256,7 @@ class WeatherCard extends HTMLElement {
                 }
                 .hero {
                     display: flex;
-                    align-items: flex-start;
+                    align-items: center;
                     gap: 16px;
                 }
                 .temp-group {
@@ -277,9 +279,8 @@ class WeatherCard extends HTMLElement {
                 .meta {
                     display: flex;
                     flex-direction: column;
-                    justify-content: flex-start;
+                    justify-content: center;
                     flex: 1;
-                    padding-top: 4px;
                 }
                 .condition {
                     font-size: 18px;
@@ -291,14 +292,13 @@ class WeatherCard extends HTMLElement {
                     display: flex;
                     align-items: center;
                     gap: 4px;
-                    margin-top: 4px;
+                    margin-top: 2px;
                     font-size: 14px;
                     color: var(--text-secondary);
                     opacity: 0.8;
                 }
                 .weather-icon-large {
                     color: var(--accent);
-                    margin-top: -10px; /* Perfectly align with the caps of the temperature digits */
                 }
                 
                 :host-context([data-theme="light"]) .weather-icon-large,
@@ -391,12 +391,6 @@ class WeatherCard extends HTMLElement {
                     align-items: center;
                     gap: 8px;
                 }
-
-                /* Ensure the expanded state looks balanced */
-                :host([expanded]) .hero,
-                .hero.expanded {
-                    margin-bottom: 0px;
-                }
             </style>
             
             <div class="hero">
@@ -414,7 +408,7 @@ class WeatherCard extends HTMLElement {
                 </div>
 
                 <div class="weather-icon-large">
-                    ${this.getWeatherIcon(condition, 74, isNight)}
+                    ${this.getWeatherIcon(condition, 64, isNight)}
                 </div>
             </div>
 

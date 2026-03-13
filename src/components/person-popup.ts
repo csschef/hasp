@@ -8,6 +8,7 @@ class PersonPopup extends HTMLElement {
     private entity?: HAEntity
     private map: any = null
     private marker: any = null
+    private labelMapping: Record<string, string> = {}
     private leafletLoaded = false
 
     constructor() {
@@ -42,8 +43,9 @@ class PersonPopup extends HTMLElement {
         document.head.appendChild(script)
     }
 
-    open(entityId: string) {
+    open(entityId: string, labelMapping: Record<string, string> = {}) {
         this.entityId = entityId
+        this.labelMapping = labelMapping
         this.entity = getEntity(entityId)
 
         this.style.display = "block"
@@ -119,32 +121,9 @@ class PersonPopup extends HTMLElement {
             const icon = window.L.divIcon({
                 className: 'custom-div-icon',
                 html: `
-                    <div style="
-                        position: relative;
-                        width: 48px;
-                        height: 48px;
-                    ">
-                        <div style="
-                            background-image: url(${picture});
-                            background-size: cover;
-                            background-position: center;
-                            width: 100%;
-                            height: 100%;
-                            border-radius: 50%;
-                            border: 3px solid white;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-                        "></div>
-                        <div style="
-                            position: absolute;
-                            bottom: -2px;
-                            right: -2px;
-                            width: 14px;
-                            height: 14px;
-                            background: #4cd964;
-                            border: 2px solid white;
-                            border-radius: 50%;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                        "></div>
+                    <div style="position: relative; width: 48px; height: 48px;">
+                        <div style="background-image: url(${picture}); background-size: cover; background-position: center; width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.5);"></div>
+                        <div style="position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; background: #4cd964; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
                     </div>
                 `,
                 iconSize: [48, 48],
@@ -166,12 +145,17 @@ class PersonPopup extends HTMLElement {
         const days = Math.floor(hours / 24)
 
         if (days > 0) {
-            return `${days} dag${days > 1 ? "ar" : ""} och ${hours % 24} timmar`
+            const dText = days === 1 ? "dag" : "dagar"
+            const hText = (hours % 24) === 1 ? "timme" : "timmar"
+            return `${days} ${dText} och ${hours % 24} ${hText}`
         }
         if (hours > 0) {
-            return `${hours} timmar och ${mins} minuter`
+            const hText = hours === 1 ? "timme" : "timmar"
+            const mText = mins === 1 ? "minut" : "minuter"
+            return `${hours} ${hText} och ${mins} ${mText}`
         }
-        return `${mins} minuter`
+        const mText = mins === 1 ? "minut" : "minuter"
+        return `${mins} ${mText}`
     }
 
     update() {
@@ -186,10 +170,18 @@ class PersonPopup extends HTMLElement {
         
         title.textContent = name
         
-        let state = this.entity.state
-        if (state === "home") state = "Hemma"
-        if (state === "not_home") state = "Borta"
-        state = state.charAt(0).toUpperCase() + state.slice(1)
+        let rawState = this.entity.state
+        let state = rawState
+
+        // Apply custom mapping
+        if (this.labelMapping[rawState]) {
+            state = this.labelMapping[rawState]
+        } else {
+            if (state === "home") state = "Hemma"
+            else if (state === "not_home") state = "Borta"
+            // Capitalize state
+            state = state.charAt(0).toUpperCase() + state.slice(1)
+        }
         
         const duration = this.formatDuration(this.entity.last_changed)
         subtitle.textContent = `${state} i ${duration}.`

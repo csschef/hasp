@@ -2,12 +2,21 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+    font-size: 16px; /* Anchor rem units */
+}
+
 body {
     margin: 0;
     font-family: var(--font-main);
     background: var(--color-bg);
     color: var(--text-primary);
     transition: background 0.25s ease, color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 16px; /* Explicit base size to prevent HA overrides */
+    line-height: 1.5;
 }
 
 /* ── Top bar ── */

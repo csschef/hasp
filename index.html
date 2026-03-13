@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     <title>HA Dashboard</title>
     <style>
         /* Critical: applied synchronously before Vite JS/CSS loads.
@@ -33,8 +33,12 @@
             <weather-card></weather-card>
 
             <div class="person-row">
-                <person-card person="person.sebastian" battery="sensor.cph2581_battery_level"></person-card>
-                <person-card person="person.sara" battery="sensor.sara_battery_level"></person-card>
+                <person-card person="person.sebastian" battery="sensor.cph2581_battery_level"
+                    label-mapping='{"home": "Hemma", "Sebbes Jobb": "På jobbet", "Saras Jobb": "Vid Saras jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "Filip": "Hos Filip", "not_home": "Borta"}'>
+                </person-card>
+                <person-card person="person.sara" battery="sensor.sara_battery_level"
+                    label-mapping='{"home": "Hemma", "Saras Jobb": "På jobbet", "Sebbes Jobb": "Vid Sebbes jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "not_home": "Borta"}'>
+                </person-card>
             </div>
 
             <!-- Entre -->

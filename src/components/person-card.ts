@@ -9,10 +9,20 @@ class PersonCard extends BaseCard {
     private person?: HAEntity
     private battery?: HAEntity
     private timer?: number
+    private labelMapping: Record<string, string> = {}
 
     connectedCallback() {
         this.personId = this.getAttribute("person") || ""
         this.batteryId = this.getAttribute("battery") || ""
+        
+        const mapping = this.getAttribute("label-mapping")
+        if (mapping) {
+            try {
+                this.labelMapping = JSON.parse(mapping)
+            } catch (e) {
+                console.error("Failed to parse label-mapping", e)
+            }
+        }
 
         if (this.personId) {
             subscribeEntity(this.personId, (e: HAEntity) => {
@@ -36,7 +46,7 @@ class PersonCard extends BaseCard {
         this.addEventListener('click', () => {
              const popup = document.getElementById("personPopup") as any
              if (popup && this.personId) {
-                 popup.open(this.personId)
+                 popup.open(this.personId, this.labelMapping)
              }
         })
     }
@@ -56,12 +66,17 @@ class PersonCard extends BaseCard {
         const days = Math.floor(hours / 24)
 
         if (days > 0) {
-            return `${days} dag${days > 1 ? "ar" : ""} och ${hours % 24} timmar`
+            const dText = days === 1 ? "dag" : "dagar"
+            const hText = (hours % 24) === 1 ? "timme" : "timmar"
+            return `${days} ${dText} och ${hours % 24} ${hText}`
         }
         if (hours > 0) {
-            return `${hours} timmar och ${mins} minuter`
+            const hText = hours === 1 ? "timme" : "timmar"
+            const mText = mins === 1 ? "minut" : "minuter"
+            return `${hours} ${hText} och ${mins} ${mText}`
         }
-        return `${mins} minuter`
+        const mText = mins === 1 ? "minut" : "minuter"
+        return `${mins} ${mText}`
     }
 
     update() {
@@ -71,7 +86,19 @@ class PersonCard extends BaseCard {
         }
 
         const name = this.person.attributes.friendly_name || this.personId
-        let state = this.person.state
+        let rawState = this.person.state
+        let state = rawState
+
+        // Apply custom mapping
+        if (this.labelMapping[rawState]) {
+            state = this.labelMapping[rawState]
+        } else {
+            if (state === "home") state = "Hemma"
+            else if (state === "not_home") state = "Borta"
+            // Capitalize state
+            state = state.charAt(0).toUpperCase() + state.slice(1)
+        }
+
         const duration = this.formatDuration(this.person.last_changed)
         let picture = this.person.attributes.entity_picture
         const batteryLevel = this.battery ? this.battery.state : null
@@ -80,15 +107,10 @@ class PersonCard extends BaseCard {
             picture = HA_URL + picture
         }
 
-        if (state === "home") state = "Hemma"
-        if (state === "not_home") state = "Borta"
-        // Capitalize state
-        state = state.charAt(0).toUpperCase() + state.slice(1)
-
         const statusText = `${state} i ${duration}.`
 
         this.render(name, statusText)
-        this.applyVisuals(picture, batteryLevel)
+        this.applyVisuals(picture, batteryLevel, statusText)
     }
 
     private getBatteryIcon(level: number) {
@@ -106,7 +128,7 @@ class PersonCard extends BaseCard {
         `
     }
 
-    private applyVisuals(picture: string | null, battery: string | null) {
+    private applyVisuals(picture: string | null, battery: string | null, statusText: string) {
         const root = this.shadowRoot
         if (!root) return
 
@@ -129,7 +151,7 @@ class PersonCard extends BaseCard {
                 </div>
                 <div class="info">
                     <div class="name">${this.person?.attributes.friendly_name || 'Okänd'}</div>
-                    <div class="status">${card.dataset.subtitle || ''}</div>
+                    <div class="status">${statusText}</div>
                 </div>
             </div>
         `
@@ -151,6 +173,7 @@ class PersonCard extends BaseCard {
                     border-radius: 24px;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
                     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    min-height: 220px; /* Base height for alignment */
                 }
                 .card:active {
                     transform: scale(0.96);
@@ -229,20 +252,13 @@ class PersonCard extends BaseCard {
                     line-height: 1.4;
                     max-width: 160px;
                     margin: 0 auto;
+                    min-height: 2.8em; /* Exactly 2 lines */
                 }
                 /* Hide base-card default structure but keep container */
                 header, .title, .subtitle-scroll-container { display: none !important; }
             `
             root.prepend(style)
         }
-        
-        // Update the internal status text for the new template
-        const stateStr = this.person?.state === "home" ? "Hemma" : (this.person?.state === "not_home" ? "Borta" : this.person?.state || "");
-        const capitalized = stateStr.charAt(0).toUpperCase() + stateStr.slice(1);
-        const fullStatus = `${capitalized} i ${this.formatDuration(this.person?.last_changed || '')}.`;
-        
-        const statusEl = card.querySelector(".status");
-        if (statusEl) statusEl.textContent = fullStatus;
     }
 }
 
