@@ -190,16 +190,17 @@ class LightPopup extends HTMLElement {
         const brightThumb = controls.querySelector(".bright-thumb") as HTMLElement | null
 
         if (brightSlider && brightThumb) {
+            const thumbR = 12 // half of 24px thumb
             requestAnimationFrame(() => {
                 const w = brightSlider.offsetWidth
                 const frac = (brightness - 1) / (255 - 1)
-                brightThumb.style.left = (frac * w) + "px"
+                brightThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
             })
 
             const doBrightMove = (offsetX: number) => {
                 const w = brightSlider.offsetWidth
                 const frac = Math.max(0, Math.min(1, offsetX / w))
-                brightThumb.style.left = (frac * w) + "px"
+                brightThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
                 const v = Math.round(1 + frac * 254)
                 brightSlider.closest(".control")!.querySelector(".value")!.textContent = Math.round((v / 255) * 100) + "%"
                 this.setBrightness(v)
@@ -225,18 +226,19 @@ class LightPopup extends HTMLElement {
         const tempThumb = controls.querySelector(".temp-thumb") as HTMLElement | null
 
         if (tempSlider && tempThumb) {
+            const thumbR = 12
             cancelAnimationFrame(this.tempInitRaf)
             this.tempInitRaf = requestAnimationFrame(() => {
                 this.tempInitRaf = 0
                 const w = tempSlider.offsetWidth
                 const frac = (maxK - kelvin) / (maxK - minK)
-                tempThumb.style.left = (frac * w) + "px"
+                tempThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
             })
 
             const doTempMove = (offsetX: number) => {
                 const w = tempSlider.offsetWidth
                 const frac = Math.max(0, Math.min(1, offsetX / w))
-                tempThumb.style.left = (frac * w) + "px"
+                tempThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
                 const k = Math.round(maxK - frac * (maxK - minK))
                 tempSlider.closest(".control")!.querySelector(".value")!.textContent = k + "K"
                 this.setTempKelvin(k)

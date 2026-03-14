@@ -292,8 +292,8 @@ function initHAModeButton(
     })
 }
 
-initHAModeButton("guestModeBtn", "input_boolean.gast",    "guest-active", "ph:users",      "ph:users-fill")
-initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "sleep-active", "ph:moon",       "ph:moon-fill")
+initHAModeButton("guestModeBtn", "input_boolean.gast",    "guest-active", "ph:users", "ph:users")
+initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "sleep-active", "ph:moon",  "ph:moon")
 
 document.addEventListener("show-history", (e: any) => {
     const pop = document.getElementById("historyPopup") as any
