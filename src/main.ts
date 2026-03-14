@@ -268,6 +268,29 @@ document.addEventListener("click", (e) => {
     }
 })
 
+// ── Theme: sun elevation auto-switch ────────────────────────────────────
+// Dark below -3° (horizon + civil twilight buffer)
+// Light above +5° (sun clearly up past morning glow)
+// No change in the buffer zone between −3° and +5°
+const DARK_BELOW  = -3
+const LIGHT_ABOVE =  5
+let lastAutoTheme: "light" | "dark" | null = null
+
+function applyAutoTheme(elevation: number) {
+    let target: "light" | "dark" | null = null
+    if (elevation < DARK_BELOW)  target = "dark"
+    if (elevation > LIGHT_ABOVE) target = "light"
+    if (target === null || target === lastAutoTheme) return  // buffer zone or no change
+    lastAutoTheme = target
+    applyTheme(target)
+}
+
+subscribeEntity("sun.sun", (entity: any) => {
+    const elevation = parseFloat(entity?.attributes?.elevation ?? "0")
+    applyAutoTheme(elevation)
+})
+
+// Seed on load from localStorage or system pref while waiting for HA connection
 const savedTheme = localStorage.getItem("ha-theme") as "light" | "dark" | null
 const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 applyTheme(savedTheme ?? systemTheme)
