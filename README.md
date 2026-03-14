@@ -1,41 +1,34 @@
 # HASP - Home Assistant Simplified Panel
 
-A mobile-first, performance-oriented dashboard for Home Assistant built with Vite, TypeScript, and Web Components.
-Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI — optimized for phones with the HA Companion App.
+A mobile-first, performance-oriented dashboard I built for Home Assistant using Vite, TypeScript, and Web Components. Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI.
 
----
+## Why I Built This
 
-## Catalyst & Philosophy
+I created HASP because I hit a limit with standard Home Assistant dashboards. I wanted a UI that felt like a premium native app, not a collection of boxes on a webpage. 
 
-HASP exists because off-the-shelf solutions often reach a limit of expression. This project is driven by two core motivations:
+### 1. Frustration with Custom Cards
+I got tired of the "YAML hell" and constant maintenance. In a complex smart home, a single vendor change (like the shift from mireds to Kelvin) can break dozens of custom cards. By building the dashboard from scratch in TypeScript, I have a **single source of truth**. I can fix a breaking change across every card in minutes by updating the core code, rather than hunt through thousands of lines of configuration.
 
-1.  **Creative Freedom**: Native weather, map, and popup cards in Home Assistant are functional but visually rigid. HASP is an exercise in full-stack control, where every pixel, animation, and interaction is designed without the constraints of a generic framework.
-2.  **Maintenance Resilience**: In a complex smart home, vendor changes (like the industry shift from mireds to Kelvin) can break dozens of custom YAML-based cards. By consolidating the logic in Antigravity and a centralized TypeScript codebase, we avoid code duplication and can fix breaking changes across the entire dashboard in minutes, not hours.
+### 2. High-End UI & UX
+Standard HA dashboards are functional but can feel rigid. I wanted full creative control to implement:
+- **Custom Animations**: Fluid transitions and iOS-style sheet popups that aren't possible with standard Lovelace.
+- **Micro-interactions**: Instant "Optimistic UI" updates where toggles react immediately without waiting for the server.
+- **Premium Design**: A unified aesthetic where every pixel, from the typography to the custom gradients, follows my personal design system.
 
----
+## What Makes This Different
 
-## Design & UX Principles
+Unlike standard dashboards or generic custom cards, HASP implements several "hardware-aware" innovations:
 
-HASP is built from scratch using native browser technologies — no heavy frameworks, no unnecessary dependencies.
-
-- **Personalized Localized Weather (World-First Innovation)**: Unlike native Home Assistant weather cards which are locked to a single static zone, HASP implements hardware-aware weather. It automatically detects the holder of the phone (Pixel vs. OnePlus) and fetches a decentralized forecast for their specific GPS coordinates. This provides a truly personalized survival tool for multi-user households that Home Assistant does not yet support natively.
-- **Hardware-Aware Identity**: Automatically detects who is holding the phone (e.g., Pixel 9 Pro vs. OnePlus 12) via User-Agent fingerprinting, ensuring personalized weather and GPS tracking without manual toggles.
-- **Decentralized Weather**: Fetches local weather directly from Open-Meteo, bypassing Home Assistant's internal proxy limits and forbidden headers to ensure zero "Failed to fetch" errors on mobile devices.
-- **Optimistic UI**: Visual states update instantly on tap, never waiting for server confirmation.
-- **Micro-Animations**: Fluid transitions for subviews and sheet-style popups that feel like a native iOS/Android application.
-
----
+- **Personalized Weather Map**: Most weather cards are static. Mine detects which device is being used (e.g., my Oneplus 12 vs. another phone) and fetches a decentralized local forecast for that specific GPS spot. It turns the dashboard into a personalized tool for whoever is holding it.
+- **Device Identity**: The dashboard automatically greets the user and adjusts its tracking data based on the hardware it's running on, making it truly multi-user aware.
+- **Decentralized Performance**: I fetch weather and geocoding data directly (bypassing HA's internal proxy limits) to ensure zero loading failures and absolute speed on mobile companion apps.
 
 ## Key Features
 
-- **Personalized Welcome**: Automatic user detection and greeting system based on the physical device.
-- **Dynamic Weather Hero**: High-resolution custom icons, real-time reverse geocoding for city names, and feels like temperature calculations.
-- **Hardware-Sync Person Cards**: Satellite-imagery mapping and battery tracking synced to the specific user's hardware.
-- **Premium TV Remote**: A custom interactive popup with D-pad, haptic-ready volume controls, and app-switching logic.
-- **History Visualization**: Real-time sensor history graphs for temperature and humidity.
-- **Adaptive Lighting**: Cards that automatically generate color gradients based on the current state of light groups (Color Temp or RGB).
-
----
+- **Weather Hero**: High-res custom icons, reverse geocoding for city names, and "feels like" temp math.
+- **Premium TV Remote**: A custom interactive popup with D-pad and haptic-ready controls.
+- **History Visualization**: Real-time sensor history graphs integrated directly into the cards.
+- **Adaptive Lighting**: Cards that generate background color gradients based on the current state of light or lightgroups.
 
 ## Tech Stack
 
@@ -46,50 +39,25 @@ HASP is built from scratch using native browser technologies — no heavy framew
 - **Home Assistant WebSocket API** (Real-time state synchronization)
 - **BigDataCloud / Open-Meteo API** (Decentralized location and weather engine)
 
----
+## Development
 
-## Project Structure
+I developed HASP in collaboration with Antigravity (AI). This allowed me to focus on the design, UX friction points, and overall architecture while we worked together to build a robust, scalable codebase that replaces hundreds of fragile YAML configs with solid TypeScript.
 
-```
-src/
-├── components/   # Hardware-aware Web Components (WeatherCard, UserHeader, LightCard)
-├── store/        # State management and identity tracking (entity-store.ts)
-├── services/     # Home Assistant WebSocket client and hardware detection
-├── utils/        # Color math, geocoding logic, and data formatting
-├── styles/       # Design tokens (tokens.css) and layout systems
-public/
-└── weather/      # Custom high-quality weather iconography
-```
+## Installation
 
----
-
-## Joint Development
-
-HASP is a collaborative effort between me, a human creative director and an AI Coding Agent (Antigravity). This workflow allows for rapid iteration: I identify the UX friction points (like broken sensor logic or rigid YAML), and the AI architecting a robust, scalable TypeScript solution instantly.
-
----
-
-## Installation & Build
-
-### 1. Setup
 ```bash
+# Setup
 git clone https://github.com/csschef/hasp.git
-cd hasp
 npm install
-```
 
-### 2. Deployment
-```bash
-# Start local development with HMR
+# Development
 npm run dev -- --host
 
-# Build for production
+# Production
 npm run build
 ```
 
-The contents of the dist/ folder should be copied to your Home Assistant www/dashboard/ directory.
-
----
+The contents of the `dist/` folder go into your Home Assistant `www/` directory.
 
 ## License
 MIT
