@@ -252,11 +252,90 @@ if (document.readyState === "loading") {
 // ── Initial Listeners & UI ──
 const topbarEl = document.getElementById("topTrayContainer")
 topbarEl?.addEventListener("click", (e) => {
+    // Don't open tray when clicking the hamburger button
+    if ((e.target as HTMLElement).closest("#haMenuBtn")) return
     if ((e.target as HTMLElement).closest(".topbar-tray")) return
     const isExpanded = topbarEl.classList.toggle("expanded")
     document.body.style.overflow = isExpanded ? "hidden" : ""
     document.body.classList.toggle("tray-open", isExpanded)
 })
+
+// ── HA Sidebar & Header ──────────────────────────────────────────────────
+// Kiosk-mode approach: use window.top to reach the outer HA frame regardless of iframe depth
+function getHAMain(): Element | null {
+    try {
+        const topDoc = (window.top ?? window.parent ?? window).document
+        const ha = topDoc.querySelector("home-assistant") as any
+        if (!ha) { console.warn("[hasp] home-assistant element not found"); return null }
+        const haMain = ha.shadowRoot?.querySelector("home-assistant-main")
+        if (!haMain) { console.warn("[hasp] home-assistant-main not found in shadowRoot"); return null }
+        return haMain
+    } catch (e) {
+        console.warn("[hasp] getHAMain error:", e)
+        return null
+    }
+}
+
+function toggleHASidebar() {
+    const haMain = getHAMain()
+    if (!haMain) return
+    haMain.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))
+}
+
+function hideHAHeader() {
+    let retries = 0
+    const attempt = () => {
+        if (retries++ > 25) return
+        try {
+            const topDoc = (window.top ?? window.parent ?? window).document
+            const ha = topDoc.querySelector("home-assistant") as any
+            if (!ha?.shadowRoot) { setTimeout(attempt, 600); return }
+
+            const haMain    = ha.shadowRoot.querySelector("home-assistant-main") as any
+            if (!haMain?.shadowRoot) { setTimeout(attempt, 600); return }
+
+            // Walk into hui-root's shadow root — this is where .header > .toolbar lives
+            // Note: partial-panel-resolver has NO shadow root — ha-panel-lovelace is a direct child
+            const resolver   = haMain.shadowRoot.querySelector("partial-panel-resolver") as any
+            const lovelace   = resolver?.querySelector("ha-panel-lovelace") as any
+            const huiRoot    = lovelace?.shadowRoot?.querySelector("hui-root") as any
+            const huiShadow = huiRoot?.shadowRoot as ShadowRoot | null
+
+            const inject = (root: ShadowRoot, id: string, css: string) => {
+                if (root.getElementById(id)) return
+                const s = document.createElement("style")
+                s.id = id; s.textContent = css
+                root.appendChild(s)
+                console.log(`[hasp] header CSS injected into ${root.host?.tagName}`)
+            }
+
+            if (huiShadow) {
+                inject(huiShadow, "ha-dash-hide-hdr", `
+                    .header { display: none !important; height: 0 !important; min-height: 0 !important; overflow: hidden !important; }
+                    .toolbar { display: none !important; height: 0 !important; }
+                    #view { padding-top: 0 !important; margin-top: 0 !important; }
+                    hui-view-container { margin-top: 0 !important; padding-top: 0 !important; }
+                `)
+                return  // success, stop retrying
+            }
+
+            // hui-root not ready yet — keep trying
+            setTimeout(attempt, 600)
+        } catch (e) {
+            console.warn("[hasp] hideHAHeader error:", e)
+            setTimeout(attempt, 600)
+        }
+    }
+    attempt()
+}
+
+
+document.getElementById("haMenuBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation()
+    toggleHASidebar()
+})
+
+hideHAHeader()
 
 // Close tray when clicking anywhere outside the topbar
 document.addEventListener("click", (e) => {

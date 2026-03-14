@@ -101,6 +101,28 @@ body.tray-open .bottom-dock {
     flex: 1;
 }
 
+/* Hamburger / HA sidebar button */
+.ha-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+.ha-menu-btn iconify-icon {
+    font-size: 20px;
+    color: var(--text-primary);
+    opacity: 0.85;
+    transform: scaleX(1.08);
+    display: block;
+    transition: opacity 0.15s ease;
+}
+.ha-menu-btn iconify-icon svg { stroke-width: 1.5; }
+.ha-menu-btn:active iconify-icon { opacity: 1; }
+
 .notification-bell-box {
     position: relative;
     display: flex;

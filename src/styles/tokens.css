@@ -1,5 +1,16 @@
 /* ── Design tokens ─────────────────────────────────────────────────────── */
 
+/* Lock font base — HA injects theme CSS into same-origin iframes which
+   can silently override font-size. !important wins regardless of order.  */
+html {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+}
+body {
+    font-family: "Inter", system-ui, sans-serif !important;
+    font-size: 1rem !important;
+}
+
 :root {
     /* spacing */
     --space-xs: 4px;
