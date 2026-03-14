@@ -1,7 +1,6 @@
-/* ── Design tokens ───────────────────────────────────── */
+/* ── Design tokens ─────────────────────────────────────────────────────── */
 
 :root {
-
     /* spacing */
     --space-xs: 4px;
     --space-sm: 8px;
@@ -12,88 +11,97 @@
     --radius-sm: 10px;
     --radius-md: 16px;
     --radius-lg: 22px;
+    --radius-xl: 28px;
 
     /* typography */
     --font-main: "Inter", system-ui, sans-serif;
 
-    /* ── Light theme (default) ── */
-    --color-bg: #f2f2f7;
-    --color-card: #ffffff;
-    --color-card-alt: #f2f2f7;
-    --color-overlay: rgba(0, 0, 0, 0.48);
+    /* ── Light theme (default) ──────────────────────────────────────────── */
+    /* Warm linen white — not pure white, avoids harshness */
+    --color-bg:       #f4f3f0;
+    --color-card:     #fdfcfb;
+    --color-card-alt: #eeecea;
+    --color-overlay:  rgba(30, 28, 25, 0.4);
 
-    --text-primary: rgb(17, 17, 17);
-    --text-secondary: #636366;
+    --text-primary:   #1a1917;
+    --text-secondary: #7a7670;
 
-    --border-color: #e0e0e3;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.10);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.14);
+    --border-color:   #e4e2de;
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
 
-    --accent: #007aff;
-    --accent-muted: rgba(0, 122, 255, 0.12);
-    --accent-low: rgba(0, 122, 255, 0.05);
-    --yellow-accent: #ffb300;
+    /* Nordic Steel Blue — calm, muted, not saturated */
+    --accent:         #5b7fa6;
+    --accent-muted:   rgba(91, 127, 166, 0.12);
+    --accent-low:     rgba(91, 127, 166, 0.06);
 
+    /* Vibrant gold for notifications */
+    --yellow-accent:  #f0a500;
 }
 
-/* ── Dark theme via system preference ── */
+/* ── Dark theme via system preference ──────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --color-bg: #0b0b0c;
-        --color-card: #1c1c1e;
-        --color-card-alt: #161617;
+        --color-bg:       #0f0f10;
+        --color-card:     #19191b;
         /* Specific inactive standout */
-        --color-overlay: rgba(0, 0, 0, 0.64);
-        --color-bg-rgb: 11, 11, 12;
+        --color-card-alt: #131314;
+        --color-overlay:  rgba(0, 0, 0, 0.60);
 
-        --text-primary: #f5f5f7;
-        --text-secondary: #8e8e93;
+        --text-primary:   #e8e6e2;
+        --text-secondary: #7a7875;
 
-        --border-color: #2c2c2e;
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+        --border-color:   #272628;
+        --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
 
-        --accent: #0a84ff;
-        --accent-muted: rgba(10, 132, 255, 0.15);
-        --accent-low: rgba(10, 132, 255, 0.08);
+        --accent:         #6b8fb8;
+        --accent-muted:   rgba(107, 143, 184, 0.14);
+        --accent-low:     rgba(107, 143, 184, 0.07);
+
+        --yellow-accent:  #f5b830;
     }
 }
 
-/* ── Manual dark override ── */
+/* ── Manual dark override ───────────────────────────────────────────────── */
 [data-theme="dark"] {
-    --color-bg: #0b0b0c;
-    --color-card: #1c1c1e;
-    --color-card-alt: #161617;
-    --color-overlay: rgba(0, 0, 0, 0.64);
-    --color-bg-rgb: 11, 11, 12;
+    --color-bg:       #0f0f10;
+    --color-card:     #19191b;
+    --color-card-alt: #131314;
+    --color-overlay:  rgba(0, 0, 0, 0.60);
 
-    --text-primary: #f5f5f7;
-    --text-secondary: #8e8e93;
+    --text-primary:   #e8e6e2;
+    --text-secondary: #7a7875;
 
-    --border-color: #2c2c2e;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --border-color:   #272628;
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
 
-    --accent: #0a84ff;
-    --accent-muted: rgba(10, 132, 255, 0.15);
+    --accent:         #6b8fb8;
+    --accent-muted:   rgba(107, 143, 184, 0.14);
+    --accent-low:     rgba(107, 143, 184, 0.07);
+
+    --yellow-accent:  #f5b830;
 }
 
-/* ── Manual light override ── */
+/* ── Manual light override ──────────────────────────────────────────────── */
 [data-theme="light"] {
-    --color-bg: #f2f2f7;
-    --color-card: #ffffff;
-    --color-card-alt: #e5e5ea;
+    --color-bg:       #f4f3f0;
+    --color-card:     #fdfcfb;
+    --color-card-alt: #eeecea;
     /* Matches iOS inactive background */
-    --color-overlay: rgba(0, 0, 0, 0.48);
-    --color-bg-rgb: 242, 242, 247;
+    --color-overlay:  rgba(30, 28, 25, 0.4);
 
-    --text-primary: #111111;
-    --text-secondary: #636366;
+    --text-primary:   #1a1917;
+    --text-secondary: #7a7670;
 
-    --border-color: #e5e5ea;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --border-color:   #e4e2de;
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
 
-    --accent: #007aff;
-    --accent-muted: rgba(0, 122, 255, 0.12);
+    --accent:         #5b7fa6;
+    --accent-muted:   rgba(91, 127, 166, 0.12);
+    --accent-low:     rgba(91, 127, 166, 0.06);
+
+    --yellow-accent:  #f0a500;
 }

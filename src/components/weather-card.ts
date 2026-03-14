@@ -252,15 +252,15 @@ class WeatherCard extends HTMLElement {
                     gap: 2px;
                 }
                 .temp {
-                    font-size: 56px;
-                    font-weight: 600;
+                    font-size: 52px;
+                    font-weight: 300;
                     letter-spacing: -3px;
                     line-height: 0.9;
                 }
                 .unit {
-                    font-size: 32px;
-                    font-weight: 500;
-                    margin-top: -12px;
+                    font-size: 28px;
+                    font-weight: 300;
+                    margin-top: -10px;
                 }
                 .meta {
                     display: flex;
@@ -269,8 +269,8 @@ class WeatherCard extends HTMLElement {
                     flex: 1;
                 }
                 .condition {
-                    font-size: 18px;
-                    font-weight: 600;
+                    font-size: 16px;
+                    font-weight: 400;
                     text-transform: capitalize;
                     line-height: 1.2;
                 }

@@ -69,9 +69,15 @@ themeTile?.addEventListener("click", (e) => {
 
 function applyTheme(theme: "light" | "dark") {
     html.setAttribute("data-theme", theme)
-    if (themeIcon) themeIcon.textContent = theme === "dark" ? "☀️" : "🌙"
+    const isDark = theme === "dark"
+    const iconEl = themeIcon as (HTMLElement & { icon?: string }) | null
+    if (iconEl) {
+        if ('icon' in iconEl) {
+            iconEl.icon = isDark ? "ph:moon-fill" : "ph:sun"
+        }
+    }
     localStorage.setItem("ha-theme", theme)
-    themeTile?.classList.toggle("active", theme === "dark")
+    themeTile?.classList.toggle("active", isDark)
 }
 
 // ── Notification System ──
@@ -133,10 +139,10 @@ function updateNotifications() {
     if (bellBox) {
         if (active.length > 0) {
             bellBox.classList.add("has-notifs")
-            if (bellIcon) bellIcon.icon = "mdi:bell"
+            if (bellIcon) bellIcon.icon = "ph:bell-simple-fill"
         } else {
             bellBox.classList.remove("has-notifs")
-            if (bellIcon) bellIcon.icon = "lucide:bell"
+            if (bellIcon) bellIcon.icon = "ph:bell-simple"
         }
     }
 
@@ -206,7 +212,16 @@ function handleRoute() {
             }
         })
         document.querySelectorAll(".nav-item").forEach(nav => {
-            nav.classList.toggle("active", (nav as HTMLElement).dataset.tab === targetId)
+            const isActive = (nav as HTMLElement).dataset.tab === targetId
+            nav.classList.toggle("active", isActive)
+            // Swap icon between filled (active) and outline (inactive)
+            const icon = nav.querySelector("iconify-icon") as HTMLElement | null
+            if (icon) {
+                const el = nav as HTMLElement
+                icon.setAttribute("icon", isActive
+                    ? (el.dataset.iconFill || el.dataset.iconOutline || "")
+                    : (el.dataset.iconOutline || ""))
+            }
         })
     }
 }
@@ -237,12 +252,48 @@ if (document.readyState === "loading") {
 const topbarEl = document.getElementById("topTrayContainer")
 topbarEl?.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).closest(".topbar-tray")) return
-    topbarEl.classList.toggle("expanded")
+    const isExpanded = topbarEl.classList.toggle("expanded")
+    document.body.style.overflow = isExpanded ? "hidden" : ""
+    document.body.classList.toggle("tray-open", isExpanded)
+})
+
+// Close tray when clicking anywhere outside the topbar
+document.addEventListener("click", (e) => {
+    if (!topbarEl) return
+    if (!topbarEl.classList.contains("expanded")) return
+    if (!topbarEl.contains(e.target as Node)) {
+        topbarEl.classList.remove("expanded")
+        document.body.style.overflow = ""
+        document.body.classList.remove("tray-open")
+    }
 })
 
 const savedTheme = localStorage.getItem("ha-theme") as "light" | "dark" | null
 const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 applyTheme(savedTheme ?? systemTheme)
+
+// ── Guest Mode & Sleep Mode (HA-backed) ─────────────────────────────────
+function initHAModeButton(
+    id: string,
+    entityId: string,
+    activeClass: string,
+    iconOutline: string,
+    iconFill: string
+) {
+    const btn = document.getElementById(id)
+    if (!btn) return
+    const icon = btn.querySelector("iconify-icon") as HTMLElement & { icon: string }
+
+    // Keep icon in sync with HA entity state
+    subscribeEntity(entityId, (entity: any) => {
+        const on = entity?.state === "on"
+        btn.classList.toggle(activeClass, on)
+        if (icon) icon.icon = on ? iconFill : iconOutline
+    })
+}
+
+initHAModeButton("guestModeBtn", "input_boolean.gast",    "guest-active", "ph:users",      "ph:users-fill")
+initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "sleep-active", "ph:moon",       "ph:moon-fill")
 
 document.addEventListener("show-history", (e: any) => {
     const pop = document.getElementById("historyPopup") as any

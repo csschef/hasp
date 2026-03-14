@@ -61,81 +61,91 @@ class KitchenView extends HTMLElement {
 
         this.shadowRoot!.innerHTML = `
         <style>
-            :host { display: block; padding: 0 16px 140px; color: var(--text-primary); }
-            
-            h2 { font-size: 22px; margin: 32px 0 16px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
-            h2 iconify-icon { color: var(--accent); }
+            :host { display: block; padding: 0 var(--space-md) 140px; color: var(--text-primary); font-family: var(--font-main); }
 
-            /* ── Meals (Vertical Layout for readability) ── */
+            h2 {
+                font-size: 13px;
+                font-weight: 500;
+                letter-spacing: 0.07em;
+                text-transform: uppercase;
+                color: var(--text-secondary);
+                margin: 28px 0 12px;
+                opacity: 0.7;
+            }
+
+            /* ── Meals ── */
             .meal-list {
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
-                margin-bottom: 40px;
+                gap: 1px;
+                background: var(--border-color);
+                border-radius: var(--radius-md);
+                overflow: hidden;
+                border: 1px solid var(--border-color);
+                margin-bottom: 32px;
             }
             .meal-card {
                 background: var(--color-card);
-                padding: 18px 20px;
-                border-radius: 20px;
-                box-shadow: var(--shadow-sm);
+                padding: 14px 16px;
                 display: grid;
-                grid-template-columns: 100px 1fr;
+                grid-template-columns: 90px 1fr;
                 align-items: center;
-                gap: 16px;
-                border: 1px solid var(--border-color);
+                gap: 12px;
             }
-            .day-label { 
-                font-size: 13px; 
-                font-weight: 800; 
-                text-transform: uppercase; 
-                color: var(--text-secondary); 
-                letter-spacing: 0.05em;
+            .day-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-secondary);
+                letter-spacing: 0.02em;
+                opacity: 0.7;
             }
             .meal-input {
                 background: none;
                 border: none;
                 color: var(--text-primary);
-                font-size: 16px;
-                font-weight: 600;
+                font-size: 15px;
+                font-weight: 400;
                 width: 100%;
                 outline: none;
                 padding: 0;
+                font-family: var(--font-main);
+                letter-spacing: -0.01em;
             }
             .meal-input::placeholder { color: var(--text-secondary); opacity: 0.3; }
 
-            /* ── Shopping List (Drag & Drop) ── */
+            /* ── Shopping List ── */
             .shopping-container {
                 background: var(--color-card);
-                border-radius: 28px;
-                padding: 20px;
-                box-shadow: var(--shadow-sm);
+                border-radius: var(--radius-md);
                 border: 1px solid var(--border-color);
+                overflow: hidden;
             }
-            
+
             .shopping-list {
                 display: flex;
                 flex-direction: column;
-                gap: 2px;
             }
 
             .shopping-item {
                 display: flex;
                 align-items: center;
-                gap: 12px;
-                padding: 12px 8px;
-                border-radius: 12px;
-                transition: background 0.2s;
+                gap: 10px;
+                padding: 13px 16px;
+                border-bottom: 1px solid var(--border-color);
+                transition: background 0.15s ease;
                 user-select: none;
             }
-            
-            .shopping-item.dragging { opacity: 0.4; background: var(--color-card-alt); }
-            .shopping-item.over { border-top: 2px solid var(--accent); }
+            .shopping-item:last-child { border-bottom: none; }
+
+            .shopping-item.dragging { opacity: 0.3; background: var(--color-card-alt); }
+            .shopping-item.over { border-top: 1.5px solid var(--accent); }
 
             .drag-handle {
                 color: var(--text-secondary);
-                opacity: 0.3;
+                opacity: 0.2;
                 cursor: grab;
-                font-size: 20px;
+                font-size: 18px;
+                flex-shrink: 0;
             }
 
             .item-input {
@@ -143,50 +153,51 @@ class KitchenView extends HTMLElement {
                 background: none;
                 border: none;
                 color: var(--text-primary);
-                font-size: 16px;
-                font-weight: 500;
+                font-size: 15px;
+                font-weight: 400;
                 outline: none;
+                font-family: var(--font-main);
             }
 
             .delete-btn {
-                color: #ff3b30;
+                color: var(--text-secondary);
                 opacity: 0;
-                transition: opacity 0.2s;
+                transition: opacity 0.15s ease;
                 cursor: pointer;
                 background: none;
                 border: none;
                 padding: 4px;
-            }
-            
-            .shopping-item:hover .delete-btn { opacity: 0.8; }
-
-            .add-box {
-                margin-top: 20px;
-                padding: 12px;
-                background: var(--accent-low);
-                border-radius: 16px;
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                gap: 8px;
-                color: var(--accent);
-                font-weight: 700;
-                font-size: 14px;
-                cursor: pointer;
-                transition: transform 0.2s;
+                flex-shrink: 0;
             }
-            .add-box:active { transform: scale(0.96); }
+            .shopping-item:hover .delete-btn { opacity: 0.4; }
+
+            .add-box {
+                padding: 14px 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: var(--text-secondary);
+                font-size: 14px;
+                font-weight: 400;
+                cursor: pointer;
+                transition: background 0.15s ease;
+                border-top: 1px solid var(--border-color);
+                opacity: 0.6;
+            }
+            .add-box:active { background: var(--color-card-alt); }
         </style>
-        
-        <h2><iconify-icon icon="lucide:calendar"></iconify-icon> Veckans Meny</h2>
+
+        <h2>Veckans Meny</h2>
         <div class="meal-list">
             ${this.days.map(day => {
                 const entity = getEntity(`input_text.meny_${day.toLowerCase()}`)
                 return `
                 <div class="meal-card">
                     <div class="day-label">${day}</div>
-                    <input class="meal-input" 
-                           placeholder="Ej planerat..." 
+                    <input class="meal-input"
+                           placeholder="Ej planerat..."
                            data-day="${day}"
                            value="${entity?.state || ''}">
                 </div>
@@ -194,7 +205,7 @@ class KitchenView extends HTMLElement {
             }).join('')}
         </div>
 
-        <h2><iconify-icon icon="lucide:shopping-cart"></iconify-icon> Inköpslista</h2>
+        <h2>Inköpslista</h2>
         <div class="shopping-container">
             <div class="shopping-list" id="dragList">
                 ${items.map((item, idx) => `
@@ -202,11 +213,11 @@ class KitchenView extends HTMLElement {
                         <div class="drag-handle">
                             <iconify-icon icon="lucide:grip-vertical"></iconify-icon>
                         </div>
-                        <input class="item-input" 
-                               value="${item}" 
+                        <input class="item-input"
+                               value="${item}"
                                data-index="${idx}">
                         <button class="delete-btn" data-index="${idx}">
-                            <iconify-icon icon="lucide:trash-2"></iconify-icon>
+                            <iconify-icon icon="lucide:x"></iconify-icon>
                         </button>
                     </div>
                 `).join('')}

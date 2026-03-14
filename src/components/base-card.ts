@@ -12,29 +12,22 @@ export class BaseCard extends HTMLElement {
       <style>
 
         .card {
-
           background: var(--card-bg, var(--color-card));
           border-radius: var(--radius-md);
-
           padding: var(--space-md);
-
-          transition:
-            background 0.35s ease,
-            transform 0.15s ease;
-
+          border: 1px solid var(--border-color);
+          transition: background 0.3s ease, transform 0.15s ease, border-color 0.3s ease;
         }
 
         .card:active {
-
+          transform: scale(0.97);
         }
 
         .header {
-
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px; /* Space between icon row and text */
-
+          margin-bottom: 10px;
         }
 
         .title, .subtitle {
@@ -44,17 +37,14 @@ export class BaseCard extends HTMLElement {
         }
 
         .title {
-
           font-weight: 400;
-          font-size: 16px;
-
+          font-size: 15px;
+          letter-spacing: -0.01em;
           color: var(--card-text-primary, var(--text-primary));
-          transition: color 0.35s ease;
+          transition: color 0.3s ease;
           margin-bottom: 2px;
-
         }
 
-        /* Container for scrolling text if needed */
         .subtitle-scroll-container {
             width: 100%;
             overflow: hidden;
@@ -62,16 +52,15 @@ export class BaseCard extends HTMLElement {
         }
 
         .subtitle {
-
           font-weight: 400;
           font-size: 12px;
           color: var(--card-text-secondary, var(--text-secondary));
-          transition: color 0.35s ease;
-
+          transition: color 0.3s ease;
+          opacity: 0.8;
         }
 
         .card-icon {
-          color: var(--card-icon-fill, var(--text-primary));
+          color: var(--card-icon-fill, var(--text-secondary));
           transition: color 0.15s ease;
         }
 
@@ -80,8 +69,8 @@ export class BaseCard extends HTMLElement {
         }
 
         @keyframes marquee {
-          0%, 15% { transform: translateX(0); } /* initial rest */
-          80%, 100% { transform: translateX(var(--scroll-dist)); } /* smooth tracking to end and linger */
+          0%, 15% { transform: translateX(0); }
+          80%, 100% { transform: translateX(var(--scroll-dist)); }
         }
 
       </style>

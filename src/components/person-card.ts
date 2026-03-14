@@ -171,10 +171,9 @@ class PersonCard extends BaseCard {
                     cursor: pointer;
                     background: var(--color-card);
                     border-radius: var(--radius-md);
-                    box-shadow: none !important;
-                    border: none !important;
-                    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                    min-height: 200px; /* Base height for alignment */
+                    border: 1px solid var(--border-color);
+                    transition: all 0.2s ease;
+                    min-height: 190px;
                 }
                 .card:active {
                     transform: scale(0.96);
@@ -183,13 +182,13 @@ class PersonCard extends BaseCard {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 16px;
+                    gap: 14px;
                     width: 100%;
                 }
                 .avatar-wrap {
                     position: relative;
-                    width: 100px;
-                    height: 100px;
+                    width: 88px;
+                    height: 88px;
                 }
                 .main-avatar {
                     width: 100%;
@@ -198,8 +197,7 @@ class PersonCard extends BaseCard {
                     background-size: cover;
                     background-position: center;
                     background-color: var(--color-card-alt);
-                    box-shadow: none !important;
-                    border: none !important;
+                    border: 1.5px solid var(--border-color);
                 }
                 .battery-pill {
                     position: absolute;
@@ -207,55 +205,43 @@ class PersonCard extends BaseCard {
                     right: -4px;
                     display: flex;
                     align-items: center;
-                    gap: 5px;
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(8px);
-                    -webkit-backdrop-filter: blur(8px);
-                    padding: 4px 10px;
-                    border-radius: 12px;
-                    box-shadow: none !important;
-                    border: none !important;
-                }
-                [data-theme="dark"] .battery-pill {
-                    background: rgba(45, 45, 45, 0.9);
+                    gap: 4px;
+                    background: var(--color-card);
+                    border: 1px solid var(--border-color);
+                    padding: 3px 8px;
+                    border-radius: var(--radius-sm);
                 }
                 .battery-pill svg {
-                    width: 14px;
-                    height: 14px;
-                    color: #1a1a1a;
-                    stroke: #1a1a1a;
-                }
-                [data-theme="dark"] .battery-pill svg {
-                    color: #ffffff;
-                    stroke: #ffffff;
+                    width: 13px;
+                    height: 13px;
+                    color: var(--text-secondary);
+                    stroke: var(--text-secondary);
                 }
                 .battery-pill span {
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: #1a1a1a;
-                }
-                [data-theme="dark"] .battery-pill span {
-                    color: #ffffff;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: var(--text-secondary);
                 }
                 .info {
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 3px;
                 }
                 .name {
-                    font-size: 18px;
-                    font-weight: 600;
+                    font-size: 16px;
+                    font-weight: 500;
+                    letter-spacing: -0.01em;
                     color: var(--text-primary);
                 }
                 .status {
-                    font-size: 13px;
+                    font-size: 12px;
                     color: var(--text-secondary);
                     line-height: 1.4;
-                    max-width: 160px;
+                    max-width: 150px;
                     margin: 0 auto;
-                    min-height: 2.8em; /* Exactly 2 lines */
+                    min-height: 2.8em;
+                    opacity: 0.7;
                 }
-                /* Hide base-card default structure but keep container */
                 header, .title, .subtitle-scroll-container { display: none !important; }
             `
             root.prepend(style)

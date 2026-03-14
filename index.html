@@ -33,8 +33,14 @@
             <div class="user-info">
                 <user-header></user-header>
             </div>
+            <div class="topbar-icon-btn" id="guestModeBtn" title="Gästläge">
+                <iconify-icon icon="ph:users"></iconify-icon>
+            </div>
+            <div class="topbar-icon-btn" id="sleepModeBtn" title="Nattläge">
+                <iconify-icon icon="ph:moon"></iconify-icon>
+            </div>
             <div class="notification-bell-box">
-                <iconify-icon icon="lucide:bell"></iconify-icon>
+                <iconify-icon icon="ph:bell-simple"></iconify-icon>
                 <div id="notifBadge" class="notification-badge" style="display: none;">0</div>
             </div>
         </div>
@@ -45,11 +51,11 @@
                 <div class="tray-title">Snabba val</div>
                 <div class="tray-grid">
                     <div class="tray-tile" id="toggleThemeTray">
-                         <span id="themeBtnIcon">☀️</span>
-                         <span>Tema</span>
+                        <iconify-icon id="themeBtnIcon" icon="ph:sun"></iconify-icon>
+                        <span>Tema</span>
                     </div>
                     <div class="tray-tile" id="toggleGuestMode">
-                        <iconify-icon icon="lucide:users"></iconify-icon>
+                        <iconify-icon icon="ph:users"></iconify-icon>
                         <span>Gästläge</span>
                     </div>
                     <div class="tray-tile" id="toggleSleepMode">
@@ -302,16 +308,16 @@
          BOTTOM DOCK (Navigation)
     ════════════════════════════════════════════════════════════ -->
     <nav class="bottom-dock">
-        <button class="nav-item active" data-tab="home">
-            <iconify-icon icon="lucide:house"></iconify-icon>
+        <button class="nav-item active" data-tab="home" data-icon-outline="ph:house" data-icon-fill="ph:house-fill">
+            <iconify-icon icon="ph:house-fill"></iconify-icon>
             <span>Hem</span>
         </button>
-        <button class="nav-item" data-tab="kitchen">
-            <iconify-icon icon="lucide:shopping-cart"></iconify-icon>
+        <button class="nav-item" data-tab="kitchen" data-icon-outline="ph:shopping-cart" data-icon-fill="ph:shopping-cart-fill">
+            <iconify-icon icon="ph:shopping-cart"></iconify-icon>
             <span>Kök</span>
         </button>
-        <button class="nav-item" data-tab="energy">
-            <iconify-icon icon="lucide:zap"></iconify-icon>
+        <button class="nav-item" data-tab="energy" data-icon-outline="ph:lightning" data-icon-fill="ph:lightning-fill">
+            <iconify-icon icon="ph:lightning"></iconify-icon>
             <span>Energi</span>
         </button>
     </nav>

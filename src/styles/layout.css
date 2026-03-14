@@ -13,18 +13,22 @@ body {
     font-family: var(--font-main);
     background: var(--color-bg);
     color: var(--text-primary);
-    transition: background 0.25s ease, color 0.25s ease;
+    transition: background 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     line-height: 1.5;
+    letter-spacing: -0.01em;
 }
 
-/* ── Top bar & Tray ── */
+/* ── Top bar & Tray ─────────────────────────────────────────── */
 .topbar {
     position: sticky;
     top: 0;
     z-index: 5000;
-    background: var(--color-card);
+    background: color-mix(in srgb, var(--color-card) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     padding: 12px var(--space-md);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     height: auto;
@@ -39,35 +43,54 @@ body {
     cursor: pointer;
 }
 
-/* Base tray — Hidden but positioned absolutely */
+/* Base tray — hidden but positioned absolutely */
 .topbar-tray {
     position: absolute;
     top: calc(100% - 1px); /* Overlap topbar border to remove seam */
     left: 0;
     right: 0;
-    width: 100%; /* Prevents horizontal spill */
-    background: var(--color-card);
+    width: 100%;
+    background: color-mix(in srgb, var(--color-card) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
     padding: 0 var(--space-md) 32px;
     opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(-16px);
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
     z-index: 1000;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     border-bottom: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.topbar.expanded {
+    /* Solid when open — removes seam between topbar and tray */
+    background: var(--color-card);
+    border-bottom-color: transparent;
 }
 
 .topbar.expanded .topbar-tray {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+    background: var(--color-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
-/* When a subview is active, block interaction with background layers */
+/* Block interaction when subview is active */
 body.subview-active .topbar,
 body.subview-active .bottom-dock,
 body.subview-active .main-shell {
+    pointer-events: none;
+}
+
+/* Block cards & nav when tray is open — topbar stays interactive */
+body.tray-open .main-shell,
+body.tray-open .bottom-dock {
     pointer-events: none;
 }
 
@@ -88,6 +111,37 @@ body.subview-active .main-shell {
     cursor: pointer;
 }
 
+/* Guest mode & Sleep mode indicator buttons — hidden until active */
+.topbar-icon-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    cursor: default;
+    border-radius: 50%;
+}
+.topbar-icon-btn.guest-active,
+.topbar-icon-btn.sleep-active {
+    display: flex;
+}
+.topbar-icon-btn iconify-icon {
+    font-size: 22px;
+    transition: color 0.2s ease;
+}
+
+/* Guest mode active — mid Nordic green */
+.topbar-icon-btn.guest-active iconify-icon {
+    color: #3dbb61;
+    opacity: 1;
+}
+
+/* Sleep mode active — indigo / night purple */
+.topbar-icon-btn.sleep-active iconify-icon {
+    color: #8b7ecf;
+    opacity: 1;
+}
+
 @keyframes bell-ring {
     0%   { transform: rotate(0deg); }
     10%  { transform: rotate(16deg); }
@@ -101,9 +155,9 @@ body.subview-active .main-shell {
 }
 
 .notification-bell-box iconify-icon {
-    font-size: 24px;
-    color: var(--text-primary);
-    transition: color 0.3s cubic-bezier(0.4,0,0.2,1);
+    font-size: 22px;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
     transform-origin: top center;
 }
 
@@ -124,30 +178,73 @@ body.subview-active .main-shell {
     border-radius: 50%;
     border: 1.5px solid var(--text-primary);
     font-size: 9px;
-    font-weight: 800;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
 }
 
-/* ── Tray Sections ── */
-.tray-section { margin-bottom: 24px; margin-top: 24px; }
-.tray-title { font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: var(--text-secondary); margin-bottom: 10px; }
-.tray-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.tray-tile { background: var(--color-card-alt); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-.tray-tile:active { transform: scale(0.95); opacity: 0.8; }
+/* ── Tray Sections ──────────────────────────────────────────── */
+.tray-section { margin-bottom: 24px; margin-top: 20px; }
+.tray-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+.tray-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tray-tile {
+    background: var(--color-card-alt);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.tray-tile:active { transform: scale(0.94); }
 .tray-tile i,
-.tray-tile iconify-icon { font-size: 18px; color: var(--text-primary); }
-.tray-tile span { font-size: 11px; font-weight: 500; letter-spacing: 0.01em; color: var(--text-secondary); }
+.tray-tile iconify-icon { font-size: 17px; color: var(--text-secondary); transition: color 0.2s ease; }
+.tray-tile span { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
 .tray-tile.active { background: var(--accent-muted); border-color: var(--accent); }
 .tray-tile.active i,
 .tray-tile.active iconify-icon { color: var(--accent); }
 .tray-tile.active span { color: var(--accent); }
 
-.notification-list { background: var(--color-card-alt); border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 8px; min-height: 80px; display: flex; flex-direction: column; }
+/* Guest mode tile — green when active */
+#toggleGuestMode.active {
+    background: rgba(61, 187, 97, 0.12);
+    border-color: #3dbb61;
+}
+#toggleGuestMode.active iconify-icon,
+#toggleGuestMode.active span { color: #3dbb61; }
 
-/* ── Subview header ── */
+/* Sleep mode tile — indigo/purple when active */
+#toggleSleepMode.active {
+    background: rgba(139, 126, 207, 0.12);
+    border-color: #8b7ecf;
+}
+#toggleSleepMode.active iconify-icon,
+#toggleSleepMode.active span { color: #8b7ecf; }
+
+.notification-list {
+    background: var(--color-card-alt);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: 6px;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Subview header ─────────────────────────────────────────── */
 .subview-header {
     position: sticky;
     top: 0;
@@ -155,14 +252,34 @@ body.subview-active .main-shell {
     background: var(--color-bg);
     display: flex;
     align-items: center;
-    padding: 16px 16px 12px; /* Reduced top padding since it's inside fixed view */
+    padding: 16px var(--space-md) 12px;
     cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.subview-title { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; color: var(--text-primary); }
-.back-btn { width: 44px; height: 44px; border-radius: 50%; background: transparent; color: var(--text-primary); display: flex; align-items: center; justify-content: center; margin-right: 8px; cursor: pointer; }
+.subview-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+.back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-card-alt);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease;
+}
+.back-btn:active { background: var(--border-color); }
 
-/* ── Card grid ── */
+/* ── Card grid ──────────────────────────────────────────────── */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -171,13 +288,7 @@ body.subview-active .main-shell {
 }
 room-divider { grid-column: 1 / -1; }
 
-/* ── View & Transitions ── */
-.main-shell {
-    position: relative;
-    padding-bottom: 80px;
-}
-
-/* ── View & Transitions ── */
+/* ── Main shell ─────────────────────────────────────────────── */
 .main-shell {
     position: relative;
     padding-bottom: 80px;
@@ -189,7 +300,6 @@ room-divider { grid-column: 1 / -1; }
     opacity: 0;
     transition: opacity 0.2s ease;
 }
-
 .view.active-tab {
     display: block;
     opacity: 1;
@@ -206,52 +316,75 @@ room-divider { grid-column: 1 / -1; }
     transform: translateY(100vh);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
     pointer-events: none;
-    /* NOTE: display stays 'none' from .view, we override it here */
     display: block;
 }
-
 .view.subview.active-subview {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
 }
 
-/* ── Bottom Dock ── */
+/* ── Bottom Dock ────────────────────────────────────────────── */
 .bottom-dock {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: 60px;
-    /* Semi-transparent so the blur actually renders */
-    background: color-mix(in srgb, var(--color-card) 85%, transparent);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: color-mix(in srgb, var(--color-card) 88%, transparent);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-around;
     align-items: center;
     padding-bottom: env(safe-area-inset-bottom);
-    z-index: 9000; /* Always on top, even over subviews */
+    z-index: 9000;
     transition: transform 0.3s ease;
 }
 
-/* Hide dock when subview is active so it doesn't intercept subview content clicks */
 body.subview-active .bottom-dock {
     transform: translateY(100%);
     pointer-events: none;
 }
 
 .nav-item {
-    background: none; border: none; color: var(--text-primary); display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px; flex: 1; cursor: pointer; transition: color 0.25s ease, opacity 0.25s ease; -webkit-tap-highlight-color: transparent;
-    opacity: 0.3;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 8px;
+    flex: 1;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.35;
 }
 .nav-item iconify-icon { font-size: 22px; }
 .nav-item span { display: none; }
-.nav-item.active { color: var(--text-primary); opacity: 1; }
+.nav-item.active { opacity: 1; }
 
-/* ── Notification Actions ── */
-.notif-actions { display: flex; gap: 10px; margin-top: 14px; }
-.action-btn { background: var(--color-card); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
-.action-btn:active { transform: scale(0.94); background: var(--color-card-alt); }
+/* ── Notification Actions ───────────────────────────────────── */
+.notif-actions { display: flex; gap: 8px; margin-top: 12px; }
+.action-btn {
+    background: var(--color-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    letter-spacing: 0;
+}
+.action-btn:active { transform: scale(0.93); background: var(--color-card-alt); }
 .action-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
