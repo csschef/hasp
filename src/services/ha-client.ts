@@ -5,7 +5,8 @@ import { registerSocket } from "./ha-service"
 // we use the current browser's origin. This fixed the Companion App issue 
 // where the app might be using a public/internal URL different from the dev env.
 const rawUrl = import.meta.env.VITE_HA_URL
-export const HA_URL = (window.location.port === "5173" || window.location.port === "5174")
+const port = parseInt(window.location.port)
+export const HA_URL = (port >= 5173 && port <= 5179)
     ? rawUrl 
     : window.location.origin
 
@@ -84,14 +85,14 @@ export function connectHA() {
         }
 
         if (msg.type === "result" && Array.isArray(msg.result)) {
-            console.log("Received all states:", msg.result.length)
-
-            // Helpful Debugger: Search for what HA is actually naming the lights
-            const lights = msg.result.filter((r: any) => r.entity_id.startsWith("light.hobbyrum"))
-            console.log("Available Hobbyrum Lights in HA:", lights.map((l: any) => l.entity_id))
-
-            setEntities(msg.result)
-
+            // CRITICAL FIX: Only treat the result as entities if they actually are entities.
+            // An empty array or a list without entity_id properties must NOT wipe the store.
+            const isEntityList = msg.result.length > 0 && msg.result[0].hasOwnProperty('entity_id');
+            
+            if (isEntityList) {
+                console.log("Received all states:", msg.result.length);
+                setEntities(msg.result);
+            }
             return
         }
     }

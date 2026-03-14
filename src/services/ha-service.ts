@@ -4,6 +4,10 @@ export function registerSocket(ws: WebSocket) {
     socket = ws
 }
 
+export function getSocket() {
+    return socket
+}
+
 let messageId = 1000
 
 function nextId() {
@@ -75,4 +79,29 @@ export function fetchHistory(entityId: string, hours = 24): Promise<any[]> {
             })
         )
     })
+}
+
+export function fetchShoppingList(): Promise<any[]> {
+    return new Promise((resolve) => {
+        if (!socket) return resolve([])
+        const reqId = nextId()
+        const handler = (event: MessageEvent) => {
+            const msg = JSON.parse(event.data)
+            if (msg.id === reqId) {
+                socket!.removeEventListener("message", handler)
+                resolve(msg.result || [])
+            }
+        }
+        socket.addEventListener("message", handler)
+        socket.send(JSON.stringify({ id: reqId, type: "shopping_list/items" }))
+    })
+}
+
+export function callShoppingList(service: string, data: any = {}) {
+    if (!socket) return
+    socket.send(JSON.stringify({
+        id: nextId(),
+        type: `shopping_list/${service}`,
+        ...data
+    }))
 }

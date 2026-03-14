@@ -190,16 +190,17 @@ class LightPopup extends HTMLElement {
         const brightThumb = controls.querySelector(".bright-thumb") as HTMLElement | null
 
         if (brightSlider && brightThumb) {
+            const thumbR = 12 // half of 24px thumb
             requestAnimationFrame(() => {
                 const w = brightSlider.offsetWidth
                 const frac = (brightness - 1) / (255 - 1)
-                brightThumb.style.left = (frac * w) + "px"
+                brightThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
             })
 
             const doBrightMove = (offsetX: number) => {
                 const w = brightSlider.offsetWidth
                 const frac = Math.max(0, Math.min(1, offsetX / w))
-                brightThumb.style.left = (frac * w) + "px"
+                brightThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
                 const v = Math.round(1 + frac * 254)
                 brightSlider.closest(".control")!.querySelector(".value")!.textContent = Math.round((v / 255) * 100) + "%"
                 this.setBrightness(v)
@@ -225,18 +226,19 @@ class LightPopup extends HTMLElement {
         const tempThumb = controls.querySelector(".temp-thumb") as HTMLElement | null
 
         if (tempSlider && tempThumb) {
+            const thumbR = 12
             cancelAnimationFrame(this.tempInitRaf)
             this.tempInitRaf = requestAnimationFrame(() => {
                 this.tempInitRaf = 0
                 const w = tempSlider.offsetWidth
                 const frac = (maxK - kelvin) / (maxK - minK)
-                tempThumb.style.left = (frac * w) + "px"
+                tempThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
             })
 
             const doTempMove = (offsetX: number) => {
                 const w = tempSlider.offsetWidth
                 const frac = Math.max(0, Math.min(1, offsetX / w))
-                tempThumb.style.left = (frac * w) + "px"
+                tempThumb.style.left = Math.max(thumbR, Math.min(w - thumbR, frac * w)) + "px"
                 const k = Math.round(maxK - frac * (maxK - minK))
                 tempSlider.closest(".control")!.querySelector(".value")!.textContent = k + "K"
                 this.setTempKelvin(k)
@@ -318,12 +320,12 @@ class LightPopup extends HTMLElement {
 position:fixed;
 inset:0;
 display:none;
-background:var(--color-overlay);
-backdrop-filter:blur(12px);
--webkit-backdrop-filter:blur(12px);
-z-index:1000;
+background: rgba(0,0,0,0.3);
+backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
+z-index:10000;
 opacity: 0;
-transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+transition: opacity 0.3s ease;
 pointer-events: none;
 }
 :host(.active) {
@@ -333,17 +335,18 @@ pointer-events: none;
 
 .sheet{
 position:absolute;
-top:32px;
+top: 60px;
 left:50%;
-transform:translate(-50%, 20px);
+transform:translate(-50%, 16px);
 opacity: 0;
 width:calc(100% - 32px);
-max-width:460px;
+max-width:420px;
 background:var(--color-card);
-border-radius:28px;
+border-radius:var(--radius-xl);
 padding:24px;
-box-shadow:0 12px 48px rgba(0,0,0,0.22);
-max-height:calc(100dvh - 64px);
+border: 1px solid var(--border-color);
+box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+max-height:calc(100dvh - 80px);
 overflow-y:auto;
 box-sizing:border-box;
 transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -357,24 +360,38 @@ transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bez
 display:flex;
 justify-content:space-between;
 align-items:center;
+margin-bottom: 4px;
 }
 
 .title{
-font-size:1.2rem;
-font-weight:500;
+font-size: 1rem;
+font-weight: 500;
+letter-spacing: -0.01em;
 color:var(--text-primary);
 }
 
 .close{
-font-size:28px;
+width: 28px;
+height: 28px;
+border-radius: 50%;
+background: var(--color-card-alt);
+border: 1px solid var(--border-color);
+display: flex;
+align-items: center;
+justify-content: center;
 cursor:pointer;
+color: var(--text-secondary);
+font-size: 16px;
+line-height: 1;
+transition: background 0.15s ease;
 }
+.close:active { background: var(--border-color); }
 
 .controls{
 margin-top:24px;
 display:flex;
 flex-direction:column;
-gap:28px;
+gap:24px;
 }
 
 .control{
@@ -390,22 +407,27 @@ align-items:center;
 }
 
 label{
-font-size:0.9rem;
+font-size:13px;
 font-weight:400;
-color:var(--text-primary);
+color:var(--text-secondary);
+letter-spacing: 0.01em;
+text-transform: uppercase;
+font-size: 11px;
+opacity: 0.7;
 }
 
 .value{
-font-size:0.85rem;
-color:var(--text-secondary);
+font-size:13px;
+font-weight: 500;
+color:var(--text-primary);
 }
 
-/* ── Custom div sliders (shared) ─────────────────────── */
+/* ── Sliders ──────────────────────────────── */
 
 .bright-slider,
 .temp-slider{
 position:relative;
-height:34px;
+height:30px;
 border-radius:999px;
 cursor:pointer;
 touch-action:none;
@@ -425,12 +447,12 @@ background:linear-gradient(to right,#5ea8ff,#e0e0e0,#ff9c3a);
 .temp-thumb{
 position:absolute;
 top:50%;
-width:26px;
-height:26px;
+width:24px;
+height:24px;
 border-radius:50%;
 background:white;
-border:2px solid rgba(0,0,0,0.55);
-box-shadow:0 2px 8px rgba(0,0,0,0.35);
+border:1.5px solid rgba(0,0,0,0.2);
+box-shadow:0 2px 8px rgba(0,0,0,0.25);
 transform:translate(-50%,-50%);
 pointer-events:none;
 will-change:left;
@@ -443,8 +465,8 @@ justify-content:center;
 
 .color-wheel{
 position:relative;
-width:240px;
-height:240px;
+width:220px;
+height:220px;
 border-radius:50%;
 background:conic-gradient(
 red,
@@ -465,20 +487,20 @@ border-radius:50%;
 background:radial-gradient(
 circle at center,
 white 0%,
-rgba(255,255,255,0.8) 20%,
-rgba(255,255,255,0) 70%
+rgba(255,255,255,0.75) 20%,
+rgba(255,255,255,0) 68%
 );
 pointer-events:none;
 }
 
 .picker{
 position:absolute;
-width:18px;
-height:18px;
+width:16px;
+height:16px;
 border-radius:50%;
 background:white;
-border:2px solid rgba(0,0,0,0.55);
-box-shadow:0 2px 8px rgba(0,0,0,0.35);
+border:1.5px solid rgba(0,0,0,0.3);
+box-shadow:0 2px 8px rgba(0,0,0,0.3);
 transform:translate(-50%,-50%);
 pointer-events:none;
 }
@@ -489,7 +511,7 @@ pointer-events:none;
 
 <div class="header">
 <div class="title"></div>
-<div class="close">×</div>
+<div class="close"><iconify-icon icon="lucide:x" style="font-size:14px;"></iconify-icon></div>
 </div>
 
 <div class="controls"></div>

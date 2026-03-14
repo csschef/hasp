@@ -252,15 +252,15 @@ class WeatherCard extends HTMLElement {
                     gap: 2px;
                 }
                 .temp {
-                    font-size: 56px;
-                    font-weight: 600;
+                    font-size: 52px;
+                    font-weight: 300;
                     letter-spacing: -3px;
                     line-height: 0.9;
                 }
                 .unit {
-                    font-size: 32px;
-                    font-weight: 500;
-                    margin-top: -12px;
+                    font-size: 28px;
+                    font-weight: 300;
+                    margin-top: -10px;
                 }
                 .meta {
                     display: flex;
@@ -269,8 +269,8 @@ class WeatherCard extends HTMLElement {
                     flex: 1;
                 }
                 .condition {
-                    font-size: 18px;
-                    font-weight: 600;
+                    font-size: 16px;
+                    font-weight: 400;
                     text-transform: capitalize;
                     line-height: 1.2;
                 }
@@ -414,11 +414,11 @@ class WeatherCard extends HTMLElement {
                     <div class="content-inner">
                         <div class="sun-info">
                             <div class="sun-item">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 11V3.5"/><path d="m9 6.5 3-3 3 3"/><path d="M18 20a6 6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 11V3.5"/><path d="m9 6.5 3-3 3 3"/><path d="M18 20a6 6 0 0 0 -12 0"/><path d="M2 22h20"/></svg>
                                 Soluppgång ${formatTime(sun?.attributes.next_rising)}
                             </div>
                             <div class="sun-item">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 3.5v7.5"/><path d="m15 8-3 3-3-3"/><path d="M18 20a6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 3.5v7.5"/><path d="m15 8-3 3-3-3"/><path d="M18 20a6 6 0 0 0 -12 0"/><path d="M2 22h20"/></svg>
                                 Solnedgång ${formatTime(sun?.attributes.next_setting)}
                             </div>
                         </div>

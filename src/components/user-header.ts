@@ -10,7 +10,7 @@ class UserHeader extends HTMLElement {
         this.shadowRoot!.innerHTML = `
             <style>
                 span {
-                    font-size: 1.25rem;
+                    font-size: 1rem;
                     font-weight: 600;
                     color: var(--text-primary);
                     letter-spacing: -0.01em;

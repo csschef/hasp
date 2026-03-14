@@ -72,30 +72,33 @@ class RoomDivider extends HTMLElement {
                     padding: var(--space-md) var(--space-md) 0 var(--space-md);
                 }
                 .title {
-                    font-size: 1.25rem;
+                    font-size: 0.95rem;
                     font-weight: 500;
-                    color: var(--text-primary);
-                    letter-spacing: -0.01em;
+                    color: var(--text-secondary);
+                    letter-spacing: 0.01em;
+                    text-transform: uppercase;
+                    font-size: 11px;
                 }
                 .stats {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                     color: var(--text-secondary);
-                    font-size: 13px;
-                    font-weight: 500;
+                    font-size: 12px;
+                    font-weight: 400;
+                    opacity: 0.7;
                 }
                 .stat {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 5px;
                 }
                 .stat-interactive {
                     cursor: pointer;
-                    transition: color 0.15s ease;
+                    transition: opacity 0.15s ease;
                 }
-                .stat-interactive:hover {
-                    color: var(--text-primary);
+                .stat-interactive:active {
+                    opacity: 0.5;
                 }
                 .active-sensor {
                     display: flex;

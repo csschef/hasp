@@ -185,8 +185,8 @@ class HistoryPopup extends HTMLElement {
             </defs>
             <!-- Background Guides -->
             <!-- Adjusted stroke opacity to make it lighter, and padded start bounds -->
-            <line x1="${textMargin}" y1="${height / 2}" x2="${width}" y2="${height / 2}" stroke="var(--text-secondary)" stroke-opacity="0.1" stroke-dasharray="2, 6" />
-            <line x1="${textMargin}" y1="${height - 1}" x2="${width}" y2="${height - 1}" stroke="var(--text-secondary)" stroke-opacity="0.1" stroke-dasharray="2, 6" />
+            <line x1="${textMargin}" y1="${height / 2}" x2="${width}" y2="${height / 2}" stroke="var(--text-secondary)" stroke-opacity="0.25" stroke-dasharray="2, 6" />
+            <line x1="${textMargin}" y1="${height - 1}" x2="${width}" y2="${height - 1}" stroke="var(--text-secondary)" stroke-opacity="0.25" stroke-dasharray="2, 6" />
 
             <path d="${pathData}" fill="url(#fillGrad)" />
             <path d="${lineData}" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -212,12 +212,12 @@ class HistoryPopup extends HTMLElement {
     position: fixed;
     inset: 0;
     display: none;
-    background: var(--color-overlay);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    z-index: 1000;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10000;
     opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.3s ease;
     pointer-events: none;
 }
 :host(.active) {
@@ -227,21 +227,24 @@ class HistoryPopup extends HTMLElement {
 
 .sheet {
     position: absolute;
-    top: 32px;
+    top: 60px;
     left: 50%;
-    transform: translate(-50%, 20px);
+    transform: translate(-50%, 16px);
     opacity: 0;
     width: calc(100% - 32px);
-    max-width: 460px;
+    max-width: 480px;
     background: var(--color-card);
-    border-radius: 28px;
-    padding: 24px;
-    padding-bottom: 20px;
-    box-shadow: 0 12px 48px rgba(0,0,0,0.22);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.2);
     box-sizing: border-box;
-    max-height: calc(100dvh - 64px);
+    max-height: calc(100dvh - 76px);
     overflow-y: auto;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 :host(.active) .sheet {
     transform: translate(-50%, 0);
@@ -251,53 +254,57 @@ class HistoryPopup extends HTMLElement {
 .header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+    align-items: flex-start;
 }
-
-.title-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
+.title-wrap { display: flex; flex-direction: column; gap: 3px; }
 .title {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 500;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
 }
-
 .subtitle {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    font-weight: 400;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
+.close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-card-alt);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+.close:active { background: var(--border-color); }
 
 .current-value {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 400;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
-    letter-spacing: -0.02em;
-    margin-top: -12px;
-    margin-bottom: 24px;
-}
-
-.close {
-    font-size: 28px;
-    cursor: pointer;
-    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 4px;
 }
 
 .graph-container {
     position: relative;
     width: 100%;
-    height: auto;
-    border-radius: 12px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    box-sizing: border-box;
 }
-
 .graph-container svg {
     width: 100%;
-    height: 180px;
+    height: 160px;
     display: block;
     overflow: visible;
 }
@@ -306,19 +313,20 @@ class HistoryPopup extends HTMLElement {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 180px;
+    height: 160px;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    opacity: 0.6;
 }
 
 .x-axis {
     display: flex;
     justify-content: space-between;
-    margin-top: 12px;
-    margin-bottom: 8px; /* Buffer against the card edge */
+    padding: 8px 0 4px;
     color: var(--text-secondary);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.6;
 }
 </style>
 
@@ -328,7 +336,7 @@ class HistoryPopup extends HTMLElement {
             <div class="title">Laddar...</div>
             <div class="subtitle" style="display:none;"></div>
         </div>
-        <div class="close">×</div>
+        <div class="close"><iconify-icon icon="lucide:x" style="font-size:14px;"></iconify-icon></div>
     </div>
     <div class="current-value">--</div>
     <div class="graph-container"></div>

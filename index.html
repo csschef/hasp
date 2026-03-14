@@ -14,7 +14,7 @@
         }
         /* Critical: applied synchronously before Vite JS/CSS loads.
            Keeps subviews off-screen from the very first paint — no FOUC flash. */
-        .view:not(#home) {
+        .view.subview {
             position: fixed;
             inset: 0;
             transform: translateY(100vh);
@@ -28,17 +28,61 @@
 
 <body>
 
-    <div class="topbar">
-        <div style="flex: 1; display: flex; align-items: center;">
-            <user-header></user-header>
+    <div class="topbar" id="topTrayContainer">
+        <div class="topbar-main">
+            <div class="user-info">
+                <user-header></user-header>
+            </div>
+            <div class="topbar-icon-btn" id="guestModeBtn" title="Gästläge">
+                <iconify-icon icon="ph:users"></iconify-icon>
+            </div>
+            <div class="topbar-icon-btn" id="sleepModeBtn" title="Nattläge">
+                <iconify-icon icon="ph:moon"></iconify-icon>
+            </div>
+            <div class="notification-bell-box">
+                <iconify-icon icon="ph:bell-simple"></iconify-icon>
+                <div id="notifBadge" class="notification-badge" style="display: none;">0</div>
+            </div>
         </div>
-        <button class="theme-btn" id="themeBtn" title="Toggle theme">☀️</button>
+        
+        <!-- Expanded Tray Area -->
+        <div class="topbar-tray" id="notificationTray">
+            <div class="tray-section">
+                <div class="tray-title">Snabba val</div>
+                <div class="tray-grid">
+                    <div class="tray-tile" id="toggleThemeTray">
+                        <iconify-icon id="themeBtnIcon" icon="ph:sun"></iconify-icon>
+                        <span>Tema</span>
+                    </div>
+                    <div class="tray-tile" id="toggleGuestMode">
+                        <iconify-icon icon="ph:users"></iconify-icon>
+                        <span>Gästläge</span>
+                    </div>
+                    <div class="tray-tile" id="toggleSleepMode">
+                        <iconify-icon icon="lucide:moon"></iconify-icon>
+                        <span>Sovläge</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tray-section">
+                <div class="tray-title">Notiser</div>
+                <div id="notificationList" class="notification-list">
+                    <div class="no-notifications">Inga nya notiser</div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TAB CONTENT
+    ════════════════════════════════════════════════════════════ -->
+    <div class="main-shell">
 
     <!-- ═══════════════════════════════════════════════════════════
          MAIN HOME VIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view active" id="home">
+    <div class="view active-tab" id="home">
         <div class="dashboard">
             <weather-card></weather-card>
 
@@ -114,15 +158,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          ENTRÉ SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="entre">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="entre">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Entre</span>
         </div>
         <div class="dashboard">
@@ -138,15 +178,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          VARDAGSRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="vardagsrum">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="vardagsrum">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Vardagsrum</span>
         </div>
         <div class="dashboard">
@@ -161,15 +197,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          KÖK SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="kok">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="kok">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Kök</span>
         </div>
         <div class="dashboard">
@@ -182,15 +214,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          SOVRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="sovrum">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="sovrum">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Sovrum</span>
         </div>
         <div class="dashboard">
@@ -204,15 +232,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          ELISES RUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="elises-rum">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="elises-rum">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Elises rum</span>
         </div>
         <div class="dashboard">
@@ -226,15 +250,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          LEIAS RUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="leias-rum">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="leias-rum">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Leias rum</span>
         </div>
         <div class="dashboard">
@@ -248,15 +268,11 @@
     <!-- ═══════════════════════════════════════════════════════════
          HOBBYRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="hobbyrum">
-        <div class="subview-header"
-            onclick="window.history.length > 2 ? window.history.back() : window.location.hash='#home'">
-            <button class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                </svg>
-            </button>
+    <div class="view subview" id="hobbyrum">
+        <div class="subview-header" onclick="goBack()">
+            <div class="back-btn">
+                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+            </div>
             <span class="subview-title">Hobbyrum</span>
         </div>
         <div class="dashboard">
@@ -272,6 +288,39 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         KITCHEN VIEW (Meals + Shopping)
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="kitchen">
+        <kitchen-view></kitchen-view>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ENERGY VIEW (Nordpool)
+    ════════════════════════════════════════════════════════════ -->
+    <div class="view" id="energy">
+        <energy-view></energy-view>
+    </div>
+
+    </div> <!-- End .main-shell -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM DOCK (Navigation)
+    ════════════════════════════════════════════════════════════ -->
+    <nav class="bottom-dock">
+        <button class="nav-item active" data-tab="home" data-icon-outline="ph:house" data-icon-fill="ph:house-fill">
+            <iconify-icon icon="ph:house-fill"></iconify-icon>
+            <span>Hem</span>
+        </button>
+        <button class="nav-item" data-tab="kitchen" data-icon-outline="ph:shopping-cart" data-icon-fill="ph:shopping-cart-fill">
+            <iconify-icon icon="ph:shopping-cart"></iconify-icon>
+            <span>Kök</span>
+        </button>
+        <button class="nav-item" data-tab="energy" data-icon-outline="ph:lightning" data-icon-fill="ph:lightning-fill">
+            <iconify-icon icon="ph:lightning"></iconify-icon>
+            <span>Energi</span>
+        </button>
+    </nav>
     <light-popup id="lightPopup"></light-popup>
     <tv-popup id="tvPopup"></tv-popup>
     <history-popup id="historyPopup"></history-popup>

@@ -95,7 +95,7 @@ class TvPopup extends HTMLElement {
     background: var(--color-overlay);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 3000;
+    z-index: 10000;
     opacity: 0;
     transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
@@ -221,6 +221,7 @@ class TvPopup extends HTMLElement {
 .round-btn i { font-size: 20px; }
 .round-btn svg { fill: currentColor; }
 .round-btn iconify-icon { font-size: 32px; }
+.round-btn iconify-icon svg { stroke-width: 1.2; }
 .round-btn ha-icon { --mdc-icon-size: 32px; width: 32px; height: 32px; }
 
 /* ── VOLUME OVAL ────────────────────────────────────── */
@@ -284,7 +285,7 @@ class TvPopup extends HTMLElement {
             <svg width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M15 18l-6-6 6-6"/></svg>
         </button>
         <button class="round-btn" data-cmd="HOME">
-            <svg width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M3 12l9-9 9 9M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+            <iconify-icon icon="ph:house" style="font-size:32px;"></iconify-icon>
         </button>
         
         <button class="round-btn" data-cmd="MEDIA_PLAY_PAUSE">
