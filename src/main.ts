@@ -14,6 +14,7 @@ import "./components/person-popup"
 import "./components/tv-card"
 import "./components/tv-popup"
 import "./components/settings-popup"
+import "./components/user-header"
 
 import { connectHA } from "./services/ha-client"
 

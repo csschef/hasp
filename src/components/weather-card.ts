@@ -1,4 +1,4 @@
-import { getEntity, subscribeEntity, subscribeUser, subscribeActivePerson } from "../store/entity-store"
+import { getEntity, subscribeEntity, subscribeUser, getActivePerson, setActivePerson, subscribeActivePerson } from "../store/entity-store"
 import { callService } from "../services/ha-service"
 import type { HAEntity } from "../types/homeassistant"
 import type { HAUser } from "../store/entity-store"
@@ -8,7 +8,7 @@ class WeatherCard extends HTMLElement {
     private toggleEntity = "input_boolean.toggle_vaderprognos"
     private hourlySensor = "sensor.vader_prognos_timme"
     private dailySensor = "sensor.vader_prognos_daglig"
-    
+
     // Person tracking
     private personEntity = "person.sebastian"
     private lastCoords: string = ""
@@ -52,19 +52,23 @@ class WeatherCard extends HTMLElement {
         })
 
         // 2. Subscribe to BOTH persons for coordinates
+        // 3. Update whenever person/location changes
+        subscribeActivePerson((personId) => {
+            if (this.personEntity !== personId) {
+                this.personEntity = personId;
+                this.lastCoords = ""; // Force re-fetch
+                this.handleUpdate();
+            }
+        })
+
+        // 4. Normal updates/focus
         subscribeEntity("person.sebastian", () => this.handleUpdate())
         subscribeEntity("person.sara", () => this.handleUpdate())
 
-        // 3. THE "MAGIC" PART: Subscribe to the active person from the store
-        subscribeActivePerson((personId) => {
-            this.personEntity = personId
-            console.log("Weather location now tracking:", this.personEntity)
-            this.handleUpdate()
-        })
-        
         // 4. Update when coming back into focus
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
+                this.lastCoords = ""
                 this.handleUpdate()
             }
         })
@@ -76,64 +80,48 @@ class WeatherCard extends HTMLElement {
         });
     }
 
-    private handleUpdate() {
+    private async handleUpdate() {
         const person = getEntity(this.personEntity)
-        
-        if (person?.attributes.latitude && person?.attributes.longitude) {
-            const coords = `${person.attributes.latitude.toFixed(4)},${person.attributes.longitude.toFixed(4)}`
-            if (coords !== this.lastCoords) {
-                this.lastCoords = coords
-                this.fetchError = ""
-                this.fetchLocalWeather(person.attributes.latitude, person.attributes.longitude)
-            }
-        }
-        
-        if (person || this.localWeather) {
-            this.setAttribute("loaded", "")
-        }
-        this.render()
-    }
-    private async fetchLocalWeather(lat: number, lon: number) {
+        if (!person?.attributes.latitude || !person?.attributes.longitude) return;
+
+        const lat = person.attributes.latitude;
+        const lon = person.attributes.longitude;
+        const coords = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+
+        // Only fetch if location actually changed
+        if (coords === this.lastCoords) return;
+        this.lastCoords = coords;
+
         try {
-            // Coordinate validation
-            if (isNaN(lat) || isNaN(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-                throw new Error("Invalid GPS data");
-            }
-
-            // 1. Get City Name
+            // 1. Get City Name (Works perfectly on mobile)
             const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=sv`)
-            if (!geoRes.ok) throw new Error(`Geo Error ${geoRes.status}`);
-            const geoData = await geoRes.json()
+            if (geoRes.ok) {
+                const geoData = await geoRes.json();
+                let location = geoData.locality || geoData.city || "Okänd";
+                
+                // Premium cleanup
+                location = location.replace(/ stadsdelsområde$/i, "").replace(/ kommun$/i, "");
+                this.localLocation = location;
+                
+                // Hard override for home
+                const distToHome = Math.sqrt(Math.pow(lat - 56.726, 2) + Math.pow(lon - 16.326, 2));
+                if (distToHome < 0.01) this.localLocation = "Lindsdal";
+            }
+
+            // 2. Get Weather via Open-Meteo (Zero restrictions / Zero blocks)
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code&hourly=temperature_2m,weather_code,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=ms&timezone=auto`)
             
-            // Hard override for home
-            const distToHome = Math.sqrt(Math.pow(lat - 56.726, 2) + Math.pow(lon - 16.326, 2))
-            if (distToHome < 0.01) {
-                this.localLocation = "Lindsdal"
-            } else {
-                let location = geoData.locality || geoData.city || geoData.principalSubdivision || "Okänd"
-                location = location.replace(/ stadsdelsområde$/i, "").replace(/ kommun$/i, "")
-                this.localLocation = location
-            }
-
-            // 2. Get Weather - Yr.no (MET Norway)
-            // 2. Get Weather - Yr.no (MET Norway)
-            // CRITICAL: We DO NOT set User-Agent here. It is a forbidden header in browsers
-            // and causes an immediate "Failed to fetch" security error on mobile devices.
-            const weatherRes = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`)
-
-            if (!weatherRes.ok) {
-                throw new Error(`MET ${weatherRes.status}`);
-            }
-
-            const data = await weatherRes.json()
-            this.localWeather = data
-            this.setAttribute("loaded", "")
-            this.render()
+            if (!weatherRes.ok) throw new Error(`Weather error ${weatherRes.status}`);
+            
+            this.localWeather = await weatherRes.json();
+            this.setAttribute("loaded", "");
+            this.fetchError = "";
         } catch (e: any) {
-            console.error("Weather fetch failed:", e)
-            this.fetchError = e.message || "Network Error"
-            this.render()
+            console.error("Weather fetch failed:", e);
+            this.fetchError = "Anslutningsfel"; 
         }
+        
+        this.render()
     }
 
     private toggleView(mode: 'hourly' | 'daily') {
@@ -160,34 +148,17 @@ class WeatherCard extends HTMLElement {
         let condition: string
         let locationName: string
 
-        if (this.localWeather) {
-            const current = this.localWeather.properties.timeseries[0].data.instant.details
-            const symbol = this.localWeather.properties.timeseries[0].data.next_1_hours.summary.symbol_code
-            temp = Math.round(current.air_temperature)
-            
-            // If MET compact doesn't have it, calculate a simple heat index / wind chill approximation
-            let app = current.apparent_temperature
-            if (app == null) {
-                const ws = current.wind_speed || 0
-                const rh = current.relative_humidity || 50
-                if (temp <= 10) {
-                    // Simple wind chill for cold
-                    app = 13.12 + 0.6215 * temp - 11.37 * Math.pow(ws, 0.16) + 0.3965 * temp * Math.pow(ws, 0.16)
-                } else if (temp >= 26) {
-                    // Simple heat index for warm
-                    app = temp + 0.5 * (temp + 61 + (temp - 68) * 1.2 + rh * 0.094)
-                } else {
-                    app = temp
-                }
-            }
-            feelsLike = Math.round(app)
-            condition = this.getMetState(symbol)
-            locationName = this.localLocation
+        if (this.localWeather && this.localWeather.current) {
+            const current = this.localWeather.current;
+            temp = Math.round(current.temperature_2m);
+            feelsLike = Math.round(current.apparent_temperature);
+            condition = this.getWmoState(current.weather_code);
+            locationName = this.localLocation;
         } else {
             temp = Math.round(Number(weather.attributes.temperature || 0))
             const app = weather.attributes.apparent_temperature
             feelsLike = app != null ? Math.round(app) : temp
-            condition = weather.state 
+            condition = weather.state
             locationName = "Lindsdal"
         }
 
@@ -447,7 +418,7 @@ class WeatherCard extends HTMLElement {
                                 Soluppgång ${formatTime(sun?.attributes.next_rising)}
                             </div>
                             <div class="sun-item">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 3.5v7.5"/><path d="m15 8-3 3-3-3"/><path d="M18 20a6 6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible"><path d="M12 3.5v7.5"/><path d="m15 8-3 3-3-3"/><path d="M18 20a6 0 0 0-12 0"/><path d="M2 22h20"/></svg>
                                 Solnedgång ${formatTime(sun?.attributes.next_setting)}
                             </div>
                         </div>
@@ -489,26 +460,27 @@ class WeatherCard extends HTMLElement {
     }
 
     private renderHourly(entity?: HAEntity) {
-        if (this.localWeather) {
-            const timeseries = this.localWeather.properties.timeseries
-            const now = new Date()
-            
-            // Filter only future points and take next 24
-            const futurePoints = timeseries.filter((ts: any) => new Date(ts.time) > now)
+        if (this.localWeather && this.localWeather.hourly) {
+            const h = this.localWeather.hourly;
+            const now = new Date().getTime();
 
-            return futurePoints.slice(0, 24).map((ts: any) => {
-                const date = new Date(ts.time)
-                const temp = Math.round(ts.data.instant.details.air_temperature)
-                const symbol = ts.data.next_1_hours?.summary?.symbol_code || ts.data.next_6_hours?.summary?.symbol_code
-                const cond = this.getMetState(symbol)
-                const precip = ts.data.next_1_hours?.details?.precipitation_amount || 0
+            return h.time.map((timeStr: string, i: number) => {
+                const d = new Date(timeStr);
+                return { d, i };
+            }).filter((item: any) => item.d.getTime() > now)
+              .slice(0, 24)
+              .map((item: any) => {
+                const i = item.i;
+                const d = item.d;
+                const cond = this.getWmoState(h.weather_code[i]);
+                const isNight = d.getHours() > 20 || d.getHours() < 6;
                 
                 return `
                     <div class="item">
-                        <span class="label">${date.getHours()}:00</span>
-                        ${this.getWeatherIcon(cond, 24, date.getHours() > 20 || date.getHours() < 6)}
-                        <span class="f-temp">${temp}°</span>
-                        <span class="precip">${precip > 0 ? precip.toFixed(1) + ' mm' : '&nbsp;'}</span>
+                        <span class="label">${d.getHours()}:00</span>
+                        ${this.getWeatherIcon(cond, 24, isNight)}
+                        <span class="f-temp">${Math.round(h.temperature_2m[i])}°</span>
+                        <span class="precip">${h.precipitation[i] > 0 ? h.precipitation[i].toFixed(1) + ' mm' : '&nbsp;'}</span>
                     </div>
                 `
             }).join("")
@@ -520,7 +492,7 @@ class WeatherCard extends HTMLElement {
             const time = date.getHours().toString().padStart(2, '0') + ":00"
             const hour = date.getHours()
             const isNight = hour > 20 || hour < 6
-            
+
             return `
                 <div class="item">
                     <span class="label">${time}</span>
@@ -533,72 +505,24 @@ class WeatherCard extends HTMLElement {
     }
 
     private renderDaily(entity?: HAEntity) {
-        if (this.localWeather) {
-            const timeseries = this.localWeather.properties.timeseries
-            const days = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"]
+        if (this.localWeather && this.localWeather.daily) {
+            const d = this.localWeather.daily;
+            const days = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
             
-            // 1. Group all points by local date
-            const dailyGroups: Record<string, any[]> = {}
-            timeseries.forEach((ts: any) => {
-                const dateKey = new Date(ts.time).toLocaleDateString()
-                if (!dailyGroups[dateKey]) dailyGroups[dateKey] = []
-                dailyGroups[dateKey].push(ts)
-            })
-
-            const dailyData: any[] = []
-            Object.keys(dailyGroups).forEach(dateKey => {
-                const group = dailyGroups[dateKey]
-                
-                // Get all temperatures for this day
-                const temps = group.map(ts => ts.data.instant.details.air_temperature)
-                
-                // Find a midday point (around 12:00 local) for the day's icon
-                let midDayPoint = group.find(ts => new Date(ts.time).getHours() === 12) || group[Math.floor(group.length / 2)]
-                
-                // Sum precipitation for the whole day
-                // MET Norway provides non-overlapping windows. We prefer 1h windows, fall back to 6h.
-                let totalPrecip = 0
-                let lastPrecipTime = 0
-                
-                group.forEach(ts => {
-                    const time = new Date(ts.time).getTime()
-                    const p1 = ts.data.next_1_hours?.details?.precipitation_amount
-                    const p6 = ts.data.next_6_hours?.details?.precipitation_amount
-                    
-                    if (p1 !== undefined) {
-                        totalPrecip += p1
-                    } else if (p6 !== undefined && time >= lastPrecipTime + 6 * 3600000) {
-                        // Only add 6h data if we haven't covered these hours with 1h points
-                        totalPrecip += p6
-                        lastPrecipTime = time
-                    }
-                })
-
-                dailyData.push({
-                    time: group[0].time,
-                    tempMax: Math.max(...temps),
-                    tempMin: Math.min(...temps),
-                    symbol: midDayPoint.data.next_6_hours?.summary?.symbol_code || midDayPoint.data.next_12_hours?.summary?.symbol_code || midDayPoint.data.next_1_hours?.summary?.symbol_code,
-                    precip: totalPrecip
-                })
-            })
-
-            // Skip "today" if it's late in the evening and user wants "tomorrow" as first forecast
-            // or just show the next 8 days available
-            return dailyData.slice(0, 8).map((d: any, i: number) => {
-                const date = new Date(d.time)
-                const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()]
-                let cond = this.getMetState(d.symbol)
+            return d.time.map((timeStr: string, i: number) => {
+                const date = new Date(timeStr);
+                const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()];
+                const cond = this.getWmoState(d.weather_code[i]);
                 
                 return `
                     <div class="item">
                         <span class="label">${dayName}</span>
                         ${this.getWeatherIcon(cond, 26, false)}
                         <div class="f-temps">
-                            <span class="f-temp">${Math.round(d.tempMax)}°</span>
-                            <span class="f-temp low">${Math.round(d.tempMin)}°</span>
+                            <span class="f-temp">${Math.round(d.temperature_2m_max[i])}°</span>
+                            <span class="f-temp low">${Math.round(d.temperature_2m_min[i])}°</span>
                         </div>
-                        <span class="precip">${d.precip > 0.1 ? d.precip.toFixed(1) + ' mm' : '&nbsp;'}</span>
+                        <span class="precip">${d.precipitation_sum[i] > 0.1 ? d.precipitation_sum[i].toFixed(1) + ' mm' : '&nbsp;'}</span>
                     </div>
                 `
             }).join("")
@@ -623,28 +547,32 @@ class WeatherCard extends HTMLElement {
         }).join("")
     }
 
-    private getMetState(symbol: string): string {
-        const s = symbol?.split("_")[0] || ""
-        switch (s) {
-            case "clearsky": return "sunny"
-            case "fair": 
-            case "partlycloudy": return "partlycloudy"
-            case "cloudy": return "cloudy"
-            case "fog": return "fog"
-            case "rain": return "rainy"
-            case "heavyrain": return "pouring"
-            case "lightrain": 
-            case "lightrainshowers": return "rainy"
-            case "rainshowers": 
-            case "heavyrainshowers": return "rainy"
-            case "snow": 
-            case "heavysnow": return "snowy"
-            case "lightsnow": 
-            case "lightsnowshowers":
-            case "snowshowers": return "snowy"
-            case "sleet": 
-            case "sleetshowers": return "snowy-rainy"
-            case "thunderstorm": return "lightning"
+    private getWmoState(code: number): string {
+        switch (code) {
+            case 0: return "sunny"
+            case 1:
+            case 2: return "partlycloudy"
+            case 3: return "cloudy"
+            case 45:
+            case 48: return "fog"
+            case 51:
+            case 53:
+            case 55:
+            case 61:
+            case 63:
+            case 65:
+            case 80:
+            case 81:
+            case 82: return "rainy"
+            case 71:
+            case 73:
+            case 75:
+            case 77:
+            case 85:
+            case 86: return "snowy"
+            case 95:
+            case 96:
+            case 99: return "lightning"
             default: return "cloudy"
         }
     }
@@ -672,20 +600,20 @@ class WeatherCard extends HTMLElement {
 
     private getWeatherIcon(condition: string, size: number, isNight: boolean = false) {
         let stateKey = (condition || "").toLowerCase().trim()
-        
+
         // Handle night swap for sunny
         if (isNight && stateKey === "sunny") stateKey = "clear-night"
 
         // Check for night variation in our map (fog_night, etc)
         const nightKey = `${stateKey}_night`
         const finalKey = (isNight && this.imageMap[nightKey]) ? nightKey : stateKey
-        
+
         const fileName = this.imageMap[finalKey] || this.imageMap[stateKey]
 
         if (fileName) {
             // Use Vite's built-in detection to handle paths correctly in both environments
             const iconUrl = `weather/${fileName}`
-            
+
             return `
                 <div class="icon-wrapper" style="width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
                     <img src="${iconUrl}" 

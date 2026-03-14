@@ -77,7 +77,22 @@ export function subscribeUser(callback: Function) {
 }
 
 /* ── Active Person Tracking (Sticky Identity) ── */
-let activePerson: string = localStorage.getItem("ha_active_person") || "person.sebastian"
+// 1. Check LocalStorage (manual override)
+// 2. Detect via Hardware (User Agent)
+// 3. Fallback
+function detectHardwarePerson() {
+    const ua = navigator.userAgent;
+    const storagePrefix = "ha_active_person";
+    const saved = localStorage.getItem(storagePrefix);
+    if (saved) return saved;
+
+    if (ua.includes("Pixel 9 Pro")) return "person.sara";
+    if (ua.includes("CPH2581") || ua.includes("OnePlus")) return "person.sebastian";
+    
+    return "person.sebastian";
+}
+
+let activePerson: string = detectHardwarePerson();
 const personListeners: ((personId: string) => void)[] = []
 
 export function getActivePerson() {

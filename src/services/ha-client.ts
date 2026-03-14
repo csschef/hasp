@@ -52,10 +52,10 @@ export function connectHA() {
             subscribeStateChanges()
             getStates()
             
-            // Fetch current user
+            // Requesting current user (works for everyone)
             socket?.send(JSON.stringify({
                 id: nextId(),
-                type: "config/get_user"
+                type: "auth/current_user"
             }))
 
             return
