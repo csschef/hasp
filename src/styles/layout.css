@@ -38,6 +38,7 @@ body {
     letter-spacing: -0.02em;
     color: var(--text-primary);
     flex-grow: 1;
+    text-align: center;
 }
 
 /* ── Subview header ── */
@@ -94,6 +95,7 @@ body {
     justify-content: center;
     transition: background 0.15s ease, transform 0.15s ease;
     box-shadow: var(--shadow-sm);
+    padding: 0;
 }
 
 .theme-btn:hover {

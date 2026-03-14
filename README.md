@@ -1,54 +1,50 @@
 # HASP - Home Assistant Simplified Panel
 
-A **mobile-first**, performance-oriented dashboard for **Home Assistant** built with **Vite, TypeScript, and Web Components**.
-Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI — optimized for phones and tablets with the HA Companion App.
+A mobile-first, performance-oriented dashboard for Home Assistant built with Vite, TypeScript, and Web Components.
+Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI — optimized for phones with the HA Companion App.
 
 ---
 
-## About
+## Catalyst & Philosophy
 
-HASP is a custom frontend for Home Assistant that prioritizes speed, aesthetics, and touch usability. It is built entirely from scratch using native browser technologies — no heavy frameworks, no unnecessary dependencies.
+HASP exists because off-the-shelf solutions often reach a limit of expression. This project is driven by two core motivations:
 
-Key design principles:
+1.  **Creative Freedom**: Native weather, map, and popup cards in Home Assistant are functional but visually rigid. HASP is an exercise in full-stack control, where every pixel, animation, and interaction is designed without the constraints of a generic framework.
+2.  **Maintenance Resilience**: In a complex smart home, vendor changes (like the industry shift from mireds to Kelvin) can break dozens of custom YAML-based cards. By consolidating the logic in Antigravity and a centralized TypeScript codebase, we avoid code duplication and can fix breaking changes across the entire dashboard in minutes, not hours.
+
+---
+
+## Design & UX Principles
+
+HASP is built from scratch using native browser technologies — no heavy frameworks, no unnecessary dependencies.
+
+- **Personalized Localized Weather (World-First Innovation)**: Unlike native Home Assistant weather cards which are locked to a single static zone, HASP implements hardware-aware weather. It automatically detects the holder of the phone (Pixel vs. OnePlus) and fetches a decentralized forecast for their specific GPS coordinates. This provides a truly personalized survival tool for multi-user households that Home Assistant does not yet support natively.
+- **Hardware-Aware Identity**: Automatically detects who is holding the phone (e.g., Pixel 9 Pro vs. OnePlus 12) via User-Agent fingerprinting, ensuring personalized weather and GPS tracking without manual toggles.
+- **Decentralized Weather**: Fetches local weather directly from Open-Meteo, bypassing Home Assistant's internal proxy limits and forbidden headers to ensure zero "Failed to fetch" errors on mobile devices.
 - **Optimistic UI**: Visual states update instantly on tap, never waiting for server confirmation.
-- **Pure Web Components**: Shadow DOM encapsulation for maximum performance and style isolation.
-- **Mobile-First**: Every layout, interaction, and animation is designed for finger-sized targets and small screens.
-- **Custom Design System**: A cohesive visual language with curated gradients, glassmorphism, and fluid micro-animations.
+- **Micro-Animations**: Fluid transitions for subviews and sheet-style popups that feel like a native iOS/Android application.
 
 ---
 
-## Features
+## Key Features
 
-- **Instant Feedback**: Cards and toggles update on the same frame as the tap — zero perceptible latency.
-- **Dynamic Adaptive Backgrounds**: Cards automatically adjust their background gradient based on the light's color temperature or RGB state.
-- **Person Tracking & Maps**: Premium, Apple-style person cards with high-resolution satellite imagery (Esri World Imagery) and dynamic map markers.
-- **Advanced Weather Dashboard**: Intelligent weather component with dynamic icon mapping, calculated "feels like" temperature, and real-time reverse geocoding for precise local forecasts.
-- **TV Remote Popup**: A full-featured, premium in-app remote control with D-pad, volume oval, and app-switching.
-- **Lucide Iconography**: Consistent stroke-based SVG icons throughout for a clean, professional look.
-- **Subview Navigation**: Fluid per-room subview routing with sheet-style transitions.
-- **History Graphs**: Interactive popups showing historical sensor data (temperature, humidity, etc.).
-- **Theme Support**: Built-in light/dark mode toggle with persistent storage.
+- **Personalized Welcome**: Automatic user detection and greeting system based on the physical device.
+- **Dynamic Weather Hero**: High-resolution custom icons, real-time reverse geocoding for city names, and feels like temperature calculations.
+- **Hardware-Sync Person Cards**: Satellite-imagery mapping and battery tracking synced to the specific user's hardware.
+- **Premium TV Remote**: A custom interactive popup with D-pad, haptic-ready volume controls, and app-switching logic.
+- **History Visualization**: Real-time sensor history graphs for temperature and humidity.
+- **Adaptive Lighting**: Cards that automatically generate color gradients based on the current state of light groups (Color Temp or RGB).
 
 ---
 
 ## Tech Stack
 
-- **TypeScript**
-- **Vite** (Build tool and dev server)
-- **Vanilla CSS** (Custom properties and design tokens — no Tailwind)
+- **TypeScript** (Core logic and strict typing)
+- **Vite** (Next-gen build tool and HMR dev server)
+- **Vanilla CSS** (Custom properties and hardware-accelerated animations)
 - **Web Components** (Shadow DOM for style encapsulation)
 - **Home Assistant WebSocket API** (Real-time state synchronization)
-- **Lucide Icons** (Inline SVGs)
-
----
-
-## Architecture
-
-HASP is a Single Page Application (SPA) where every UI element is a fully self-contained custom element.
-
-- **Entity Store**: Manages WebSocket subscriptions and ensures components only re-render when their specific state changes.
-- **Optimistic Layer**: Intercepts user actions to patch the DOM instantly before sending commands to Home Assistant.
-- **Color Utility**: Math-based color translation from mireds/RGB to card-ready gradients, with smart fallbacks for mixed light groups.
+- **BigDataCloud / Open-Meteo API** (Decentralized location and weather engine)
 
 ---
 
@@ -56,49 +52,44 @@ HASP is a Single Page Application (SPA) where every UI element is a fully self-c
 
 ```
 src/
-├── components/   # Custom Web Components (LightCard, TvCard, WeatherCard, etc.)
-├── store/        # State management and entity subscriptions
-├── services/     # Home Assistant WebSocket API layer
-├── utils/        # Color translation, history processing, data formatting
-├── styles/       # Design tokens, layout, and global card styles
+├── components/   # Hardware-aware Web Components (WeatherCard, UserHeader, LightCard)
+├── store/        # State management and identity tracking (entity-store.ts)
+├── services/     # Home Assistant WebSocket client and hardware detection
+├── utils/        # Color math, geocoding logic, and data formatting
+├── styles/       # Design tokens (tokens.css) and layout systems
 public/
-└── weather/      # Custom high-resolution weather icon set
+└── weather/      # Custom high-quality weather iconography
 ```
 
 ---
 
 ## Joint Development
 
-HASP is a collaborative project between a human creative director and an **AI Coding Agent (Antigravity)**. Human vision drives aesthetics, UX direction, and product decisions. The AI handles implementation, component architecture, and state management logic.
+HASP is a collaborative effort between me, a human creative director and an AI Coding Agent (Antigravity). This workflow allows for rapid iteration: I identify the UX friction points (like broken sensor logic or rigid YAML), and the AI architecting a robust, scalable TypeScript solution instantly.
 
 ---
 
-## Installation
+## Installation & Build
 
-### Clone the repository
-
+### 1. Setup
 ```bash
 git clone https://github.com/csschef/hasp.git
 cd hasp
 npm install
 ```
 
-### Development server
-
+### 2. Deployment
 ```bash
+# Start local development with HMR
 npm run dev -- --host
-```
 
-### Build for production
-
-```bash
+# Build for production
 npm run build
 ```
 
-The `dist/` folder can be served by any static web server (NGINX, Apache) or deployed directly into Home Assistant as a frontend add-on.
+The contents of the dist/ folder should be copied to your Home Assistant www/dashboard/ directory.
 
 ---
 
 ## License
-
 MIT
