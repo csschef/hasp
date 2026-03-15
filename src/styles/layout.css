@@ -167,7 +167,7 @@ body.tray-open .bottom-dock {
 .topbar-icon-btn.guest-active,
 .topbar-icon-btn.sleep-active {
     display: flex;
-    background: var(--accent);
+    background: var(--accent-muted);
     transform: scale(0.9);
     animation: icon-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -177,14 +177,14 @@ body.tray-open .bottom-dock {
 }
 
 .topbar-icon-btn iconify-icon {
-    font-size: 1rem;
+    font-size: 1.15rem;
     transition: color 0.2s ease;
 }
 
-/* Guest mode active — solid circle, white icon */
+/* Guest mode active — Soft tinted 'Steel Blue' feel */
 .topbar-icon-btn.guest-active iconify-icon,
 .topbar-icon-btn.sleep-active iconify-icon {
-    color: white;
+    color: var(--accent);
     opacity: 1;
 }
 
