@@ -76,6 +76,31 @@ class MealsView extends HTMLElement {
         })
     }
 
+    private moveItem(uid: string, previousUid: string | null) {
+        const data: any = {
+            entity_id: this.todoEntityId,
+            uid: uid,
+        }
+        if (previousUid) {
+            data.previous_uid = previousUid
+        }
+        
+        callService("todo", "move_item", data)
+        
+        // Optimistically update local order for smoothness
+        const itemIdx = this.todoItems.findIndex(i => i.uid === uid)
+        if (itemIdx === -1) return
+        
+        const [movedItem] = this.todoItems.splice(itemIdx, 1)
+        if (!previousUid) {
+            this.todoItems.unshift(movedItem)
+        } else {
+            const prevIdx = this.todoItems.findIndex(i => i.uid === previousUid)
+            this.todoItems.splice(prevIdx + 1, 0, movedItem)
+        }
+        this.render()
+    }
+
     private async clearCompleted() {
         const completedUids = this.todoItems
             .filter(i => i.status === 'completed')
@@ -227,6 +252,48 @@ class MealsView extends HTMLElement {
             }
             .shopping-item:last-child { border-bottom: none; }
             .shopping-item:active { background: var(--color-card-alt); }
+            
+            .shopping-item.dragging {
+                opacity: 0.1;
+                filter: grayscale(1);
+            }
+
+            .shopping-item {
+                position: relative;
+            }
+
+            .shopping-item.drag-over::before {
+                content: '';
+                position: absolute;
+                top: -1px;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--accent);
+                z-index: 10;
+                box-shadow: 0 0 10px var(--accent);
+                border-radius: 2px;
+            }
+
+            /* Prevent flickering by disabling pointer events on children during drag */
+            .shopping-list.dragging-active .shopping-item * {
+                pointer-events: none;
+            }
+
+            .drag-handle {
+                color: var(--text-secondary);
+                opacity: 0.3;
+                cursor: grab;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                margin-right: -8px;
+                flex-shrink: 0;
+            }
+            .drag-handle:active { cursor: grabbing; }
+            .drag-handle iconify-icon { font-size: 20px; }
 
             .checkbox {
                 width: 20px;
@@ -388,7 +455,10 @@ class MealsView extends HTMLElement {
     private renderItem(item: any) {
         const isCompleted = item.status === 'completed'
         return `
-            <div class="shopping-item ${isCompleted ? 'completed' : ''}" data-uid="${item.uid}">
+            <div class="shopping-item ${isCompleted ? 'completed' : ''}" 
+                 data-uid="${item.uid}" 
+                 draggable="${!isCompleted}">
+                
                 <div class="checkbox ${isCompleted ? 'checked' : ''}" data-uid="${item.uid}">
                     <iconify-icon icon="lucide:check"></iconify-icon>
                 </div>
@@ -396,9 +466,12 @@ class MealsView extends HTMLElement {
                     <span class="item-summary">${item.summary}</span>
                     ${item.description ? `<span class="item-description">${item.description}</span>` : ''}
                 </div>
-                <button class="delete-btn" data-uid="${item.uid}">
-                    <iconify-icon icon="lucide:x"></iconify-icon>
-                </button>
+
+                ${!isCompleted ? `
+                <div class="drag-handle">
+                    <iconify-icon icon="lucide:grip-vertical"></iconify-icon>
+                </div>
+                ` : ''}
             </div>
         `
     }
@@ -478,6 +551,67 @@ class MealsView extends HTMLElement {
 
         addInput?.addEventListener("keydown", (e) => {
             if (e.key === "Enter") handleAdd()
+        })
+
+        // Drag & Drop
+        let draggedUid: string | null = null
+        const shoppingList = root.querySelector(".shopping-list")
+
+        root.querySelectorAll(".shopping-item[draggable='true']").forEach(item => {
+            item.addEventListener("dragstart", (e: any) => {
+                draggedUid = item.getAttribute("data-uid")
+                item.classList.add("dragging")
+                shoppingList?.classList.add("dragging-active")
+                e.dataTransfer.effectAllowed = "move"
+            })
+
+            item.addEventListener("dragover", (e: any) => {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = "move"
+                const targetUid = item.getAttribute("data-uid")
+                if (targetUid !== draggedUid) {
+                    item.classList.add("drag-over")
+                }
+            })
+
+            item.addEventListener("dragleave", () => {
+                item.classList.remove("drag-over")
+            })
+
+            item.addEventListener("dragend", () => {
+                item.classList.remove("dragging")
+                shoppingList?.classList.remove("dragging-active")
+                root.querySelectorAll(".shopping-item").forEach(i => i.classList.remove("drag-over"))
+            })
+
+            item.addEventListener("drop", (e: any) => {
+                e.preventDefault()
+                item.classList.remove("drag-over")
+                shoppingList?.classList.remove("dragging-active")
+                const targetUid = item.getAttribute("data-uid")
+                
+                if (draggedUid && targetUid && draggedUid !== targetUid) {
+                    // Find actual active items to figure out previous item
+                    const activeItems = this.todoItems.filter(i => i.status !== 'completed')
+                    const targetIdx = activeItems.findIndex(i => i.uid === targetUid)
+                    const draggedIdx = activeItems.findIndex(i => i.uid === draggedUid)
+                    
+                    let previousUid: string | null = null
+                    
+                    if (targetIdx === 0) {
+                        // Move to top
+                        previousUid = null
+                    } else if (draggedIdx < targetIdx) {
+                        // Moving down: we want to be AFTER the target
+                        previousUid = targetUid
+                    } else {
+                        // Moving up: we want to be AFTER the item BEFORE the target
+                        previousUid = activeItems[targetIdx - 1].uid
+                    }
+                    
+                    this.moveItem(draggedUid, previousUid)
+                }
+            })
         })
     }
 }

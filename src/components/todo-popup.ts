@@ -166,11 +166,17 @@ class TodoPopup extends HTMLElement {
             }
 
             .input-group {
-                background: var(--color-card-alt);
+                background: var(--color-bg);
                 border-radius: var(--radius-md);
                 padding: 10px 14px;
                 margin-bottom: 12px;
                 border: 1px solid var(--border-color);
+            }
+            :host-context([data-theme="dark"]) .input-group,
+            @media (prefers-color-scheme: dark) {
+                .input-group {
+                    background: var(--color-card-alt);
+                }
             }
             .input-label {
                 font-size: 0.625rem;
