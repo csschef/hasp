@@ -49,6 +49,10 @@ export function getEntity(entityId: string) {
     return entities[entityId]
 }
 
+export function getEntitiesByDomain(domain: string): HAEntity[] {
+    return Object.values(entities).filter(e => e.entity_id.startsWith(`${domain}.`))
+}
+
 export function subscribeEntity(entityId: string, callback: Function) {
     if (!entityListeners[entityId]) {
         entityListeners[entityId] = []

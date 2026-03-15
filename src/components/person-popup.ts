@@ -1,5 +1,6 @@
-import { getEntity, subscribeEntity } from "../store/entity-store"
+import { getEntity, subscribeEntity, getEntitiesByDomain } from "../store/entity-store"
 import { HA_URL } from "../services/ha-client"
+import { fetchHistory } from "../services/ha-service"
 import type { HAEntity } from "../types/homeassistant"
 
 class PersonPopup extends HTMLElement {
@@ -27,13 +28,11 @@ class PersonPopup extends HTMLElement {
             return
         }
 
-        // Add Leaflet CSS
         const link = document.createElement("link")
         link.rel = "stylesheet"
         link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         this.shadow.appendChild(link)
 
-        // Add Leaflet JS
         const script = document.createElement("script")
         script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         script.onload = () => {
@@ -61,13 +60,110 @@ class PersonPopup extends HTMLElement {
         })
 
         this.update()
+        this.fetchAndRenderHistory()
         
-        // Finalize map after animation
         setTimeout(() => {
             if (this.leafletLoaded) {
                 this.initMap()
             }
         }, 400)
+    }
+
+    private getStateDate(state: any): number {
+        const val = state.last_changed || state.lc || state.last_updated || state.lu
+        if (!val) return 0
+        if (typeof val === 'number') return val * 1000
+        const d = new Date(val).getTime()
+        return isNaN(d) ? 0 : d
+    }
+
+    private getStateName(state: any): string {
+        return state.state || state.s || "unknown"
+    }
+
+    private formatDuration(seconds: number) {
+        if (seconds < 60) return `${seconds} sek`
+        const h = Math.floor(seconds / 3600)
+        const m = Math.floor((seconds % 3600) / 60)
+        
+        if (h > 0) {
+            const hText = h === 1 ? 'timme' : 'timmar'
+            const mText = m === 1 ? 'min' : 'min'
+            return m > 0 ? `${h} ${hText} ${m} ${mText}` : `${h} ${hText}`
+        }
+        return `${m} ${m === 1 ? 'minut' : 'minuter'}`
+    }
+
+    private async fetchAndRenderHistory() {
+        const historyContainer = this.shadow.querySelector(".history-content") as HTMLElement
+        if (!historyContainer) return
+        
+        historyContainer.innerHTML = '<div class="no-history">Hämtar historik...</div>'
+
+        const history = await fetchHistory(this.entityId, 24)
+        if (!history || history.length === 0) {
+            historyContainer.innerHTML = '<div class="no-history">Ingen historik tillgänglig</div>'
+            return
+        }
+
+        const now = new Date()
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+        const segments: any[] = []
+        
+        for (let i = 0; i < history.length; i++) {
+            const state = history[i]
+            const nextState = history[i + 1]
+            
+            const startTime = this.getStateDate(state)
+            const endTime = nextState ? this.getStateDate(nextState) : now.getTime()
+            
+            if (endTime < startOfToday) continue
+            
+            const actualStart = Math.max(startTime, startOfToday)
+            const durationSec = Math.round((endTime - actualStart) / 1000)
+            
+            if (durationSec < 10) continue
+
+            segments.push({
+                state: this.getStateName(state),
+                start: new Date(actualStart),
+                end: new Date(endTime),
+                duration: durationSec
+            })
+        }
+
+        if (segments.length === 0) {
+            historyContainer.innerHTML = '<div class="no-history">Ingen aktivitet idag</div>'
+            return
+        }
+
+        segments.reverse()
+
+        historyContainer.innerHTML = segments.map(seg => {
+            let label = seg.state
+            if (this.labelMapping[seg.state]) {
+                label = this.labelMapping[seg.state]
+            } else if (label === "home") {
+                label = "Hemma"
+            } else if (label === "not_home") {
+                label = "Borta"
+            } else {
+                label = label.charAt(0).toUpperCase() + label.slice(1)
+            }
+
+            const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            return `
+                <div class="history-item">
+                    <div class="item-details">
+                        <div class="item-header">
+                            <span class="item-location">${label}</span>
+                            <span class="item-duration">${this.formatDuration(seg.duration)}</span>
+                        </div>
+                        <div class="item-time">${formatTime(seg.start)} – ${formatTime(seg.end)}</div>
+                    </div>
+                </div>
+            `
+        }).join('')
     }
 
     close() {
@@ -99,13 +195,43 @@ class PersonPopup extends HTMLElement {
             maxZoom: 18
         }).setView([lat, lon], 17) 
 
-        // Premium Satellite tiles (Esri World Imagery)
         window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri'
         }).addTo(this.map)
 
+        // Draw Zones
+        const zones = getEntitiesByDomain("zone")
+        zones.forEach(zone => {
+            const zLat = zone.attributes.latitude
+            const zLon = zone.attributes.longitude
+            const radius = zone.attributes.radius || 100
+            const zoneName = zone.attributes.friendly_name || ""
+
+            if (zLat !== undefined && zLon !== undefined) {
+                // Circle styling
+                window.L.circle([zLat, zLon], {
+                    radius: radius,
+                    color: "rgba(118, 124, 218, 0.7)", // Premium blue border
+                    weight: 2,
+                    fillColor: "rgba(118, 124, 218, 0.25)", // Semi-transparent blue fill
+                    fillOpacity: 1,
+                    interactive: false
+                }).addTo(this.map)
+
+                // Name label
+                if (zoneName) {
+                    const labelIcon = window.L.divIcon({
+                        className: 'zone-label',
+                        html: `<div style="color: white; font-size: 10px; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8); white-space: nowrap; text-align: center;">${zoneName}</div>`,
+                        iconSize: [100, 20],
+                        iconAnchor: [50, -25] // Shifted down below person marker
+                    })
+                    window.L.marker([zLat, zLon], { icon: labelIcon, interactive: false }).addTo(this.map)
+                }
+            }
+        })
+
         this.marker = window.L.marker([lat, lon]).addTo(this.map)
-        
         this.updateMarkerIcon()
     }
 
@@ -133,31 +259,6 @@ class PersonPopup extends HTMLElement {
         }
     }
 
-    private formatDuration(lastChanged: string) {
-        if (!lastChanged) return ""
-        const now = new Date()
-        const changed = new Date(lastChanged)
-        const diffMs = now.getTime() - changed.getTime()
-        const diffMins = Math.floor(diffMs / 60000)
-        
-        const hours = Math.floor(diffMins / 60)
-        const mins = diffMins % 60
-        const days = Math.floor(hours / 24)
-
-        if (days > 0) {
-            const dText = days === 1 ? "dag" : "dagar"
-            const hText = (hours % 24) === 1 ? "timme" : "timmar"
-            return `${days} ${dText} och ${hours % 24} ${hText}`
-        }
-        if (hours > 0) {
-            const hText = hours === 1 ? "timme" : "timmar"
-            const mText = mins === 1 ? "minut" : "minuter"
-            return `${hours} ${hText} och ${mins} ${mText}`
-        }
-        const mText = mins === 1 ? "minut" : "minuter"
-        return `${mins} ${mText}`
-    }
-
     update() {
         if (!this.entity) return
 
@@ -173,17 +274,18 @@ class PersonPopup extends HTMLElement {
         let rawState = this.entity.state
         let state = rawState
 
-        // Apply custom mapping
         if (this.labelMapping[rawState]) {
             state = this.labelMapping[rawState]
+        } else if (state === "home") {
+            state = "Hemma"
+        } else if (state === "not_home") {
+            state = "Borta"
         } else {
-            if (state === "home") state = "Hemma"
-            else if (state === "not_home") state = "Borta"
-            // Capitalize state
             state = state.charAt(0).toUpperCase() + state.slice(1)
         }
         
-        const duration = this.formatDuration(this.entity.last_changed)
+        const lastChanged = this.getStateDate(this.entity)
+        const duration = this.formatDuration(Math.round((new Date().getTime() - lastChanged) / 1000))
         subtitle.textContent = `${state} i ${duration}.`
 
         if (this.map && lat !== undefined && lon !== undefined && this.marker) {
@@ -215,7 +317,7 @@ class PersonPopup extends HTMLElement {
 }
 .sheet {
     position: absolute;
-    top: 60px;
+    top: 52px; /* Matches layout updates */
     left: 50%;
     transform: translate(-50%, 16px);
     opacity: 0;
@@ -223,14 +325,14 @@ class PersonPopup extends HTMLElement {
     max-width: 480px;
     background: var(--color-card);
     border-radius: var(--radius-xl);
-    padding: 20px;
+    padding: 2.2rem 1.4rem 1.4rem;
     border: 1px solid var(--border-color);
     box-shadow: 0 24px 64px rgba(0,0,0,0.2);
     box-sizing: border-box;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 1.25rem;
 }
 :host(.active) .sheet {
     transform: translate(-50%, 0);
@@ -273,14 +375,80 @@ class PersonPopup extends HTMLElement {
     flex-shrink: 0;
 }
 .close:active { background: var(--border-color); }
+
 #map {
     width: 100%;
-    height: 360px;
+    height: 300px;
     border-radius: var(--radius-lg);
     background: var(--color-card-alt);
     z-index: 1;
     border: 1px solid var(--border-color);
     overflow: hidden;
+    flex-shrink: 0;
+}
+
+.history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.history-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    padding-left: 2px;
+}
+.history-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.history-content::-webkit-scrollbar { width: 0; }
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    background: transparent;
+}
+.history-item:not(:last-child) {
+    border-bottom: 1px solid rgba(var(--text-secondary-rgb, 128, 128, 128), 0.1);
+}
+.item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+}
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.item-location {
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+.item-duration {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+.item-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+.no-history {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    text-align: center;
+    padding: 30px;
 }
 </style>
 <div class="sheet">
@@ -292,6 +460,12 @@ class PersonPopup extends HTMLElement {
         <div class="close"><iconify-icon icon="lucide:x" style="font-size:0.875rem;"></iconify-icon></div>
     </div>
     <div id="map"></div>
+    <div class="history-section">
+        <div class="history-title">Historik idag</div>
+        <div class="history-content">
+            <div class="no-history">Hämtar historik...</div>
+        </div>
+    </div>
 </div>
 `
         const host = this.shadow.host as HTMLElement
