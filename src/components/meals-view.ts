@@ -134,7 +134,7 @@ class MealsView extends HTMLElement {
 
         this.shadowRoot!.innerHTML = `
         <style>
-            :host { display: block; padding: 0 var(--space-md) 140px; color: var(--text-primary); font-family: var(--font-main); }
+            :host { display: block; padding: 0 var(--space-md) 24px; color: var(--text-primary); font-family: var(--font-main); }
 
             h2 {
                 font-size: 0.6875rem;
