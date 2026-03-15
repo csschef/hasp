@@ -2,6 +2,30 @@
 
 A mobile-first, performance-oriented dashboard I built for Home Assistant using Vite, TypeScript, and Web Components. Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI.
 
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="https://github.com/user-attachments/assets/29b1d333-d513-49be-aeba-2bdc80c60f57" width="230" alt="Dashboard 1"></td>
+      <td><img src="https://github.com/user-attachments/assets/a9171ce4-a0ea-4033-a996-41291629f5cb" width="230" alt="Dashboard 2"></td>
+      <td><img src="https://github.com/user-attachments/assets/6312dd95-6de5-4244-b425-a6b4365509ee" width="230" alt="Dashboard 3"></td>
+      <td><img src="https://github.com/user-attachments/assets/0e572715-0a53-4dd5-a20e-4a33cf158009" width="230" alt="Dashboard 4"></td>
+    </tr>
+    <tr>
+      <td><img src="https://github.com/user-attachments/assets/9910683d-0bd5-4a60-b0f3-cf5965a01c26" width="230" alt="Dashboard 5"></td>
+      <td><img src="https://github.com/user-attachments/assets/1a3328c5-ec14-4ec7-a774-d6597d736cf2" width="230" alt="Dashboard 6"></td>
+      <td><img src="https://github.com/user-attachments/assets/63c22fca-9703-48a2-9a8b-24ae8052c17a" width="230" alt="Dashboard 7"></td>
+      <td><img src="https://github.com/user-attachments/assets/e13f44ed-b6f5-4adb-821b-f6fbd7dd1e50" width="230" alt="Dashboard 8"></td>
+    </tr>
+    <tr>
+      <td><img src="https://github.com/user-attachments/assets/b64a0c70-c2cd-4957-8e3b-a8c8e2d881f4" width="230" alt="Dashboard 9"></td>
+      <td><img src="https://github.com/user-attachments/assets/293e0739-d30e-4870-ae36-66548397a29b" width="230" alt="Dashboard 10"></td>
+      <td><img src="https://github.com/user-attachments/assets/3bc165ad-9f50-4f9a-82cb-ad0ab10f0af5" width="230" alt="Dashboard 11"></td>
+      <td><img src="https://github.com/user-attachments/assets/306846c8-9592-49b0-93ab-548df99711aa" width="230" alt="Dashboard 12"></td>
+    </tr>
+  </table>
+</div>
+
+
 ## Why I Built This
 
 I created HASP because I hit a limit with standard Home Assistant dashboards. I wanted a UI that felt like a premium native app, not a collection of boxes on a webpage. 
