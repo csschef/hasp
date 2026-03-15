@@ -105,3 +105,30 @@ export function callShoppingList(service: string, data: any = {}) {
         ...data
     }))
 }
+
+export function fetchTodoItems(entityId: string): Promise<any[]> {
+    return new Promise((resolve) => {
+        if (!socket) return resolve([])
+        const reqId = nextId()
+        const handler = (event: MessageEvent) => {
+            const msg = JSON.parse(event.data)
+            if (msg.id === reqId) {
+                socket!.removeEventListener("message", handler)
+                resolve(msg.result?.items || [])
+            }
+        }
+        socket.addEventListener("message", handler)
+        socket.send(JSON.stringify({ 
+            id: reqId, 
+            type: "todo/item/list",
+            entity_id: entityId
+        }))
+    })
+}
+
+export function callTodoService(service: string, entityId: string, data: any = {}) {
+    callService("todo", service, {
+        entity_id: entityId,
+        ...data
+    })
+}
