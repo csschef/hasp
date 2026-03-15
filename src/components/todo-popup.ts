@@ -77,8 +77,7 @@ class TodoPopup extends HTMLElement {
     }
 
     render() {
-        // Muted version of the brand green
-        const mutedGreen = "rgba(61, 187, 97, 0.7)"
+
 
         this.shadow.innerHTML = `
         <style>
@@ -220,14 +219,15 @@ class TodoPopup extends HTMLElement {
                 gap: 8px;
             }
             .btn-delete {
-                background: var(--color-card-alt);
-                color: #ff4d4d;
-                border: 1px solid var(--border-color);
+                background: var(--color-danger);
+                color: white;
+                border: none;
             }
-            .btn-delete:active { background: rgba(255, 77, 77, 0.1); transform: scale(0.98); }
-
+            .btn-delete:active { opacity: 0.8; transform: scale(0.98); }
+            .btn-delete:hover { opacity: 0.9; }
+ 
             .btn-save {
-                background: ${mutedGreen};
+                background: var(--color-success);
                 color: white;
             }
             .btn-save:active { transform: scale(0.98); opacity: 0.9; }

@@ -167,26 +167,34 @@ class LightCard extends BaseCard {
 
         if (cc && isOn) {
 
-            // Light is on AND has a colour (color_temp / rgb)
-            const { r, g, b } = cc
-            const l = (v: number) => Math.min(255, Math.round(v + (255 - v) * 0.2))
-            const dk = (v: number) => Math.round(v * 0.65)
+            // Nordic tweak: desaturate colors slightly for a sophisticated feel
+            const ice = (v: number) => {
+                const avg = (cc.r + cc.g + cc.b) / 3
+                return Math.round(v * 0.85 + avg * 0.15)
+            }
+            const rf = ice(cc.r), gf = ice(cc.g), bf = ice(cc.b)
 
-            card.style.setProperty("--card-bg",
-                `linear-gradient(135deg, rgb(${r},${g},${b}), rgb(${l(r)},${l(g)},${l(b)}))`)
+            const l = (v: number) => Math.min(255, Math.round(v + (255 - v) * 0.25))
+            const dk = (v: number) => Math.round(v * 0.7)
 
-            accentColor = `rgb(${dk(r)},${dk(g)},${dk(b)})`
+            // Directional Light Gradient: Base color -> Lightened highlights on the right
+            const baseCol = `rgb(${rf},${gf},${bf})`
+            const lightCol = `rgb(${l(rf)},${l(gf)},${l(bf)})`
+            card.style.setProperty("--card-bg", `linear-gradient(145deg, ${baseCol} 0%, ${lightCol} 100%)`)
+
+            accentColor = `rgb(${dk(rf)},${dk(gf)},${dk(bf)})`
 
             const lin = (v: number) => {
                 v = v / 255
                 return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
             }
-            const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-            const isLight = lum > 0.35
+            const lum = 0.2126 * lin(rf) + 0.7152 * lin(gf) + 0.0722 * lin(bf)
+            const isLight = lum > 0.45
 
-            card.style.setProperty("--card-text-primary", isLight ? "#1a1a1a" : "#ffffff")
-            card.style.setProperty("--card-text-secondary", isLight ? "#333333" : "rgba(255,255,255,0.75)")
-            card.style.setProperty("--card-icon-fill", isLight ? "#1a1a1a" : "#ffffff")
+            card.style.setProperty("--card-text-primary", isLight ? "#2e3440" : "#eceff4")
+            card.style.setProperty("--card-text-secondary", isLight ? "rgba(46, 52, 64, 0.75)" : "rgba(236, 239, 244, 0.7)")
+            card.style.setProperty("--card-icon-fill", isLight ? "#2e3440" : "#eceff4")
+            card.style.setProperty("border-color", isLight ? "rgba(46, 52, 64, 0.1)" : "rgba(255, 255, 255, 0.15)")
 
         } else {
 

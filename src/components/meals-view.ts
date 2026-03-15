@@ -104,8 +104,8 @@ class MealsView extends HTMLElement {
         const activeItems = this.todoItems.filter(i => i.status !== 'completed')
         const completedItems = this.todoItems.filter(i => i.status === 'completed')
         
-        // Use guest mode green: #3dbb61
-        const brandGreen = "#3dbb61"
+        // Nordic Success color for branding
+        const brandGreen = "var(--color-success)"
 
         this.shadowRoot!.innerHTML = `
         <style>
@@ -125,8 +125,8 @@ class MealsView extends HTMLElement {
             .meal-list {
                 display: flex;
                 flex-direction: column;
-                gap: 1px;
-                background: var(--border-color);
+                gap: 0;
+                background: none;
                 border-radius: var(--radius-md);
                 overflow: hidden;
                 border: 1px solid var(--border-color);
@@ -159,6 +159,9 @@ class MealsView extends HTMLElement {
                 padding: 0;
                 font-family: var(--font-main);
                 letter-spacing: -0.01em;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
             }
             .meal-input::placeholder { color: var(--text-secondary); opacity: 0.3; }
 
@@ -168,7 +171,6 @@ class MealsView extends HTMLElement {
                 border-radius: var(--radius-md);
                 border: 1px solid var(--border-color);
                 overflow: hidden;
-                margin-top: 4px;
             }
 
             .add-item-bar {
@@ -176,8 +178,10 @@ class MealsView extends HTMLElement {
                 align-items: center;
                 gap: 12px;
                 padding: 12px 16px;
-                border-bottom: 1px solid var(--border-color);
-                background: var(--color-card-alt);
+                background: var(--color-card);
+                border-radius: var(--radius-md);
+                border: 1px solid var(--border-color);
+                margin-bottom: 24px;
             }
 
             .add-input {
@@ -196,8 +200,8 @@ class MealsView extends HTMLElement {
                 width: 26px;
                 height: 26px;
                 border-radius: 50%;
-                background: var(--border-color);
-                color: var(--text-secondary);
+                background: ${brandGreen};
+                color: white;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -206,7 +210,6 @@ class MealsView extends HTMLElement {
                 transition: all 0.2s ease;
             }
             .add-btn:active { transform: scale(0.9); }
-            .add-btn:hover { background: ${brandGreen}; color: white; }
             .add-btn iconify-icon { font-size: 16px; }
 
             .shopping-list {
@@ -219,7 +222,6 @@ class MealsView extends HTMLElement {
                 align-items: center;
                 gap: 12px;
                 padding: 14px 16px;
-                border-bottom: 1px solid var(--border-color);
                 transition: background 0.15s ease;
                 cursor: pointer;
             }
@@ -240,9 +242,9 @@ class MealsView extends HTMLElement {
             }
             .checkbox:hover { border-color: ${brandGreen}; }
             .checkbox.checked {
-                background: rgba(61, 187, 97, 0.12);
+                background: ${brandGreen};
                 border-color: ${brandGreen};
-                color: ${brandGreen};
+                color: white;
             }
             .checkbox iconify-icon {
                 font-size: 12px;
@@ -293,15 +295,16 @@ class MealsView extends HTMLElement {
                 flex-shrink: 0;
             }
             .shopping-item:hover .delete-btn { opacity: 0.4; }
+            .shopping-item.completed .delete-btn { display: none; }
 
             .section-header {
-                padding: 10px 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background: var(--color-card-alt);
-                border-top: 1px solid var(--border-color);
-                border-bottom: 1px solid var(--border-color);
+                margin: 32px 0 12px;
+                background: none;
+                border: none;
+                padding: 0;
             }
             .section-title {
                 font-size: 0.6875rem;
@@ -313,24 +316,21 @@ class MealsView extends HTMLElement {
             }
 
             .clear-btn {
-                font-size: 0.6875rem;
-                font-weight: 600;
-                color: var(--text-secondary);
-                background: none;
+                font-size: 0.625rem;
+                font-weight: 700;
+                color: white;
+                background: var(--color-danger);
+                border-radius: 20px;
                 border: none;
-                padding: 4px 0;
+                padding: 5px 12px;
                 cursor: pointer;
-                opacity: 0.6;
                 transition: all 0.2s ease;
                 text-transform: uppercase;
-                letter-spacing: 0.02em;
+                letter-spacing: 0.03em;
             }
-            .clear-btn:hover { opacity: 1; color: ${brandGreen}; }
+            .clear-btn:active { transform: scale(0.95); opacity: 0.9; }
             .clear-btn.confirm {
-                background: #ff4d4d;
-                color: white;
-                border-color: transparent;
-                opacity: 1;
+                background: var(--color-danger);
             }
         </style>
 
@@ -351,31 +351,35 @@ class MealsView extends HTMLElement {
         </div>
 
         <h2>Inköpslista</h2>
-        <div class="shopping-container">
-            <div class="add-item-bar">
-                <input type="text" 
-                       class="add-input" 
-                       id="addInput" 
-                       placeholder="Lägg till vara...">
-                <button class="add-btn" id="addBtn">
-                    <iconify-icon icon="lucide:plus"></iconify-icon>
-                </button>
-            </div>
+        <div class="add-item-bar">
+            <input type="text" 
+                    class="add-input" 
+                    id="addInput" 
+                    placeholder="Lägg till vara...">
+            <button class="add-btn" id="addBtn">
+                <iconify-icon icon="lucide:plus"></iconify-icon>
+            </button>
+        </div>
 
+        <div class="shopping-container">
             <div class="shopping-list">
                 ${activeItems.map((item) => this.renderItem(item)).join('')}
-                
-                ${completedItems.length > 0 ? `
-                    <div class="section-header">
-                        <span class="section-title">Avklarade</span>
-                        <button class="clear-btn ${this.isConfirmingClear ? 'confirm' : ''}" id="clearBtn">
-                            ${this.isConfirmingClear ? 'Är du säker?' : 'Töm lista'}
-                        </button>
-                    </div>
-                    ${completedItems.map((item) => this.renderItem(item)).join('')}
-                ` : ''}
             </div>
         </div>
+
+        ${completedItems.length > 0 ? `
+            <div class="section-header">
+                <span class="section-title">Avklarade</span>
+                <button class="clear-btn ${this.isConfirmingClear ? 'confirm' : ''}" id="clearBtn">
+                    ${this.isConfirmingClear ? 'Är du säker?' : 'Töm lista'}
+                </button>
+            </div>
+            <div class="shopping-container">
+                <div class="shopping-list">
+                    ${completedItems.map((item) => this.renderItem(item)).join('')}
+                </div>
+            </div>
+        ` : ''}
         `
 
         this.setupEventListeners()

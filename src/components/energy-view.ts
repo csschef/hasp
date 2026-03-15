@@ -20,14 +20,14 @@ class EnergyView extends HTMLElement {
     }
 
     private getPriceStatus(price: number): { color: string; label: string } {
-        if (!this.prices.length) return { color: "#8e8e93", label: "Hämtar..." }
+        if (!this.prices.length) return { color: "var(--text-secondary)", label: "Hämtar..." }
         const min = Math.min(...this.prices)
         const max = Math.max(...this.prices)
         const range = max - min
         
-        if (price <= min + range * 0.3) return { color: "#34c759", label: "Billigt" }
-        if (price >= max - range * 0.3) return { color: "#ff3b30", label: "Dyrast" }
-        return { color: "#ffcc00", label: "Normalt" }
+        if (price <= min + range * 0.3) return { color: "var(--color-success)", label: "Billigt" }
+        if (price >= max - range * 0.3) return { color: "var(--color-danger)", label: "Dyrast" }
+        return { color: "var(--yellow-accent)", label: "Normalt" }
     }
 
     render() {

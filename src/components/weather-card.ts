@@ -176,6 +176,7 @@ class WeatherCard extends HTMLElement {
                     background: var(--color-card);
                     border-radius: var(--radius-md);
                     padding: var(--space-md);
+                    border: 1px solid var(--border-color);
                     color: var(--text-primary);
                     opacity: 0;
                     transition: opacity 0.4s ease-out, background 0.3s ease;
@@ -189,6 +190,7 @@ class WeatherCard extends HTMLElement {
                     :host:not([data-theme="dark"]) {
                         background: linear-gradient(180deg, rgba(51,140,210,1) 40%, rgba(89,179,224,1) 100%);
                         color: #ffffff;
+                        border-color: rgba(255, 255, 255, 0.3);
                     }
                     :host:not([data-theme="dark"]) .label,
                     :host:not([data-theme="dark"]) .location,
@@ -216,6 +218,7 @@ class WeatherCard extends HTMLElement {
                 :host-context([data-theme="light"]) {
                     background: linear-gradient(180deg, rgba(51,140,210,1) 40%, rgba(89,179,224,1) 100%);
                     color: #ffffff;
+                    border-color: rgba(255, 255, 255, 0.3);
                 }
                 :host-context([data-theme="light"]) .label,
                 :host-context([data-theme="light"]) .location,
