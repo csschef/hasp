@@ -197,7 +197,6 @@ class PersonCard extends BaseCard {
                     background-size: cover;
                     background-position: center;
                     background-color: var(--color-card-alt);
-                    border: 1.5px solid var(--border-color);
                 }
                 .battery-pill {
                     position: absolute;

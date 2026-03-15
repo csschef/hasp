@@ -74,7 +74,7 @@ class ToggleSwitch extends HTMLElement {
         .knob {
           width: 12px;
           height: 12px;
-          background: var(--text-secondary);
+          background: #9ba5b5;
           border-radius: 50%;
           position: absolute;
           top: 2px;
@@ -87,11 +87,14 @@ class ToggleSwitch extends HTMLElement {
           background: white;
         }
 
-        /* Dark mode specific overrides — handled by tokens but keeping structure for scale */
+        /* Dark mode specific overrides — var(--text-secondary) looks great in dark mode */
         @media (prefers-color-scheme: dark) {
           .switch:not(.checked) .knob {
-            /* Inherits var(--text-secondary) from dark tokens */
+            background: var(--text-secondary);
           }
+        }
+        [data-theme="dark"] .switch:not(.checked) .knob {
+            background: var(--text-secondary);
         }
       </style>
 

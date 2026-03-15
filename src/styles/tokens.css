@@ -35,92 +35,99 @@ body {
     /* typography */
     --font-main: "Inter", system-ui, sans-serif;
 
-    /* ── Light theme (default) ──────────────────────────────────────────── */
-    /* Warm linen white — not pure white, avoids harshness */
-    --color-bg: #f4f3f0;
-    --color-card: #fdfcfb;
-    --color-card-alt: #eeecea;
-    --color-overlay: rgba(30, 28, 25, 0.4);
+    /* ── Nordic Stone ──────────────────────────────────────────────────────── */
+    /* Muted, professional stone/snow bases */
+    --color-bg: #eff1f3;
+    --color-card: #ffffff;
+    --color-card-alt: #e1e4e8;
+    --color-overlay: rgba(46, 52, 64, 0.3);
 
-    --text-primary: #1a1917;
-    --text-secondary: #7a7670;
+    --text-primary: #2e3440;
+    --text-secondary: #4c566a;
 
-    --border-color: #e4e2de;
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --border-color: #d1d8e0;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);
 
-    /* Nordic Steel Blue — calm, muted, not saturated */
+    /* Nordic Steel Blue — the user's favorite */
     --accent: #5b7fa6;
     --accent-muted: rgba(91, 127, 166, 0.12);
     --accent-low: rgba(91, 127, 166, 0.06);
 
-    /* Vibrant gold for notifications */
-    --yellow-accent: #f0a500;
+    /* Clean Nordic Gold */
+    --yellow-accent: #e4bc0d;
+    --color-success: #a3be8c;
+    --color-danger: #bf616a;
 }
 
 /* ── Dark theme via system preference ──────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --color-bg: #0f0f10;
-        --color-card: #222225;
-        /* Specific inactive standout */
-        --color-card-alt: #1a1a1d;
-        --color-overlay: rgba(0, 0, 0, 0.60);
+        /* Deep Arctic Slate */
+        --color-bg: #1a1e23;
+        --color-card: #242933;
+        --color-card-alt: #2e3440;
+        --color-overlay: rgba(0, 0, 0, 0.5);
 
-        --text-primary: #e8e6e2;
-        --text-secondary: #999794;
+        --text-primary: #eceff4;
+        --text-secondary: #aeb3bd;
 
-        --border-color: #2e2d30;
-        --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
-        --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
+        --border-color: #3b4252;
+        --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.4);
 
-        --accent: #6b8fb8;
-        --accent-muted: rgba(107, 143, 184, 0.14);
-        --accent-low: rgba(107, 143, 184, 0.07);
+        --accent: #81a1c1;
+        --accent-muted: rgba(129, 161, 193, 0.15);
+        --accent-low: rgba(129, 161, 193, 0.08);
 
-        --yellow-accent: #f5b830;
+        --yellow-accent: #fadb5f;
+        --color-success: #a3be8c;
+        --color-danger: #bf616a;
     }
 }
 
 /* ── Manual dark override ───────────────────────────────────────────────── */
 [data-theme="dark"] {
-    --color-bg: #0f0f10;
-    --color-card: #222225;
-    --color-card-alt: #1a1a1d;
-    --color-overlay: rgba(0, 0, 0, 0.60);
+    --color-bg: #1a1e23;
+    --color-card: #242933;
+    --color-card-alt: #2e3440;
+    --color-overlay: rgba(0, 0, 0, 0.5);
 
-    --text-primary: #e8e6e2;
-    --text-secondary: #999794;
+    --text-primary: #eceff4;
+    --text-secondary: #aeb3bd;
 
-    --border-color: #2e2d30;
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
+    --border-color: #3b4252;
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.4);
 
-    --accent: #6b8fb8;
-    --accent-muted: rgba(107, 143, 184, 0.14);
-    --accent-low: rgba(107, 143, 184, 0.07);
+    --accent: #81a1c1;
+    --accent-muted: rgba(129, 161, 193, 0.15);
+    --accent-low: rgba(129, 161, 193, 0.08);
 
-    --yellow-accent: #f5b830;
+    --yellow-accent: #fadb5f;
+    --color-success: #a3be8c;
+    --color-danger: #bf616a;
 }
 
 /* ── Manual light override ──────────────────────────────────────────────── */
 [data-theme="light"] {
-    --color-bg: #f4f3f0;
-    --color-card: #fdfcfb;
-    --color-card-alt: #eeecea;
-    /* Matches iOS inactive background */
-    --color-overlay: rgba(30, 28, 25, 0.4);
+    --color-bg: #eff1f3;
+    --color-card: #ffffff;
+    --color-card-alt: #e1e4e8;
+    --color-overlay: rgba(46, 52, 64, 0.3);
 
-    --text-primary: #1a1917;
-    --text-secondary: #7a7670;
+    --text-primary: #2e3440;
+    --text-secondary: #4c566a;
 
-    --border-color: #e4e2de;
-    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --border-color: #d1d8e0;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);
 
     --accent: #5b7fa6;
     --accent-muted: rgba(91, 127, 166, 0.12);
     --accent-low: rgba(91, 127, 166, 0.06);
 
-    --yellow-accent: #f0a500;
+    --yellow-accent: #f2c94c;
+    --color-success: #a3be8c;
+    --color-danger: #bf616a;
 }

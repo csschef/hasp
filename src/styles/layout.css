@@ -26,9 +26,9 @@ body {
     position: sticky;
     top: 0;
     z-index: 5000;
-    background: color-mix(in srgb, var(--color-card) 96%, transparent);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    background: color-mix(in srgb, var(--color-card) 80%, transparent);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
     padding: 12px var(--space-md);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     height: auto;
@@ -36,30 +36,32 @@ body {
 }
 
 .topbar-main {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 36px;
     cursor: pointer;
+    z-index: 50; /* Above tray background */
 }
 
 /* Base tray — hidden but positioned absolutely */
 .topbar-tray {
     position: absolute;
-    top: calc(100% - 1px); /* Overlap topbar border to remove seam */
+    top: 0;
     left: 0;
     right: 0;
     width: 100%;
-    background: color-mix(in srgb, var(--color-card) 96%, transparent);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    padding: 0 var(--space-md) 32px;
+    background: color-mix(in srgb, var(--color-card) 80%, transparent);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    padding: 60px var(--space-md) 32px; /* 60px = topbar height offset */
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateY(-100%);
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
-    z-index: 1000;
+    z-index: 10;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     border-bottom: 1px solid var(--border-color);
     border-left: 1px solid var(--border-color);
@@ -67,18 +69,16 @@ body {
 }
 
 .topbar.expanded {
-    /* Solid when open — removes seam between topbar and tray */
-    background: var(--color-card);
+    background: transparent;
     border-bottom-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .topbar.expanded .topbar-tray {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    background: var(--color-card);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
 }
 
 /* Tray backdrop — darkens and blurs background when open */
@@ -143,9 +143,10 @@ body.tray-open .bottom-dock {
     display: none !important;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
+    margin-left: 8px;
 }
 
 .notification-bell-box.has-notifs {
@@ -157,24 +158,33 @@ body.tray-open .bottom-dock {
     display: none;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     cursor: default;
     border-radius: 50%;
+    margin-left: 8px;
 }
 .topbar-icon-btn.guest-active,
 .topbar-icon-btn.sleep-active {
     display: flex;
+    background: var(--accent);
+    transform: scale(0.9);
+    animation: icon-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+@keyframes icon-pop {
+    to { transform: scale(1); }
+}
+
 .topbar-icon-btn iconify-icon {
-    font-size: 1.375rem;
+    font-size: 1rem;
     transition: color 0.2s ease;
 }
 
-/* Guest mode active — outlined, secondary text color */
+/* Guest mode active — solid circle, white icon */
 .topbar-icon-btn.guest-active iconify-icon,
 .topbar-icon-btn.sleep-active iconify-icon {
-    color: var(--text-primary);
+    color: white;
     opacity: 1;
 }
 
@@ -205,21 +215,21 @@ body.tray-open .bottom-dock {
 
 .notification-badge {
     position: absolute;
-    top: -3px;
-    right: -4px;
-    background: var(--color-card);
-    color: var(--text-primary);
+    top: -2px;
+    right: -2px;
+    background: var(--color-danger);
+    color: white;
     min-width: 16px;
     height: 16px;
-    padding: 0 2px;
-    border-radius: 50%;
-    border: 1.5px solid var(--text-primary);
-    font-size: 0.5625rem;
-    font-weight: 700;
+    padding: 0 4px;
+    border-radius: 10px;
+    font-size: 0.625rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    z-index: 10;
 }
 
 /* ── Tray Sections ──────────────────────────────────────────── */
@@ -235,7 +245,7 @@ body.tray-open .bottom-dock {
 }
 .tray-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tray-tile {
-    background: var(--color-card-alt);
+    background: var(--color-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 14px 10px;
@@ -250,27 +260,15 @@ body.tray-open .bottom-dock {
 .tray-tile i,
 .tray-tile iconify-icon { font-size: 1.0625rem; color: var(--text-secondary); transition: color 0.2s ease; }
 .tray-tile span { font-size: 0.6875rem; font-weight: 400; color: var(--text-secondary); }
-.tray-tile.active { background: var(--accent-muted); border-color: var(--accent); }
+.tray-tile.active { 
+    background: var(--accent); 
+    border-color: var(--accent); 
+}
 .tray-tile.active i,
-.tray-tile.active iconify-icon { color: var(--accent); }
-.tray-tile.active span { color: var(--accent); }
+.tray-tile.active iconify-icon { color: #fff; }
+.tray-tile.active span { color: #fff; }
 
-/* Guest mode tile — green when active */
-#toggleGuestMode.active {
-    background: rgba(61, 187, 97, 0.12);
-    border-color: #3dbb61;
-}
-#toggleGuestMode.active iconify-icon,
-#toggleGuestMode.active span { color: #3dbb61; }
-
-/* Sleep mode tile — indigo/purple when active */
-#toggleSleepMode.active {
-    background: rgba(139, 126, 207, 0.12);
-    border-color: #8b7ecf;
-}
-#toggleSleepMode.active iconify-icon,
-#toggleSleepMode.active span { color: #8b7ecf; }
-
+/* Support for light mode contrast boost - REPLACED BY SOLID STYLE */
 .notification-list {
     display: flex;
     flex-direction: column;
@@ -281,9 +279,9 @@ body.tray-open .bottom-dock {
     position: sticky;
     top: 0;
     z-index: 2100;
-    background: color-mix(in srgb, var(--color-card) 96%, transparent);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    background: color-mix(in srgb, var(--color-card) 80%, transparent);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
     display: flex;
     align-items: center;
     padding: 12px var(--space-md);
@@ -373,7 +371,7 @@ room-divider { grid-column: 1 / -1; }
     left: 0;
     right: 0;
     height: 60px;
-    background: color-mix(in srgb, var(--color-card) 88%, transparent);
+    background: color-mix(in srgb, var(--color-card) 80%, transparent);
     backdrop-filter: blur(24px) saturate(150%);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
     border-top: 1px solid var(--border-color);
@@ -401,13 +399,15 @@ body.subview-active .bottom-dock {
     padding: 8px;
     flex: 1;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
-    opacity: 0.35;
+    opacity: 1;
 }
 .nav-item iconify-icon { font-size: 1.375rem; }
 .nav-item span { display: none; }
-.nav-item.active { opacity: 1; }
+.nav-item.active {
+    color: var(--text-primary);
+}
 
 /* ── Notification Actions ───────────────────────────────────── */
 .notif-actions { display: flex; gap: 8px; margin-top: 12px; }
