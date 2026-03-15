@@ -63,7 +63,6 @@ import "./components/person-popup"
 import "./components/tv-card"
 import "./components/tv-popup"
 import "./components/settings-popup"
-import "./components/user-header"
 import "./components/meals-view"
 import "./components/energy-view"
 import "./components/todo-popup"
@@ -183,10 +182,10 @@ function updateNotifications() {
     if (bellBox) {
         if (active.length > 0) {
             bellBox.classList.add("has-notifs")
-            if (bellIcon) bellIcon.icon = "ph:bell-simple-fill"
+            if (bellIcon) bellIcon.icon = "tabler:bell-filled"
         } else {
             bellBox.classList.remove("has-notifs")
-            if (bellIcon) bellIcon.icon = "ph:bell-simple"
+            if (bellIcon) bellIcon.icon = "lucide:bell"
         }
     }
 
@@ -198,27 +197,27 @@ function updateNotifications() {
             const val = entity?.state || "0";
             
             return `
-            <div style="background: var(--color-card); padding: 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color);">
+            <div class="notif-card" style="background: var(--color-card); padding: 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color);">
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="width: 38px; height: 38px; border-radius: var(--radius-sm); background: var(--accent-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <iconify-icon icon="${n.icon}" style="color: var(--accent); font-size: 18px;"></iconify-icon>
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--color-card-alt); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <iconify-icon icon="${n.icon}" style="color: var(--text-primary); font-size: 18px;"></iconify-icon>
                     </div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.msg}</div>
-                        ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 1px;">${val} st</div>` : ''}
+                        ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 1px;">Just nu: ${val} st</div>` : ''}
                     </div>
                 </div>
-                <div class="notif-actions" onclick="event.stopPropagation()">
+                <div class="notif-actions" onclick="event.stopPropagation()" style="margin-top: 12px; display: flex; gap: 8px;">
                     ${n.type === 'counter' ? `
-                        <button class="action-btn" onclick="notifAction('minus', '${n.id}')"><iconify-icon icon="lucide:minus" style="font-size:14px;"></iconify-icon></button>
-                        <button class="action-btn" onclick="notifAction('plus', '${n.id}')"><iconify-icon icon="lucide:plus" style="font-size:14px;"></iconify-icon></button>
-                        <button class="action-btn primary" onclick="notifAction('reset', '${n.id}')">Klar</button>
+                        <button class="action-btn" onclick="notifAction('minus', '${n.id}')" style="flex: 0 0 40px; height: 32px;"><iconify-icon icon="lucide:minus" style="font-size:14px;"></iconify-icon></button>
+                        <button class="action-btn" onclick="notifAction('plus', '${n.id}')" style="flex: 0 0 40px; height: 32px;"><iconify-icon icon="lucide:plus" style="font-size:14px;"></iconify-icon></button>
+                        <button class="action-btn primary" onclick="notifAction('reset', '${n.id}')" style="flex: 1; border-radius: 10px; height: 32px; font-size: 12px;">Klar</button>
                     ` : `
-                        <button class="action-btn primary" onclick="notifAction('off', '${n.id}')">Tömd</button>
+                        <button class="action-btn primary" onclick="notifAction('off', '${n.id}')" style="width: 100%; border-radius: 10px; height: 32px; font-size: 12px;">Tömd</button>
                     `}
                 </div>
-            </div>
-        `}).join('')
+            </div>`
+        }).join('')
     }
 }
 
@@ -295,13 +294,22 @@ if (document.readyState === "loading") {
 
 // ── Initial Listeners & UI ──
 const topbarEl = document.getElementById("topTrayContainer")
-topbarEl?.addEventListener("click", (e) => {
-    // Don't open tray when clicking the hamburger button
-    if ((e.target as HTMLElement).closest("#haMenuBtn")) return
-    if ((e.target as HTMLElement).closest(".topbar-tray")) return
-    const isExpanded = topbarEl.classList.toggle("expanded")
+const backdropEl = document.getElementById("trayBackdrop")
+
+function toggleTray(force?: boolean) {
+    const isExpanded = topbarEl?.classList.toggle("expanded", force)
     document.body.style.overflow = isExpanded ? "hidden" : ""
     document.body.classList.toggle("tray-open", isExpanded)
+}
+
+topbarEl?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest("#haMenuBtn")) return
+    if ((e.target as HTMLElement).closest(".topbar-tray")) return
+    toggleTray()
+})
+
+backdropEl?.addEventListener("click", () => {
+    toggleTray(false)
 })
 
 // ── HA Sidebar & Header ──────────────────────────────────────────────────

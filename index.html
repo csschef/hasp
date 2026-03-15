@@ -34,9 +34,7 @@
             <div class="ha-menu-btn" id="haMenuBtn" title="Meny">
                 <iconify-icon icon="lucide:menu"></iconify-icon>
             </div>
-            <div class="user-info">
-                <user-header></user-header>
-            </div>
+            <div style="flex: 1;"></div>
             <div class="topbar-icon-btn" id="guestModeBtn" title="Gästläge">
                 <iconify-icon icon="ph:users"></iconify-icon>
             </div>
@@ -44,7 +42,7 @@
                 <iconify-icon icon="ph:moon"></iconify-icon>
             </div>
             <div class="notification-bell-box">
-                <iconify-icon icon="ph:bell-simple"></iconify-icon>
+                <iconify-icon icon="lucide:bell"></iconify-icon>
                 <div id="notifBadge" class="notification-badge" style="display: none;">0</div>
             </div>
         </div>
@@ -63,7 +61,7 @@
                         <span>Gästläge</span>
                     </div>
                     <div class="tray-tile" id="toggleSleepMode">
-                        <iconify-icon icon="lucide:moon"></iconify-icon>
+                        <iconify-icon icon="ph:moon-light"></iconify-icon>
                         <span>Sovläge</span>
                     </div>
                 </div>
@@ -77,6 +75,7 @@
             </div>
         </div>
     </div>
+    <div class="tray-backdrop" id="trayBackdrop"></div>
 
     <!-- ═══════════════════════════════════════════════════════════
          TAB CONTENT

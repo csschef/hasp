@@ -465,6 +465,13 @@ class MealsView extends HTMLElement {
             e.stopPropagation()
             handleAdd()
         })
+        addInput?.addEventListener("focus", () => {
+            // Delay slightly to allow keyboard to start appearing
+            setTimeout(() => {
+                addInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }, 300)
+        })
+
         addInput?.addEventListener("keydown", (e) => {
             if (e.key === "Enter") handleAdd()
         })

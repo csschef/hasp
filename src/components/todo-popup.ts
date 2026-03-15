@@ -122,23 +122,33 @@ class TodoPopup extends HTMLElement {
 
             .header {
                 display: flex;
-                flex-direction: column;
-                gap: 2px;
+                justify-content: space-between;
+                align-items: center;
                 margin-bottom: 24px;
             }
 
-            .close-btn {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                width: 32px;
-                height: 32px;
+            .header-info {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .close {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--color-card-alt);
+                border: 1px solid var(--border-color);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: var(--text-secondary);
                 cursor: pointer;
-                opacity: 0.6;
+                color: var(--text-secondary);
+                transition: background 0.15s ease, transform 0.1s ease;
+            }
+            .close:active { 
+                background: var(--border-color); 
+                transform: scale(0.9);
             }
 
             .title {
@@ -224,12 +234,14 @@ class TodoPopup extends HTMLElement {
         </style>
 
         <div class="sheet">
-            <div class="close-btn" id="closeBtn">
-                <iconify-icon icon="lucide:x" style="font-size: 20px;"></iconify-icon>
-            </div>
             <div class="header">
-                <div class="subtitle">Hantera vara</div>
-                <div class="title">Matlista</div>
+                <div class="header-info">
+                    <div class="subtitle">Hantera vara</div>
+                    <div class="title">Matlista</div>
+                </div>
+                <div class="close" id="closeBtn">
+                    <iconify-icon icon="lucide:x" style="font-size: 0.875rem;"></iconify-icon>
+                </div>
             </div>
 
             <div class="input-group">
@@ -252,6 +264,18 @@ class TodoPopup extends HTMLElement {
             </div>
         </div>
         `
+
+        const nameInput = this.shadow.querySelector("#nameInput") as HTMLInputElement
+        const descInput = this.shadow.querySelector("#descInput") as HTMLTextAreaElement
+
+        const scrollToInput = (el: HTMLElement) => {
+            setTimeout(() => {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }, 300)
+        }
+
+        nameInput?.addEventListener("focus", () => scrollToInput(nameInput))
+        descInput?.addEventListener("focus", () => scrollToInput(descInput))
 
         this.shadow.querySelector("#closeBtn")?.addEventListener("click", () => this.close())
         this.shadow.querySelector("#saveBtn")?.addEventListener("click", () => this.save())
