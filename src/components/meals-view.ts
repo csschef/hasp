@@ -14,6 +14,7 @@ class MealsView extends HTMLElement {
     private todoEntityId = "todo.matlista"
     private todoItems: any[] = []
     private isConfirmingClear = false
+    private guestModeId = "input_boolean.gast"
 
     constructor() {
         super()
@@ -29,6 +30,9 @@ class MealsView extends HTMLElement {
             subscribeEntity(entityId, () => this.render())
         })
 
+        // Subscribe to guest mode for color sync
+        subscribeEntity(this.guestModeId, () => this.render())
+
         // Subscribe to todo list
         subscribeEntity(this.todoEntityId, () => this.updateTodoItems())
         
@@ -38,7 +42,6 @@ class MealsView extends HTMLElement {
 
     private async updateTodoItems() {
         this.todoItems = await fetchTodoItems(this.todoEntityId)
-        console.log("Fetched Todo Items:", this.todoItems)
         this.render()
     }
 
@@ -79,13 +82,10 @@ class MealsView extends HTMLElement {
             .map(i => i.uid || i.summary)
         
         if (completedUids.length > 0) {
-            console.log("Clearing Completed Items:", completedUids)
             await callService("todo", "remove_item", {
                 entity_id: this.todoEntityId,
                 item: completedUids
             })
-
-            // Refresh the list after a small delay to give HA time to update
             setTimeout(() => this.updateTodoItems(), 400)
         }
         
@@ -103,6 +103,9 @@ class MealsView extends HTMLElement {
     render() {
         const activeItems = this.todoItems.filter(i => i.status !== 'completed')
         const completedItems = this.todoItems.filter(i => i.status === 'completed')
+        
+        // Use guest mode green: #3dbb61
+        const brandGreen = "#3dbb61"
 
         this.shadowRoot!.innerHTML = `
         <style>
@@ -131,24 +134,25 @@ class MealsView extends HTMLElement {
             }
             .meal-card {
                 background: var(--color-card);
-                padding: 14px 16px;
+                padding: 12px 16px;
                 display: grid;
-                grid-template-columns: 90px 1fr;
+                grid-template-columns: 80px 1fr;
                 align-items: center;
                 gap: 12px;
             }
             .day-label {
-                font-size: 0.75rem;
+                font-size: 0.6875rem;
                 font-weight: 500;
                 color: var(--text-secondary);
-                letter-spacing: 0.02em;
-                opacity: 0.7;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                opacity: 0.6;
             }
             .meal-input {
                 background: none;
                 border: none;
                 color: var(--text-primary);
-                font-size: 0.9375rem;
+                font-size: 0.875rem;
                 font-weight: 400;
                 width: 100%;
                 outline: none;
@@ -171,7 +175,7 @@ class MealsView extends HTMLElement {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                padding: 14px 16px;
+                padding: 12px 16px;
                 border-bottom: 1px solid var(--border-color);
                 background: var(--color-card-alt);
             }
@@ -181,7 +185,7 @@ class MealsView extends HTMLElement {
                 background: none;
                 border: none;
                 color: var(--text-primary);
-                font-size: 0.9375rem;
+                font-size: 0.875rem;
                 font-weight: 400;
                 outline: none;
                 font-family: var(--font-main);
@@ -189,20 +193,21 @@ class MealsView extends HTMLElement {
             .add-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
 
             .add-btn {
-                width: 28px;
-                height: 28px;
+                width: 26px;
+                height: 26px;
                 border-radius: 50%;
-                background: var(--accent);
-                color: white;
+                background: var(--border-color);
+                color: var(--text-secondary);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 border: none;
                 cursor: pointer;
-                transition: transform 0.1s;
+                transition: all 0.2s ease;
             }
             .add-btn:active { transform: scale(0.9); }
-            .add-btn iconify-icon { font-size: 18px; }
+            .add-btn:hover { background: ${brandGreen}; color: white; }
+            .add-btn iconify-icon { font-size: 16px; }
 
             .shopping-list {
                 display: flex;
@@ -211,7 +216,7 @@ class MealsView extends HTMLElement {
 
             .shopping-item {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 gap: 12px;
                 padding: 14px 16px;
                 border-bottom: 1px solid var(--border-color);
@@ -222,26 +227,25 @@ class MealsView extends HTMLElement {
             .shopping-item:active { background: var(--color-card-alt); }
 
             .checkbox {
-                width: 22px;
-                height: 22px;
+                width: 20px;
+                height: 20px;
                 border-radius: 6px;
-                border: 2px solid var(--border-color);
+                border: 1.5px solid var(--border-color);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 flex-shrink: 0;
-                margin-top: 1px;
             }
-            .checkbox:hover { border-color: var(--accent); }
+            .checkbox:hover { border-color: ${brandGreen}; }
             .checkbox.checked {
-                background: var(--accent);
-                border-color: var(--accent);
-                color: white;
+                background: rgba(61, 187, 97, 0.12);
+                border-color: ${brandGreen};
+                color: ${brandGreen};
             }
             .checkbox iconify-icon {
-                font-size: 14px;
+                font-size: 12px;
                 display: none;
                 pointer-events: none;
             }
@@ -252,28 +256,28 @@ class MealsView extends HTMLElement {
             .item-content {
                 flex: 1;
                 min-width: 0;
-                pointer-events: none; /* Let the row handle clicks */
+                pointer-events: none;
                 display: flex;
                 flex-direction: column;
             }
 
             .item-summary {
                 color: var(--text-primary);
-                font-size: 0.9375rem;
+                font-size: 0.875rem;
                 font-weight: 400;
                 line-height: 1.4;
             }
             .shopping-item.completed .item-summary {
                 color: var(--text-secondary);
                 text-decoration: line-through;
-                opacity: 0.6;
+                opacity: 0.5;
             }
 
             .item-description {
-                font-size: 0.8125rem;
+                font-size: 0.75rem;
                 color: var(--text-secondary);
                 opacity: 0.6;
-                margin-top: 2px;
+                margin-top: 1px;
             }
 
             .delete-btn {
@@ -291,38 +295,39 @@ class MealsView extends HTMLElement {
             .shopping-item:hover .delete-btn { opacity: 0.4; }
 
             .section-header {
-                padding: 12px 16px;
+                padding: 10px 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background: rgba(0,0,0,0.02);
+                background: var(--color-card-alt);
                 border-top: 1px solid var(--border-color);
                 border-bottom: 1px solid var(--border-color);
             }
             .section-title {
-                font-size: 0.75rem;
+                font-size: 0.6875rem;
                 font-weight: 600;
-                color: var(--accent);
+                color: var(--text-secondary);
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
-                opacity: 0.8;
+                letter-spacing: 0.06em;
+                opacity: 0.7;
             }
 
             .clear-btn {
-                font-size: 0.75rem;
+                font-size: 0.6875rem;
                 font-weight: 600;
                 color: var(--text-secondary);
                 background: none;
-                border: 1px solid var(--border-color);
-                padding: 4px 10px;
-                border-radius: var(--radius-sm);
+                border: none;
+                padding: 4px 0;
                 cursor: pointer;
                 opacity: 0.6;
                 transition: all 0.2s ease;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
             }
-            .clear-btn:hover { opacity: 1; background: var(--color-card-alt); }
+            .clear-btn:hover { opacity: 1; color: ${brandGreen}; }
             .clear-btn.confirm {
-                background: var(--error, #ff4d4d);
+                background: #ff4d4d;
                 color: white;
                 border-color: transparent;
                 opacity: 1;
@@ -403,7 +408,6 @@ class MealsView extends HTMLElement {
             })
         })
 
-        // Clicking the row opens the edit popup
         root.querySelectorAll(".shopping-item").forEach(row => {
             row.addEventListener("click", () => {
                 const uid = row.getAttribute("data-uid")
@@ -412,7 +416,6 @@ class MealsView extends HTMLElement {
             })
         })
 
-        // Checkbox still works independently
         root.querySelectorAll(".checkbox").forEach(cb => {
             cb.addEventListener("click", (e) => {
                 e.stopPropagation()
@@ -422,7 +425,6 @@ class MealsView extends HTMLElement {
             })
         })
 
-        // Delete button still works independently
         root.querySelectorAll(".delete-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation()

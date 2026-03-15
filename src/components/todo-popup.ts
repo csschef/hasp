@@ -47,13 +47,6 @@ class TodoPopup extends HTMLElement {
 
         if (!summary) return
 
-        console.log("Saving Todo Item:", {
-            uid: this.item.uid,
-            summary: summary,
-            description: description
-        })
-
-        // Call Home Assistant Service
         await callService("todo", "update_item", {
             entity_id: this.entityId,
             item: this.item.uid || this.item.summary,
@@ -61,13 +54,9 @@ class TodoPopup extends HTMLElement {
             description: description
         })
 
-        // Force a refresh of the UI by re-triggering the entity store
-        // (Wait a bit for HA to process the update)
         setTimeout(() => {
             const entity = getEntity(this.entityId)
-            if (entity) {
-                setEntity({ ...entity }) // Trigger subscribers
-            }
+            if (entity) setEntity({ ...entity })
         }, 300)
 
         this.close()
@@ -79,7 +68,6 @@ class TodoPopup extends HTMLElement {
             item: [this.item.uid || this.item.summary]
         })
         
-        // Refresh UI
         setTimeout(() => {
             const entity = getEntity(this.entityId)
             if (entity) setEntity({ ...entity })
@@ -89,6 +77,9 @@ class TodoPopup extends HTMLElement {
     }
 
     render() {
+        // Muted version of the brand green
+        const mutedGreen = "rgba(61, 187, 97, 0.7)"
+
         this.shadow.innerHTML = `
         <style>
             :host {
@@ -132,7 +123,7 @@ class TodoPopup extends HTMLElement {
             .header {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 2px;
                 margin-bottom: 24px;
             }
 
@@ -151,38 +142,43 @@ class TodoPopup extends HTMLElement {
             }
 
             .title {
-                font-size: 1.125rem;
+                font-size: 1rem;
                 font-weight: 600;
                 color: var(--text-primary);
+                letter-spacing: -0.01em;
             }
             .subtitle {
-                font-size: 0.8125rem;
+                font-size: 0.6875rem;
                 color: var(--text-secondary);
-                opacity: 0.6;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 600;
+                opacity: 0.7;
             }
 
             .input-group {
                 background: var(--color-card-alt);
                 border-radius: var(--radius-md);
-                padding: 12px 16px;
-                margin-bottom: 16px;
+                padding: 10px 14px;
+                margin-bottom: 12px;
                 border: 1px solid var(--border-color);
             }
             .input-label {
-                font-size: 0.6875rem;
+                font-size: 0.625rem;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
-                color: var(--accent);
+                color: var(--text-secondary);
                 margin-bottom: 4px;
                 display: block;
+                opacity: 0.5;
             }
             input, textarea {
                 width: 100%;
                 background: none;
                 border: none;
                 color: var(--text-primary);
-                font-size: 0.9375rem;
+                font-size: 0.875rem;
                 font-family: inherit;
                 outline: none;
                 padding: 0;
@@ -190,21 +186,20 @@ class TodoPopup extends HTMLElement {
             }
             textarea {
                 min-height: 80px;
-                margin-top: 4px;
+                margin-top: 2px;
             }
 
             .actions {
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-top: 32px;
-                gap: 16px;
+                margin-top: 24px;
+                gap: 12px;
             }
 
             .btn {
-                padding: 12px 24px;
-                border-radius: 999px;
-                font-size: 0.875rem;
+                flex: 1;
+                padding: 12px;
+                border-radius: 16px;
+                font-size: 0.8125rem;
                 font-weight: 600;
                 cursor: pointer;
                 border: none;
@@ -215,18 +210,17 @@ class TodoPopup extends HTMLElement {
                 gap: 8px;
             }
             .btn-delete {
+                background: var(--color-card-alt);
                 color: #ff4d4d;
-                background: none;
+                border: 1px solid var(--border-color);
             }
-            .btn-delete:active { opacity: 0.6; }
+            .btn-delete:active { background: rgba(255, 77, 77, 0.1); transform: scale(0.98); }
 
             .btn-save {
-                background: var(--accent);
+                background: ${mutedGreen};
                 color: white;
-                flex: 1;
-                max-width: 160px;
             }
-            .btn-save:active { transform: scale(0.96); }
+            .btn-save:active { transform: scale(0.98); opacity: 0.9; }
         </style>
 
         <div class="sheet">
@@ -234,26 +228,26 @@ class TodoPopup extends HTMLElement {
                 <iconify-icon icon="lucide:x" style="font-size: 20px;"></iconify-icon>
             </div>
             <div class="header">
-                <div class="title">Redigera objekt</div>
-                <div class="subtitle">Matlista</div>
+                <div class="subtitle">Hantera vara</div>
+                <div class="title">Matlista</div>
             </div>
 
             <div class="input-group">
-                <span class="input-label">Namn på uppgift</span>
+                <span class="input-label">Namn på vara</span>
                 <input type="text" id="nameInput" placeholder="Ange namn...">
             </div>
 
             <div class="input-group">
-                <span class="input-label">Beskrivning</span>
-                <textarea id="descInput" placeholder="Lägg till en beskrivning..."></textarea>
+                <span class="input-label">Beskrivning / Antal</span>
+                <textarea id="descInput"></textarea>
             </div>
 
             <div class="actions">
                 <button class="btn btn-delete" id="deleteBtn">
-                    Radera objekt
+                    Radera
                 </button>
                 <button class="btn btn-save" id="saveBtn">
-                    Spara objekt
+                    Spara
                 </button>
             </div>
         </div>
