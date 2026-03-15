@@ -64,8 +64,9 @@ import "./components/tv-card"
 import "./components/tv-popup"
 import "./components/settings-popup"
 import "./components/user-header"
-import "./components/kitchen-view"
+import "./components/meals-view"
 import "./components/energy-view"
+import "./components/todo-popup"
 
 /* ── TRAY & NOTIFICATIONS ── */
 
@@ -224,7 +225,7 @@ function updateNotifications() {
 notifications.forEach(n => subscribeEntity(n.id, updateNotifications))
 
 // ── Global Navigation ──
-const MAIN_TABS = ["home", "kitchen", "energy"]
+const MAIN_TABS = ["home", "meals", "energy"]
 
 ;(window as any).goBack = function() {
     window.location.hash = "#home"
