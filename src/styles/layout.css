@@ -81,6 +81,24 @@ body {
     -webkit-backdrop-filter: none;
 }
 
+/* Tray backdrop — darkens and blurs background when open */
+.tray-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 4000; /* Below topbar (5000) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+body.tray-open .tray-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 /* Block interaction when subview is active */
 body.subview-active .topbar,
 body.subview-active .bottom-dock,
@@ -95,9 +113,6 @@ body.tray-open .bottom-dock {
 }
 
 .user-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     flex: 1;
 }
 
@@ -125,12 +140,16 @@ body.tray-open .bottom-dock {
 
 .notification-bell-box {
     position: relative;
-    display: flex;
+    display: none !important;
     align-items: center;
     justify-content: center;
     width: 36px;
     height: 36px;
     cursor: pointer;
+}
+
+.notification-bell-box.has-notifs {
+    display: flex !important;
 }
 
 /* Guest mode & Sleep mode indicator buttons — hidden until active */
@@ -154,9 +173,8 @@ body.tray-open .bottom-dock {
 
 /* Guest mode active — outlined, secondary text color */
 .topbar-icon-btn.guest-active iconify-icon,
-/* Sleep mode active — outlined, secondary text color */
 .topbar-icon-btn.sleep-active iconify-icon {
-    color: var(--text-secondary);
+    color: var(--text-primary);
     opacity: 1;
 }
 
@@ -178,6 +196,7 @@ body.tray-open .bottom-dock {
     transition: color 0.3s ease;
     transform-origin: top center;
 }
+.notification-bell-box iconify-icon::part(svg) { stroke-width: 1.6; }
 
 .notification-bell-box.has-notifs iconify-icon {
     color: var(--yellow-accent);
@@ -253,11 +272,6 @@ body.tray-open .bottom-dock {
 #toggleSleepMode.active span { color: #8b7ecf; }
 
 .notification-list {
-    background: var(--color-card-alt);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    padding: 6px;
-    min-height: 70px;
     display: flex;
     flex-direction: column;
 }
