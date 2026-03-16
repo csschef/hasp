@@ -65,11 +65,11 @@ class EnergyView extends HTMLElement {
         const min = Math.min(...allPrices)
         const max = Math.max(...allPrices)
         const range = max - min
-        
+
         if (current <= min + range * 0.25) {
             return { color: "var(--color-success)", bg: "color-mix(in srgb, var(--color-success) 20%, transparent)", label: "Billigt" }
         } else if (current >= max - range * 0.25) {
-            return { color: "var(--color-danger)", bg: "color-mix(in srgb, var(--color-danger) 20%, transparent)", label: "Dyrast" }
+            return { color: "var(--color-danger)", bg: "color-mix(in srgb, var(--color-danger) 20%, transparent)", label: "Dyrt" }
         }
         return { color: "var(--yellow-accent)", bg: "color-mix(in srgb, var(--yellow-accent) 20%, transparent)", label: "Normalt" }
     }
@@ -91,30 +91,30 @@ class EnergyView extends HTMLElement {
         const currentHour = now.getHours()
         const currentMinute = now.getMinutes()
         const currentIndex = currentHour * pointsPerHour + Math.floor(currentMinute / (60 / pointsPerHour))
-        
+
         // Combine data
         const combined = [...this.pricesToday, ...this.pricesTomorrow]
-        
+
         // Window starts 4 hours back, aligned to full hour
         const displayStartIdx = Math.max(0, (currentHour - 4) * pointsPerHour)
         const displayPrices = combined.slice(displayStartIdx)
         const numBars = displayPrices.length
-        
+
         // Max price for scaling
         const peakInWindow = Math.max(...displayPrices)
         const maxDisplay = Math.max(250, Math.ceil(peakInWindow / 50) * 50)
-        
+
         const yAxisSteps: number[] = []
         for (let i = 0; i <= maxDisplay; i += 50) {
             yAxisSteps.push(i)
         }
 
         const barWidth = 24
-        const barGap = pointsPerHour === 4 ? 2 : 8 
+        const barGap = pointsPerHour === 4 ? 2 : 8
         const pxPerHour = (barWidth + barGap) * pointsPerHour
         const chartHeight = 160
         const totalWidth = (numBars / pointsPerHour) * pxPerHour
-        
+
         const currentStatus = this.getPriceStatus(currentPrice, this.pricesToday)
 
         this.shadowRoot!.innerHTML = `
@@ -212,9 +212,9 @@ class EnergyView extends HTMLElement {
                 <div class="y-axis">
                     <div class="y-axis-labels">
                         ${yAxisSteps.map(val => {
-                            const y = chartHeight - (val / maxDisplay) * chartHeight;
-                            return `<div class="y-label" style="top: ${y}px">${val}</div>`;
-                        }).join('')}
+            const y = chartHeight - (val / maxDisplay) * chartHeight;
+            return `<div class="y-label" style="top: ${y}px">${val}</div>`;
+        }).join('')}
                     </div>
                 </div>
                 
@@ -224,18 +224,18 @@ class EnergyView extends HTMLElement {
                         <svg viewBox="0 0 ${totalWidth} ${chartHeight}">
                             <!-- Grid Lines -->
                             ${yAxisSteps.map(val => {
-                                const y = chartHeight - (val / maxDisplay) * chartHeight;
-                                return `<line x1="0" y1="${y}" x2="${totalWidth}" y2="${y}" stroke="var(--border-color)" stroke-opacity="0.1" stroke-dasharray="4,4" />`;
-                            }).join('')}
+            const y = chartHeight - (val / maxDisplay) * chartHeight;
+            return `<line x1="0" y1="${y}" x2="${totalWidth}" y2="${y}" stroke="var(--border-color)" stroke-opacity="0.1" stroke-dasharray="4,4" />`;
+        }).join('')}
 
                             <!-- Bars -->
                             ${displayPrices.map((p, i) => {
-                                const h = (p / maxDisplay) * chartHeight;
-                                const x = i * (barWidth + barGap);
-                                const { color } = this.getPriceStatus(p, this.pricesToday);
-                                const isCurrent = (displayStartIdx + i) === currentIndex;
-                                return `<rect class="bar" x="${x}" y="${chartHeight - h}" width="${barWidth}" height="${h}" fill="${color}" rx="3" fill-opacity="1" />`;
-                            }).join('')}
+            const h = (p / maxDisplay) * chartHeight;
+            const x = i * (barWidth + barGap);
+            const { color } = this.getPriceStatus(p, this.pricesToday);
+            const isCurrent = (displayStartIdx + i) === currentIndex;
+            return `<rect class="bar" x="${x}" y="${chartHeight - h}" width="${barWidth}" height="${h}" fill="${color}" rx="3" fill-opacity="1" />`;
+        }).join('')}
 
                             <!-- Now Indicator line -->
                             <line class="now-line" x1="${(currentIndex - displayStartIdx + 0.5) * (barWidth + barGap)}" y1="0" x2="${(currentIndex - displayStartIdx + 0.5) * (barWidth + barGap)}" y2="${chartHeight}" />
@@ -243,16 +243,16 @@ class EnergyView extends HTMLElement {
                         
                         <div class="chart-labels">
                             ${(() => {
-                                const startHour = Math.floor(displayStartIdx / pointsPerHour);
-                                const totalHours = numBars / pointsPerHour;
-                                let hourLabels = [];
-                                for (let i = 0; i < totalHours; i++) {
-                                    const h = (startHour + i) % 24;
-                                    const leftPx = i * pointsPerHour * (barWidth + barGap);
-                                    hourLabels.push(`<span class="time-label" style="left: ${leftPx}px">${h < 10 ? '0' + h : h}:00</span>`);
-                                }
-                                return hourLabels.join('');
-                            })()}
+                const startHour = Math.floor(displayStartIdx / pointsPerHour);
+                const totalHours = numBars / pointsPerHour;
+                let hourLabels = [];
+                for (let i = 0; i < totalHours; i++) {
+                    const h = (startHour + i) % 24;
+                    const leftPx = i * pointsPerHour * (barWidth + barGap);
+                    hourLabels.push(`<span class="time-label" style="left: ${leftPx}px">${h < 10 ? '0' + h : h}:00</span>`);
+                }
+                return hourLabels.join('');
+            })()}
                         </div>
                     </div>
                 </div>
@@ -261,7 +261,7 @@ class EnergyView extends HTMLElement {
 
         ${this.renderAdvice(currentHour, pointsPerHour)}
         `;
-        
+
         // Ensure initial scroll after render
         requestAnimationFrame(() => this.scrollToNow());
     }
@@ -286,7 +286,7 @@ class EnergyView extends HTMLElement {
         const startH = Math.floor(absoluteIdx / pointsPerHour) % 24;
         const endH = (Math.floor((absoluteIdx + windowSize) / pointsPerHour)) % 24;
         const isTomorrow = absoluteIdx >= (24 * pointsPerHour);
-        const timeLabel = `${startH < 10 ? '0'+startH : startH}:00 - ${endH < 10 ? '0'+endH : endH}:00`;
+        const timeLabel = `${startH < 10 ? '0' + startH : startH}:00 - ${endH < 10 ? '0' + endH : endH}:00`;
         const dayLabel = isTomorrow ? 'imorgon' : 'idag';
         return `
             <div class="advice-card">
