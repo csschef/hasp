@@ -42,7 +42,8 @@ body {
     align-items: center;
     height: 32px;
     cursor: pointer;
-    z-index: 50; /* Above tray background */
+    z-index: 50;
+    /* Above tray background */
 }
 
 /* Base tray — hidden but positioned absolutely */
@@ -55,11 +56,12 @@ body {
     background: color-mix(in srgb, var(--color-card) 80%, transparent);
     backdrop-filter: blur(24px) saturate(150%);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
-    padding: 52px var(--space-md) 32px; /* 52px = topbar height offset */
+    padding: 52px var(--space-md) 32px;
+    /* 52px = topbar height offset */
     opacity: 0;
     transform: translateY(-100%);
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
     z-index: 10;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
@@ -88,7 +90,8 @@ body {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 4000; /* Below topbar (5000) */
+    z-index: 4000;
+    /* Below topbar (5000) */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.4s ease;
@@ -127,13 +130,18 @@ body.tray-open .bottom-dock {
     position: relative;
     flex-shrink: 0;
 }
+
 .ha-menu-btn iconify-icon {
     font-size: 1.5rem;
     color: var(--text-primary);
     opacity: 0.8;
     transition: all 0.2s ease;
 }
-.ha-menu-btn:active iconify-icon { opacity: 1; transform: scale(0.9); }
+
+.ha-menu-btn:active iconify-icon {
+    opacity: 1;
+    transform: scale(0.9);
+}
 
 .system-badge {
     position: absolute;
@@ -164,7 +172,7 @@ body.tray-open .bottom-dock {
     align-items: center;
     justify-content: center;
     position: relative;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     opacity: 0.8;
 }
 
@@ -173,7 +181,8 @@ body.tray-open .bottom-dock {
 }
 
 .status-icon iconify-icon {
-    font-size: 1.375rem; /* Larger, matching the dashboard style */
+    font-size: 1.1rem;
+    /* Slightly smaller for better hierarchy */
 }
 
 /* Notification Badge - Small, crisp and functional */
@@ -197,12 +206,29 @@ body.tray-open .bottom-dock {
 }
 
 @keyframes bell-ring {
-    0%   { transform: rotate(0deg); }
-    20%  { transform: rotate(10deg); }
-    40%  { transform: rotate(-10deg); }
-    60%  { transform: rotate(5deg); }
-    80%  { transform: rotate(-5deg); }
-    100% { transform: rotate(0deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    20% {
+        transform: rotate(10deg);
+    }
+
+    40% {
+        transform: rotate(-10deg);
+    }
+
+    60% {
+        transform: rotate(5deg);
+    }
+
+    80% {
+        transform: rotate(-5deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
 }
 
 .status-icon#notification-bell-box.active iconify-icon {
@@ -212,7 +238,11 @@ body.tray-open .bottom-dock {
 
 
 /* ── Tray Sections ──────────────────────────────────────────── */
-.tray-section { margin-bottom: 24px; margin-top: 20px; }
+.tray-section {
+    margin-bottom: 24px;
+    margin-top: 20px;
+}
+
 .tray-title {
     font-size: 0.6875rem;
     font-weight: 500;
@@ -222,7 +252,13 @@ body.tray-open .bottom-dock {
     margin-bottom: 10px;
     opacity: 0.7;
 }
-.tray-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.tray-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
 .tray-tile {
     background: var(--color-card);
     border: 1px solid var(--border-color);
@@ -235,17 +271,37 @@ body.tray-open .bottom-dock {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-.tray-tile:active { transform: scale(0.94); }
-.tray-tile i,
-.tray-tile iconify-icon { font-size: 1.0625rem; color: var(--text-secondary); transition: color 0.2s ease; }
-.tray-tile span { font-size: 0.6875rem; font-weight: 400; color: var(--text-secondary); }
-.tray-tile.active { 
-    background: var(--accent); 
-    border-color: var(--accent); 
+
+.tray-tile:active {
+    transform: scale(0.94);
 }
+
+.tray-tile i,
+.tray-tile iconify-icon {
+    font-size: 1.0625rem;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.tray-tile span {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.tray-tile.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
 .tray-tile.active i,
-.tray-tile.active iconify-icon { color: #fff; }
-.tray-tile.active span { color: #fff; }
+.tray-tile.active iconify-icon {
+    color: #fff;
+}
+
+.tray-tile.active span {
+    color: #fff;
+}
 
 /* Support for light mode contrast boost - REPLACED BY SOLID STYLE */
 .notification-list {
@@ -274,6 +330,7 @@ body.tray-open .bottom-dock {
     letter-spacing: -0.02em;
     color: var(--text-primary);
 }
+
 .back-btn {
     width: 28px;
     height: 28px;
@@ -289,14 +346,19 @@ body.tray-open .bottom-dock {
     transition: background 0.2s ease;
     flex-shrink: 0;
 }
+
 .back-btn iconify-icon {
     font-size: 1rem;
     color: var(--text-secondary);
 }
+
 .back-btn iconify-icon svg {
     stroke-width: 1.25;
 }
-.back-btn:active { background: var(--border-color); }
+
+.back-btn:active {
+    background: var(--border-color);
+}
 
 /* ── Card grid ──────────────────────────────────────────────── */
 .dashboard {
@@ -305,7 +367,10 @@ body.tray-open .bottom-dock {
     gap: var(--space-md);
     padding: var(--space-sm) var(--space-md) var(--space-md);
 }
-room-divider { grid-column: 1 / -1; }
+
+room-divider {
+    grid-column: 1 / -1;
+}
 
 /* ── Main shell ─────────────────────────────────────────────── */
 .main-shell {
@@ -319,6 +384,7 @@ room-divider { grid-column: 1 / -1; }
     opacity: 0;
     transition: opacity 0.2s ease;
 }
+
 .view.active-tab {
     display: block;
     opacity: 1;
@@ -337,6 +403,7 @@ room-divider { grid-column: 1 / -1; }
     pointer-events: none;
     display: block;
 }
+
 .view.subview.active-subview {
     opacity: 1;
     transform: translateY(0);
@@ -382,14 +449,26 @@ body.subview-active .bottom-dock {
     -webkit-tap-highlight-color: transparent;
     opacity: 1;
 }
-.nav-item iconify-icon { font-size: 1.375rem; }
-.nav-item span { display: none; }
+
+.nav-item iconify-icon {
+    font-size: 1.375rem;
+}
+
+.nav-item span {
+    display: none;
+}
+
 .nav-item.active {
     color: var(--text-primary);
 }
 
 /* ── Notification Actions ───────────────────────────────────── */
-.notif-actions { display: flex; gap: 8px; margin-top: 12px; }
+.notif-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .action-btn {
     background: var(--color-card);
     border: 1px solid var(--border-color);
@@ -407,5 +486,14 @@ body.subview-active .bottom-dock {
     flex: 1;
     letter-spacing: 0;
 }
-.action-btn:active { transform: scale(0.93); background: var(--color-card-alt); }
-.action-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.action-btn:active {
+    transform: scale(0.93);
+    background: var(--color-card-alt);
+}
+
+.action-btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}

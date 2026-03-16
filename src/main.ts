@@ -6,24 +6,24 @@ import { connectHA } from "./services/ha-client"
 import { subscribeEntity, getEntity, getEntitiesByDomain } from "./store/entity-store"
 import { callService } from "./services/ha-service"
 
-// ── Font size lockdown ────────────────────────────────────────────────────
-// HA injects its theme CSS into same-origin iframes AFTER our stylesheets
-// load, winning the cascade even against !important. We fight back by:
-// 1. Appending a <style> tag from JS (runs last, always wins stylesheet order)
-// 2. MutationObserver to revert any runtime inline font-size changes on <html>
-;(function lockFontSize() {
-    const ID = "ha-font-lock"
-    const mobile = window.matchMedia("(max-width: 480px)")
-    const base = () => mobile.matches ? "18px" : "16px"
+    // ── Font size lockdown ────────────────────────────────────────────────────
+    // HA injects its theme CSS into same-origin iframes AFTER our stylesheets
+    // load, winning the cascade even against !important. We fight back by:
+    // 1. Appending a <style> tag from JS (runs last, always wins stylesheet order)
+    // 2. MutationObserver to revert any runtime inline font-size changes on <html>
+    ; (function lockFontSize() {
+        const ID = "ha-font-lock"
+        const mobile = window.matchMedia("(max-width: 480px)")
+        const base = () => mobile.matches ? "18px" : "16px"
 
-    const applyLock = () => {
-        let el = document.getElementById(ID) as HTMLStyleElement | null
-        if (!el) {
-            el = document.createElement("style") as HTMLStyleElement
-            el.id = ID
-            document.head.appendChild(el)
-        }
-        el.textContent = `
+        const applyLock = () => {
+            let el = document.getElementById(ID) as HTMLStyleElement | null
+            if (!el) {
+                el = document.createElement("style") as HTMLStyleElement
+                el.id = ID
+                document.head.appendChild(el)
+            }
+            el.textContent = `
             html { font-size: ${base()} !important; -webkit-text-size-adjust: none !important; text-size-adjust: none !important; }
             body { font-size: 1rem !important; font-family: "Inter", system-ui, sans-serif !important; }
             :root {
@@ -35,19 +35,19 @@ import { callService } from "./services/ha-service"
                 --ha-room-divider-stats-font-size: 0.75rem !important;
             }
         `
-    }
-
-    applyLock()
-    mobile.addEventListener("change", applyLock)
-
-    // Revert inline style overrides on <html>
-    new MutationObserver(() => {
-        const el = document.documentElement
-        if (el.style.fontSize && el.style.fontSize !== base()) {
-            el.style.fontSize = base()
         }
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ["style"] })
-})()
+
+        applyLock()
+        mobile.addEventListener("change", applyLock)
+
+        // Revert inline style overrides on <html>
+        new MutationObserver(() => {
+            const el = document.documentElement
+            if (el.style.fontSize && el.style.fontSize !== base()) {
+                el.style.fontSize = base()
+            }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["style"] })
+    })()
 
 connectHA()
 
@@ -134,40 +134,40 @@ function applyTheme(theme: "light" | "dark") {
 // ── Notification System ──
 
 const notifications = [
-    { 
-        id: "counter.kattlada", 
-        msg: "Dags att tömma kattlådan", 
-        icon: "lucide:cat", 
+    {
+        id: "counter.kattlada",
+        msg: "Dags att tömma kattlådan",
+        icon: "lucide:cat",
         type: "counter",
-        check: (state: any) => parseInt(state?.state) > 3 
+        check: (state: any) => parseInt(state?.state) > 3
     },
-    { 
-        id: "counter.kattlada_2", 
-        msg: "Töm kattlådan i källaren", 
-        icon: "lucide:cat", 
+    {
+        id: "counter.kattlada_2",
+        msg: "Töm kattlådan i källaren",
+        icon: "lucide:cat",
         type: "counter",
-        check: (state: any) => parseInt(state?.state) > 3 
+        check: (state: any) => parseInt(state?.state) > 3
     },
-    { 
-        id: "input_boolean.posten_har_kommit", 
-        msg: "Det finns post i brevlådan", 
-        icon: "lucide:mail", 
+    {
+        id: "input_boolean.posten_har_kommit",
+        msg: "Det finns post i brevlådan",
+        icon: "lucide:mail",
         type: "boolean",
-        check: (state: any) => state?.state === "on" 
+        check: (state: any) => state?.state === "on"
     }
 ]
 
-// Global action handler for notification buttons
-;(window as any).notifAction = (action: string, entityId: string) => {
-    const domain = entityId.split('.')[0];
-    if (domain === 'counter') {
-        if (action === 'plus') callService("counter", "increment", { entity_id: entityId });
-        if (action === 'minus') callService("counter", "decrement", { entity_id: entityId });
-        if (action === 'reset') callService("counter", "reset", { entity_id: entityId });
-    } else if (domain === 'input_boolean') {
-        if (action === 'off') callService("input_boolean", "turn_off", { entity_id: entityId });
-    }
-};
+    // Global action handler for notification buttons
+    ; (window as any).notifAction = (action: string, entityId: string) => {
+        const domain = entityId.split('.')[0];
+        if (domain === 'counter') {
+            if (action === 'plus') callService("counter", "increment", { entity_id: entityId });
+            if (action === 'minus') callService("counter", "decrement", { entity_id: entityId });
+            if (action === 'reset') callService("counter", "reset", { entity_id: entityId });
+        } else if (domain === 'input_boolean') {
+            if (action === 'off') callService("input_boolean", "turn_off", { entity_id: entityId });
+        }
+    };
 
 function updateSystemBadge() {
     const badge = document.getElementById("systemBadge");
@@ -190,7 +190,7 @@ function updateNotifications() {
     const bellIconBox = document.getElementById("notification-bell-box")
 
     if (!list) return
-    
+
     const active = notifications.filter(n => {
         const entity = getEntity(n.id)
         return n.check(entity)
@@ -212,7 +212,7 @@ function updateNotifications() {
         list.innerHTML = active.map(n => {
             const entity = getEntity(n.id);
             const val = entity?.state || "0";
-            
+
             return `
             <div class="notif-card" style="background: var(--color-card); padding: 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color);">
                 <div style="display: flex; gap: 12px; align-items: center;">
@@ -221,7 +221,7 @@ function updateNotifications() {
                     </div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.msg}</div>
-                        ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 1px;">Just nu: ${val} st</div>` : ''}
+                        ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 1px;">Antal besök: ${val} st</div>` : ''}
                     </div>
                 </div>
                 <div class="notif-actions" onclick="event.stopPropagation()" style="margin-top: 12px; display: flex; gap: 8px;">
@@ -243,15 +243,15 @@ notifications.forEach(n => subscribeEntity(n.id, updateNotifications))
 // Monitor HACS and Generic Updates
 subscribeEntity("sensor.hacs", updateSystemBadge);
 // Since update entities are dynamic, we check periodically or when major states change
-setInterval(updateSystemBadge, 30000); 
+setInterval(updateSystemBadge, 30000);
 setTimeout(updateSystemBadge, 2000); // Initial check
 
 // ── Global Navigation ──
 const MAIN_TABS = ["home", "meals", "energy"]
 
-;(window as any).goBack = function() {
-    window.location.hash = "#home"
-}
+    ; (window as any).goBack = function () {
+        window.location.hash = "#home"
+    }
 
 function handleRoute() {
     const hash = window.location.hash || "#home"
@@ -366,14 +366,14 @@ function hideHAHeader() {
             const ha = topDoc.querySelector("home-assistant") as any
             if (!ha?.shadowRoot) { setTimeout(attempt, 600); return }
 
-            const haMain    = ha.shadowRoot.querySelector("home-assistant-main") as any
+            const haMain = ha.shadowRoot.querySelector("home-assistant-main") as any
             if (!haMain?.shadowRoot) { setTimeout(attempt, 600); return }
 
             // Walk into hui-root's shadow root — this is where .header > .toolbar lives
             // Note: partial-panel-resolver has NO shadow root — ha-panel-lovelace is a direct child
-            const resolver   = haMain.shadowRoot.querySelector("partial-panel-resolver") as any
-            const lovelace   = resolver?.querySelector("ha-panel-lovelace") as any
-            const huiRoot    = lovelace?.shadowRoot?.querySelector("hui-root") as any
+            const resolver = haMain.shadowRoot.querySelector("partial-panel-resolver") as any
+            const lovelace = resolver?.querySelector("ha-panel-lovelace") as any
+            const huiRoot = lovelace?.shadowRoot?.querySelector("hui-root") as any
             const huiShadow = huiRoot?.shadowRoot as ShadowRoot | null
 
             const inject = (root: ShadowRoot, id: string, css: string) => {
@@ -427,13 +427,13 @@ document.addEventListener("click", (e) => {
 // Dark below -3° (horizon + civil twilight buffer)
 // Light above +5° (sun clearly up past morning glow)
 // No change in the buffer zone between −3° and +5°
-const DARK_BELOW  = -3
-const LIGHT_ABOVE =  5
+const DARK_BELOW = -3
+const LIGHT_ABOVE = 5
 let lastAutoTheme: "light" | "dark" | null = null
 
 function applyAutoTheme(elevation: number) {
     let target: "light" | "dark" | null = null
-    if (elevation < DARK_BELOW)  target = "dark"
+    if (elevation < DARK_BELOW) target = "dark"
     if (elevation > LIGHT_ABOVE) target = "light"
     if (target === null || target === lastAutoTheme) return  // buffer zone or no change
     lastAutoTheme = target
@@ -478,8 +478,8 @@ function initHAModeButton(
     })
 }
 
-initHAModeButton("guestModeBtn", "input_boolean.gast",    "active", "ph:users", "ph:users")
-initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "active", "ph:moon",  "ph:moon")
+initHAModeButton("guestModeBtn", "input_boolean.gast", "active", "ph:users", "ph:users")
+initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "active", "ph:moon", "ph:moon")
 initHAModeButton("movieModeBtn", "input_boolean.biolage", "active", "ph:film-strip", "ph:film-strip")
 
 document.addEventListener("show-history", (e: any) => {
