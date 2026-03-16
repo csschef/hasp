@@ -72,7 +72,8 @@ import "./components/pc-card"
 
 const trayTiles = {
     guest: { id: "input_boolean.gast", el: document.getElementById("toggleGuestMode") },
-    sleep: { id: "input_boolean.sovlage", el: document.getElementById("toggleSleepMode") }
+    sleep: { id: "input_boolean.sovlage", el: document.getElementById("toggleSleepMode") },
+    movie: { id: "input_boolean.biolage", el: document.getElementById("toggleMovieMode") }
 }
 
 // Subscribe to Booleans for Tray Tiles
@@ -98,6 +99,12 @@ trayTiles.sleep.el?.addEventListener("click", (e) => {
     e.stopPropagation()
     const currentState = getEntity(trayTiles.sleep.id)?.state === "on"
     callService("input_boolean", currentState ? "turn_off" : "turn_on", { entity_id: trayTiles.sleep.id })
+})
+
+trayTiles.movie.el?.addEventListener("click", (e) => {
+    e.stopPropagation()
+    const currentState = getEntity(trayTiles.movie.id)?.state === "on"
+    callService("input_boolean", currentState ? "turn_off" : "turn_on", { entity_id: trayTiles.movie.id })
 })
 
 // Dark mode / Theme logic
@@ -196,6 +203,7 @@ function updateNotifications() {
 
     if (bellIconBox) {
         bellIconBox.classList.toggle("active", active.length > 0);
+        updateStatusPillVisibility();
     }
 
     if (active.length === 0) {
@@ -443,6 +451,13 @@ const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 
 applyTheme(savedTheme ?? systemTheme)
 
 // ── Guest Mode & Sleep Mode (HA-backed) ─────────────────────────────────
+function updateStatusPillVisibility() {
+    const pill = document.getElementById("statusPill")
+    if (!pill) return
+    const activeIcons = pill.querySelectorAll(".status-icon.active")
+    pill.classList.toggle("has-active", activeIcons.length > 0)
+}
+
 function initHAModeButton(
     id: string,
     entityId: string,
@@ -459,11 +474,13 @@ function initHAModeButton(
         const on = entity?.state === "on"
         btn.classList.toggle("active", on)
         if (icon) icon.icon = on ? iconFill : iconOutline
+        updateStatusPillVisibility()
     })
 }
 
 initHAModeButton("guestModeBtn", "input_boolean.gast",    "active", "ph:users", "ph:users")
 initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "active", "ph:moon",  "ph:moon")
+initHAModeButton("movieModeBtn", "input_boolean.biolage", "active", "ph:film-strip", "ph:film-strip")
 
 document.addEventListener("show-history", (e: any) => {
     const pop = document.getElementById("historyPopup") as any

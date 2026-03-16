@@ -223,7 +223,7 @@ body.tray-open .bottom-dock {
     margin-bottom: 10px;
     opacity: 0.7;
 }
-.tray-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tray-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .tray-tile {
     background: var(--color-card);
     border: 1px solid var(--border-color);
