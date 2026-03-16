@@ -8,7 +8,7 @@ class PersonPopup extends HTMLElement {
     private entityId = ""
     private entity?: HAEntity
     private map: any = null
-    private marker: any = null
+    private markers: Map<string, any> = new Map()
     private labelMapping: Record<string, string> = {}
     private leafletLoaded = false
 
@@ -82,10 +82,16 @@ class PersonPopup extends HTMLElement {
     }
 
     private formatDuration(seconds: number) {
-        if (seconds < 60) return `${seconds} sek`
         const h = Math.floor(seconds / 3600)
         const m = Math.floor((seconds % 3600) / 60)
+        const d = Math.floor(h / 24)
         
+        if (d > 0) {
+            const dText = d === 1 ? 'dag' : 'dagar'
+            const hText = (h % 24) === 1 ? 'timme' : 'timmar'
+            return `${d} ${dText} och ${h % 24} ${hText}`
+        }
+
         if (h > 0) {
             const hText = h === 1 ? 'timme' : 'timmar'
             const mText = m === 1 ? 'min' : 'min'
@@ -173,7 +179,7 @@ class PersonPopup extends HTMLElement {
             if (this.map) {
                 this.map.remove()
                 this.map = null
-                this.marker = null
+                this.markers.clear()
             }
         }, 300)
     }
@@ -195,8 +201,10 @@ class PersonPopup extends HTMLElement {
             maxZoom: 18
         }).setView([lat, lon], 17) 
 
-        window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri'
+        // Google Hybrid: Satellite + High Quality White Labels
+        window.L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; Google Maps'
         }).addTo(this.map)
 
         // Draw Zones
@@ -208,37 +216,51 @@ class PersonPopup extends HTMLElement {
             const zoneName = zone.attributes.friendly_name || ""
 
             if (zLat !== undefined && zLon !== undefined) {
-                // Circle styling
                 window.L.circle([zLat, zLon], {
                     radius: radius,
-                    color: "rgba(118, 124, 218, 0.7)", // Premium blue border
+                    color: "rgba(118, 124, 218, 0.7)",
                     weight: 2,
-                    fillColor: "rgba(118, 124, 218, 0.25)", // Semi-transparent blue fill
+                    fillColor: "rgba(118, 124, 218, 0.25)",
                     fillOpacity: 1,
                     interactive: false
                 }).addTo(this.map)
 
-                // Name label
                 if (zoneName) {
                     const labelIcon = window.L.divIcon({
                         className: 'zone-label',
                         html: `<div style="color: white; font-size: 10px; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8); white-space: nowrap; text-align: center;">${zoneName}</div>`,
                         iconSize: [100, 20],
-                        iconAnchor: [50, -25] // Shifted down below person marker
+                        iconAnchor: [50, -25]
                     })
                     window.L.marker([zLat, zLon], { icon: labelIcon, interactive: false }).addTo(this.map)
                 }
             }
         })
 
-        this.marker = window.L.marker([lat, lon]).addTo(this.map)
-        this.updateMarkerIcon()
+        // Draw All People
+        const people = getEntitiesByDomain("person")
+        people.forEach(p => {
+            const pLat = p.attributes.latitude
+            const pLon = p.attributes.longitude
+            if (pLat !== undefined && pLon !== undefined) {
+                const marker = window.L.marker([pLat, pLon]).addTo(this.map)
+                this.markers.set(p.entity_id, marker)
+                this.updateMarkerIcon(p.entity_id)
+                
+                // If this is our main person, bring to front
+                if (p.entity_id === this.entityId) {
+                    marker.setZIndexOffset(1000)
+                }
+            }
+        })
     }
 
-    private updateMarkerIcon() {
-        if (!this.marker || !this.entity) return
+    private updateMarkerIcon(entityId: string) {
+        const marker = this.markers.get(entityId)
+        const person = getEntity(entityId)
+        if (!marker || !person) return
 
-        let picture = this.entity.attributes.entity_picture
+        let picture = person.attributes.entity_picture
         if (picture && picture.startsWith("/")) {
             picture = HA_URL + picture
         }
@@ -249,13 +271,12 @@ class PersonPopup extends HTMLElement {
                 html: `
                     <div style="position: relative; width: 48px; height: 48px;">
                         <div style="background-image: url(${picture}); background-size: cover; background-position: center; width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.5);"></div>
-                        <div style="position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; background: #4cd964; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
                     </div>
                 `,
                 iconSize: [48, 48],
                 iconAnchor: [24, 24]
             })
-            this.marker.setIcon(icon)
+            marker.setIcon(icon)
         }
     }
 
@@ -288,11 +309,14 @@ class PersonPopup extends HTMLElement {
         const duration = this.formatDuration(Math.round((new Date().getTime() - lastChanged) / 1000))
         subtitle.textContent = `${state} i ${duration}.`
 
-        if (this.map && lat !== undefined && lon !== undefined && this.marker) {
-            const newPos = [lat, lon]
-            this.marker.setLatLng(newPos)
-            this.map.panTo(newPos)
-            this.updateMarkerIcon()
+        if (this.map && lat !== undefined && lon !== undefined) {
+            const mainMarker = this.markers.get(this.entityId)
+            if (mainMarker) {
+                const newPos = [lat, lon]
+                mainMarker.setLatLng(newPos)
+                this.map.panTo(newPos)
+                this.updateMarkerIcon(this.entityId)
+            }
         }
     }
 
