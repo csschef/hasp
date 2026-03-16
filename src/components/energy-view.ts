@@ -6,6 +6,7 @@ class EnergyView extends HTMLElement {
     private pricesTomorrow: number[] = []
     private hasInitialScrolled = false
     private observer?: IntersectionObserver
+    private updateInterval?: any
 
     constructor() {
         super()
@@ -23,6 +24,11 @@ class EnergyView extends HTMLElement {
             this.scrollToNow()
         })
 
+        // Refresh time indicator every minute
+        this.updateInterval = setInterval(() => {
+            this.render()
+        }, 60000)
+
         // Scroll to "Now" every time the view becomes visible
         this.observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) {
@@ -35,6 +41,7 @@ class EnergyView extends HTMLElement {
 
     disconnectedCallback() {
         this.observer?.disconnect()
+        if (this.updateInterval) clearInterval(this.updateInterval)
     }
 
     private scrollToNow(force = false) {
@@ -60,9 +67,9 @@ class EnergyView extends HTMLElement {
         const range = max - min
         
         if (current <= min + range * 0.25) {
-            return { color: "#a3be8c", bg: "rgba(163, 190, 140, 0.2)", label: "Billigt" }
+            return { color: "var(--color-success)", bg: "color-mix(in srgb, var(--color-success) 20%, transparent)", label: "Billigt" }
         } else if (current >= max - range * 0.25) {
-            return { color: "#bf616a", bg: "rgba(191, 97, 106, 0.2)", label: "Dyrast" }
+            return { color: "var(--color-danger)", bg: "color-mix(in srgb, var(--color-danger) 20%, transparent)", label: "Dyrast" }
         }
         return { color: "var(--yellow-accent)", bg: "color-mix(in srgb, var(--yellow-accent) 20%, transparent)", label: "Normalt" }
     }
@@ -88,8 +95,8 @@ class EnergyView extends HTMLElement {
         // Combine data
         const combined = [...this.pricesToday, ...this.pricesTomorrow]
         
-        // Window starts 4 hours back
-        const displayStartIdx = Math.max(0, currentIndex - (4 * pointsPerHour))
+        // Window starts 4 hours back, aligned to full hour
+        const displayStartIdx = Math.max(0, (currentHour - 4) * pointsPerHour)
         const displayPrices = combined.slice(displayStartIdx)
         const numBars = displayPrices.length
         
@@ -102,11 +109,11 @@ class EnergyView extends HTMLElement {
             yAxisSteps.push(i)
         }
 
-        const pxPerHour = 140 // Display fewer hours at once to make bars thicker
+        const barWidth = 24
+        const barGap = pointsPerHour === 4 ? 2 : 8 
+        const pxPerHour = (barWidth + barGap) * pointsPerHour
         const chartHeight = 160
         const totalWidth = (numBars / pointsPerHour) * pxPerHour
-        const barGap = pointsPerHour === 4 ? 2 : 8 // More gap for hourly
-        const barWidth = (totalWidth / numBars) - barGap
         
         const currentStatus = this.getPriceStatus(currentPrice, this.pricesToday)
 
@@ -173,13 +180,13 @@ class EnergyView extends HTMLElement {
             .time-label { position: absolute; transform: translateX(-50%); font-weight: 800; white-space: nowrap; }
 
             .advice-card {
-                background: linear-gradient(135deg, rgba(163, 190, 140, 0.15) 0%, rgba(163, 190, 140, 0.05) 100%);
-                border: 1px solid rgba(163, 190, 140, 0.3); border-radius: var(--radius-xl);
+                background: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 15%, transparent) 0%, color-mix(in srgb, var(--color-success) 5%, transparent) 100%);
+                border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent); border-radius: var(--radius-xl);
                 padding: 18px 20px; margin-top: 24px; display: flex; align-items: center; gap: 16px;
             }
-            .advice-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: #a3be8c; flex-shrink: 0; }
+            .advice-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: var(--color-success); flex-shrink: 0; }
             .advice-content { flex-grow: 1; }
-            .advice-title { font-size: 0.6875rem; text-transform: uppercase; font-weight: 800; color: #a3be8c; letter-spacing: 0.05em; margin-bottom: 4px; }
+            .advice-title { font-size: 0.6875rem; text-transform: uppercase; font-weight: 800; color: var(--color-success); letter-spacing: 0.05em; margin-bottom: 4px; }
             .advice-text { font-size: 0.875rem; font-weight: 400; color: var(--text-primary); line-height: 1.4; }
         </style>
 
@@ -193,9 +200,9 @@ class EnergyView extends HTMLElement {
         </div>
 
         <div class="stats-grid">
-            <div class="stat-item"><div class="stat-label">Lägsta</div><div class="stat-value" style="color: #a3be8c;">${minToday.toFixed(1)}</div></div>
+            <div class="stat-item"><div class="stat-label">Lägsta</div><div class="stat-value" style="color: var(--color-success);">${minToday.toFixed(1)}</div></div>
             <div class="stat-item"><div class="stat-label">Snitt</div><div class="stat-value" style="color: var(--accent);">${avgToday.toFixed(1)}</div></div>
-            <div class="stat-item"><div class="stat-label">Högsta</div><div class="stat-value" style="color: #bf616a;">${maxToday.toFixed(1)}</div></div>
+            <div class="stat-item"><div class="stat-label">Högsta</div><div class="stat-value" style="color: var(--color-danger);">${maxToday.toFixed(1)}</div></div>
         </div>
 
         <div class="chart-view">
@@ -227,7 +234,7 @@ class EnergyView extends HTMLElement {
                                 const x = i * (barWidth + barGap);
                                 const { color } = this.getPriceStatus(p, this.pricesToday);
                                 const isCurrent = (displayStartIdx + i) === currentIndex;
-                                return `<rect class="bar" x="${x}" y="${chartHeight - h}" width="${barWidth}" height="${h}" fill="${color}" rx="3" fill-opacity="${isCurrent ? 1 : 0.7}" />`;
+                                return `<rect class="bar" x="${x}" y="${chartHeight - h}" width="${barWidth}" height="${h}" fill="${color}" rx="3" fill-opacity="1" />`;
                             }).join('')}
 
                             <!-- Now Indicator line -->

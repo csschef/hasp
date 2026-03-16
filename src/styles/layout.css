@@ -141,7 +141,7 @@ body.tray-open .bottom-dock {
     right: 4px;
     width: 12px;
     height: 12px;
-    background: var(--yellow-accent);
+    background: var(--color-badge-bg);
     border-radius: 50%;
     border: 1.5px solid var(--color-card);
 }
@@ -181,7 +181,7 @@ body.tray-open .bottom-dock {
     position: absolute;
     top: -6px;
     left: 18px;
-    background: var(--yellow-accent);
+    background: var(--color-badge-bg);
     color: #2e3440;
     font-size: 11px;
     font-weight: 800;
