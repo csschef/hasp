@@ -4,6 +4,8 @@ class EnergyView extends HTMLElement {
     private energyEntity = "sensor.nordpool_kwh_se4_sek_2_10_0"
     private pricesToday: number[] = []
     private pricesTomorrow: number[] = []
+    private hasInitialScrolled = false
+    private observer?: IntersectionObserver
 
     constructor() {
         super()
@@ -18,265 +20,282 @@ class EnergyView extends HTMLElement {
                 this.pricesTomorrow = this.parseNordpoolData(state.attributes.raw_tomorrow || state.attributes.tomorrow)
             }
             this.render()
+            this.scrollToNow()
         })
+
+        // Scroll to "Now" every time the view becomes visible
+        this.observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                // Small delay to ensure display: block layout is ready
+                requestAnimationFrame(() => this.scrollToNow(true))
+            }
+        }, { threshold: 0.1 })
+        this.observer.observe(this)
+    }
+
+    disconnectedCallback() {
+        this.observer?.disconnect()
+    }
+
+    private scrollToNow(force = false) {
+        if (this.hasInitialScrolled && !force) return
+        const container = this.shadowRoot?.querySelector('.scroll-container')
+        const nowTag = this.shadowRoot?.querySelector('.now-tag') as HTMLElement
+        if (container && nowTag && nowTag.offsetLeft > 0) {
+            const scrollPos = nowTag.offsetLeft - (container as HTMLElement).offsetWidth / 3
+            container.scrollLeft = Math.max(0, scrollPos)
+            if (!force) this.hasInitialScrolled = true
+        }
     }
 
     private parseNordpoolData(data: any): number[] {
         if (!data || !Array.isArray(data)) return []
-        // Nordpool can return [number, number...] or [{value: number, ...}, ...]
         return data.map(item => typeof item === 'object' ? item.value : item)
     }
 
-    private getPriceStatus(price: number): { color: string; label: string; bg: string } {
-        if (!this.pricesToday.length) return { color: "var(--text-secondary)", label: "Laddar...", bg: "var(--color-card-alt)" }
-
-        const min = Math.min(...this.pricesToday)
-        const max = Math.max(...this.pricesToday)
+    private getPriceStatus(current: number, allPrices: number[]): { color: string; bg: string; label: string } {
+        if (!allPrices.length) return { color: "var(--text-secondary)", bg: "var(--color-card-alt)", label: "Laddar..." }
+        const min = Math.min(...allPrices)
+        const max = Math.max(...allPrices)
         const range = max - min
-
-        if (price <= min + range * 0.25) return { color: "#a3be8c", label: "Billigt", bg: "rgba(163, 190, 140, 0.15)" }
-        if (price >= max - range * 0.25) return { color: "#bf616a", label: "Dyrast", bg: "rgba(191, 97, 106, 0.15)" }
-        return { color: "#ebcb8b", label: "Normalt", bg: "rgba(235, 203, 139, 0.15)" }
-    }
-
-    private generateAreaPath(prices: number[], width: number, height: number, maxPrice: number, xOffset: number): string {
-        if (prices.length === 0) return ""
-        const points = prices.map((p, i) => {
-            const x = xOffset + (i / (prices.length - 1)) * (width - xOffset)
-            const y = height - (p / maxPrice) * height
-            return `${x},${y}`
-        })
-        return `M${xOffset},${height} L${points.join(' L')} L${width},${height} Z`
-    }
-
-    private generateLinePath(prices: number[], width: number, height: number, maxPrice: number, xOffset: number): string {
-        if (prices.length === 0) return ""
-        const points = prices.map((p, i) => {
-            const x = xOffset + (i / (prices.length - 1)) * (width - xOffset)
-            const y = height - (p / maxPrice) * height
-            return `${x},${y}`
-        })
-        return `M${points.join(' L')}`
+        
+        if (current <= min + range * 0.25) {
+            return { color: "#a3be8c", bg: "rgba(163, 190, 140, 0.2)", label: "Billigt" }
+        } else if (current >= max - range * 0.25) {
+            return { color: "#bf616a", bg: "rgba(191, 97, 106, 0.2)", label: "Dyrast" }
+        }
+        return { color: "var(--yellow-accent)", bg: "color-mix(in srgb, var(--yellow-accent) 20%, transparent)", label: "Normalt" }
     }
 
     render() {
         const entity = getEntity(this.energyEntity)
-        const activePrices = this.pricesToday.length > 0 ? this.pricesToday : []
-
-        if (!entity || activePrices.length === 0) {
-            this.shadowRoot!.innerHTML = `
-                <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-main);">
-                    <iconify-icon icon="line-md:loading-twotone-loop" style="font-size: 2.5rem; margin-bottom: 16px; color: var(--accent);"></iconify-icon>
-                    <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.7;">Ansluter till Nordpool...</div>
-                </div>
-            `
+        if (!entity || this.pricesToday.length === 0) {
+            this.shadowRoot!.innerHTML = `<div style="padding: 80px 20px; text-align: center; color: var(--text-secondary);">Ansluter till Nordpool...</div>`
             return
         }
 
+        const pointsPerHour = this.pricesToday.length > 48 ? 4 : 1
         const currentPrice = parseFloat(entity.state) || 0
-        const { color, label, bg } = this.getPriceStatus(currentPrice)
+        const minToday = Math.min(...this.pricesToday)
+        const maxToday = Math.max(...this.pricesToday)
+        const avgToday = this.pricesToday.reduce((a, b) => a + b, 0) / this.pricesToday.length
 
-        const minPrice = Math.min(...activePrices)
-        const maxPrice = Math.max(...activePrices)
-        const avgPrice = activePrices.reduce((a, b) => a + b, 0) / activePrices.length
+        const now = new Date()
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        const currentIndex = currentHour * pointsPerHour + Math.floor(currentMinute / (60 / pointsPerHour))
+        
+        // Combine data
+        const combined = [...this.pricesToday, ...this.pricesTomorrow]
+        
+        // Window starts 4 hours back
+        const displayStartIdx = Math.max(0, currentIndex - (4 * pointsPerHour))
+        const displayPrices = combined.slice(displayStartIdx)
+        const numBars = displayPrices.length
+        
+        // Max price for scaling
+        const peakInWindow = Math.max(...displayPrices)
+        const maxDisplay = Math.max(250, Math.ceil(peakInWindow / 50) * 50)
+        
+        const yAxisSteps: number[] = []
+        for (let i = 0; i <= maxDisplay; i += 50) {
+            yAxisSteps.push(i)
+        }
 
-        const hours = new Date().getHours()
-        const xOffset = 32
-        const nowX = xOffset + (hours / 23) * (400 - xOffset)
+        const pxPerHour = 140 // Display fewer hours at once to make bars thicker
+        const chartHeight = 160
+        const totalWidth = (numBars / pointsPerHour) * pxPerHour
+        const barGap = pointsPerHour === 4 ? 2 : 8 // More gap for hourly
+        const barWidth = (totalWidth / numBars) - barGap
+        
+        const currentStatus = this.getPriceStatus(currentPrice, this.pricesToday)
 
         this.shadowRoot!.innerHTML = `
         <style>
-            :host { display: block; padding: 0 var(--space-md) 24px; color: var(--text-primary); font-family: var(--font-main); }
-            h2 {
-                font-size: 0.6875rem;
-                font-weight: 500;
-                color: var(--text-secondary);
-                letter-spacing: 0.01em;
-                text-transform: uppercase;
-                margin: 32px 0 16px;
-                opacity: 1;
+            :host { display: block; padding: 0 var(--space-md) 24px; font-family: var(--font-main); color: var(--text-primary); }
+            
+            h2 { 
+                font-size: 0.6875rem; 
+                font-weight: 500; 
+                color: var(--text-secondary); 
+                text-transform: uppercase; 
+                margin: 28px 0 12px; 
+                letter-spacing: 0.01em; 
             }
-
+            
             .hero-card {
-                background: var(--color-card);
-                border-radius: var(--radius-xl);
-                padding: 32px 24px;
-                border: 1px solid var(--border-color);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-                position: relative;
-                overflow: hidden;
+                background: var(--color-card); border-radius: var(--radius-xl); padding: 32px 24px; border: 1px solid var(--border-color);
+                display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; overflow: hidden;
             }
             .hero-card::before {
                 content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-                background: radial-gradient(circle at center, ${color}15 0%, transparent 70%);
-                pointer-events: none;
+                background: radial-gradient(circle at center, var(--status-color, var(--accent)) 0%, transparent 70%); pointer-events: none; opacity: var(--energy-glow-opacity, 0.15);
             }
+            .price-val { font-size: 4rem; font-weight: 200; letter-spacing: -3px; line-height: 1; z-index: 1; }
+            .price-unit { font-size: 0.875rem; color: var(--text-secondary); opacity: 0.6; font-weight: 400; z-index: 1; }
+            .status-pill { padding: 6px 16px; border-radius: 100px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; z-index: 1; }
 
-            .price-display { display: flex; align-items: baseline; gap: 6px; z-index: 1; }
-            .price-val { font-size: 4rem; font-weight: 200; letter-spacing: -4px; line-height: 1; color: var(--text-primary); }
-            .price-unit { font-size: 1rem; color: var(--text-secondary); opacity: 0.7; font-weight: 400; }
+            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+            .stat-item { background: var(--color-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 10px; text-align: center; }
+            .stat-label { font-size: 0.6875rem; text-transform: uppercase; color: var(--text-secondary); opacity: 0.6; font-weight: 500; margin-bottom: 4px; letter-spacing: 0.05em; }
+            .stat-value { font-size: 0.9rem; font-weight: 600; }
 
-            .status-pill {
-                background: ${bg};
-                color: ${color};
-                padding: 6px 16px;
-                border-radius: 100px;
-                font-weight: 700;
-                font-size: 0.75rem;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-top: 4px;
-                z-index: 1;
-            }
-
-            .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
-            .stat-card {
-                background: var(--color-card);
-                border-radius: var(--radius-lg);
-                padding: 16px 12px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                border: 1px solid var(--border-color);
-            }
-            .stat-label { font-size: 0.625rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em; }
-            .stat-val { font-size: 0.9375rem; font-weight: 500; letter-spacing: -0.01em; }
-
-            /* ── Chart Section ── */
-            .chart-view {
-                background: var(--color-card);
-                border-radius: var(--radius-xl);
-                padding: 24px 20px 20px;
-                border: 1px solid var(--border-color);
-                margin-top: 12px;
-            }
-            .chart-container { position: relative; height: 160px; width: 100%; margin-top: 24px; }
-            svg { width: 100%; height: 100%; overflow: visible; display: block; }
+            .chart-view { background: var(--color-card); border-radius: var(--radius-xl); padding: 24px 0 20px; border: 1px solid var(--border-color); margin-top: 12px; overflow: hidden; }
+            .chart-header { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; color: var(--text-secondary); opacity: 0.6; margin: 0 20px 8px; letter-spacing: 0.05em; }
             
-            .chart-area { fill: url(#areaGrad); transition: all 0.5s ease; }
-            .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: all 0.5s ease; }
+            .chart-layout { display: flex; position: relative; }
             
-            .marker-line { stroke: var(--text-primary); stroke-width: 1; stroke-dasharray: 4,4; opacity: 0.2; }
-            
-            .marker-dot-css {
-                position: absolute;
-                width: 10px;
-                height: 10px;
-                background: var(--text-primary);
-                border: 2px solid var(--color-card);
-                border-radius: 50%;
-                transform: translate(-50%, -50%);
-                z-index: 100;
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                pointer-events: none;
-            }
-            
-            .chart-text {
-                font-size: 10px;
-                fill: var(--text-secondary);
-                font-weight: 500;
-                opacity: 0.6;
-            }
-            .now-label {
-                font-size: 11px;
-                fill: var(--text-primary);
-                font-weight: 700;
-            }
+            .y-axis { width: 35px; flex-shrink: 0; position: relative; z-index: 10; background: var(--color-card); border-right: 1px solid var(--border-color); }
+            .y-axis-labels { height: ${chartHeight}px; position: relative; margin-top: 32px; }
+            .y-label { position: absolute; right: 8px; font-size: 9px; color: var(--text-secondary); opacity: 0.6; font-weight: 700; transform: translateY(-50%); }
 
-            .chart-labels { display: flex; justify-content: space-between; margin-top: 16px; font-size: 0.625rem; color: var(--text-secondary); opacity: 0.5; font-weight: 600; margin-left: ${xOffset}px; }
+            .scroll-container { flex-grow: 1; overflow-x: auto; padding: 32px 0 0; position: relative; cursor: grab; scroll-behavior: smooth; }
+            .scroll-container::-webkit-scrollbar { display: none; }
+            .scroll-container:active { cursor: grabbing; }
+
+            .chart-inner { position: relative; height: 200px; width: ${totalWidth}px; margin: 0 30px; }
+            svg { width: 100%; height: 160px; display: block; overflow: visible; }
+
+            .bar { transition: height 0.3s ease, y 0.3s ease; }
+            .now-line { stroke: var(--text-secondary); stroke-width: 1.5; stroke-dasharray: 4,3; opacity: 0.6; }
+            .now-tag {
+                position: absolute; background: var(--color-card-alt); color: var(--text-secondary);
+                font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+                transform: translateX(-50%); top: -22px; z-index: 20;
+                text-transform: uppercase; letter-spacing: 0.03em;
+            }
+            .now-tag::after {
+                content: ''; position: absolute; bottom: -4px; left: 50%;
+                transform: translateX(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid var(--color-card-alt);
+            }
+            .chart-text { font-size: 9px; fill: var(--text-secondary); opacity: 0.5; font-weight: 700; }
+            .chart-labels { position: absolute; bottom: 0; left: 0; width: 100%; height: 25px; font-size: 0.65rem; color: var(--text-secondary); opacity: 0.8; }
+            .time-label { position: absolute; transform: translateX(-50%); font-weight: 800; white-space: nowrap; }
+
+            .advice-card {
+                background: linear-gradient(135deg, rgba(163, 190, 140, 0.15) 0%, rgba(163, 190, 140, 0.05) 100%);
+                border: 1px solid rgba(163, 190, 140, 0.3); border-radius: var(--radius-xl);
+                padding: 18px 20px; margin-top: 24px; display: flex; align-items: center; gap: 16px;
+            }
+            .advice-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: #a3be8c; flex-shrink: 0; }
+            .advice-content { flex-grow: 1; }
+            .advice-title { font-size: 0.6875rem; text-transform: uppercase; font-weight: 800; color: #a3be8c; letter-spacing: 0.05em; margin-bottom: 4px; }
+            .advice-text { font-size: 0.875rem; font-weight: 400; color: var(--text-primary); line-height: 1.4; }
         </style>
 
-        <h2>Energi · SE4</h2>
-
-        <div class="hero-card">
-            <div class="price-display">
-                <div class="price-val">${(currentPrice).toFixed(1)}</div>
-                <div class="price-unit">öre / kWh</div>
+        <h2>Elpris · Just nu</h2>
+        <div class="hero-card" style="--status-color: ${currentStatus.color}">
+            <div class="price-val">${currentPrice.toFixed(1)}</div>
+            <div class="price-unit">öre per kWh</div>
+            <div class="status-pill" style="background: ${currentStatus.bg}; color: ${currentStatus.color}">
+                ${currentStatus.label}
             </div>
-            <div class="status-pill">${label}</div>
-            <div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5; margin-top: 4px;">Uppdateras varje timme</div>
         </div>
 
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-label">Lägsta</div>
-                <div class="stat-val" style="color: #a3be8c;">${(minPrice).toFixed(1)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Snitt</div>
-                <div class="stat-val" style="color: var(--accent);">${(avgPrice).toFixed(1)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Högsta</div>
-                <div class="stat-val" style="color: #bf616a;">${(maxPrice).toFixed(1)}</div>
-            </div>
+        <div class="stats-grid">
+            <div class="stat-item"><div class="stat-label">Lägsta</div><div class="stat-value" style="color: #a3be8c;">${minToday.toFixed(1)}</div></div>
+            <div class="stat-item"><div class="stat-label">Snitt</div><div class="stat-value" style="color: var(--accent);">${avgToday.toFixed(1)}</div></div>
+            <div class="stat-item"><div class="stat-label">Högsta</div><div class="stat-value" style="color: #bf616a;">${maxToday.toFixed(1)}</div></div>
         </div>
 
         <div class="chart-view">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="stat-label" style="opacity: 0.8;">Priskurva idag</div>
-                <div style="font-size: 0.625rem; color: var(--accent); font-weight: 700;">SEK / kWh</div>
-            </div>
-
-            <div class="chart-container">
-                <div class="marker-dot-css" 
-                     style="left: ${(nowX / 400) * 100}%; 
-                            top: ${((160 - (currentPrice / (maxPrice * 1.1)) * 160) / 160) * 100}%;">
+            <div class="chart-header">Spotpris (öre/kWh)</div>
+            
+            <div class="chart-layout">
+                <div class="y-axis">
+                    <div class="y-axis-labels">
+                        ${yAxisSteps.map(val => {
+                            const y = chartHeight - (val / maxDisplay) * chartHeight;
+                            return `<div class="y-label" style="top: ${y}px">${val}</div>`;
+                        }).join('')}
+                    </div>
                 </div>
-                <svg viewBox="0 0 400 160" preserveAspectRatio="none" style="overflow: visible;">
-                    <defs>
-                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3" />
-                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
-                        </linearGradient>
-                    </defs>
-                    
-                    <!-- Guide lines (Horizontal) -->
-                    <line x1="${xOffset}" y1="0" x2="400" y2="0" stroke="var(--border-color)" stroke-width="0.5" stroke-dasharray="2,4" />
-                    <text x="0" y="4" class="chart-text">${(maxPrice * 1.1).toFixed(0)}</text>
-                    
-                    <line x1="${xOffset}" y1="40" x2="400" y2="40" stroke="var(--border-color)" stroke-width="0.5" stroke-dasharray="2,4" />
-                    <text x="0" y="44" class="chart-text">${((maxPrice * 1.1) * 0.75).toFixed(0)}</text>
+                
+                <div class="scroll-container">
+                    <div class="chart-inner">
+                        <div class="now-tag" style="left: ${(Math.min(numBars, currentIndex - displayStartIdx + 0.5) / numBars) * 100}%;">Nu</div>
+                        <svg viewBox="0 0 ${totalWidth} ${chartHeight}">
+                            <!-- Grid Lines -->
+                            ${yAxisSteps.map(val => {
+                                const y = chartHeight - (val / maxDisplay) * chartHeight;
+                                return `<line x1="0" y1="${y}" x2="${totalWidth}" y2="${y}" stroke="var(--border-color)" stroke-opacity="0.1" stroke-dasharray="4,4" />`;
+                            }).join('')}
 
-                    <line x1="${xOffset}" y1="80" x2="400" y2="80" stroke="var(--border-color)" stroke-width="0.5" stroke-dasharray="2,4" />
-                    <text x="0" y="84" class="chart-text">${((maxPrice * 1.1) * 0.5).toFixed(0)}</text>
+                            <!-- Bars -->
+                            ${displayPrices.map((p, i) => {
+                                const h = (p / maxDisplay) * chartHeight;
+                                const x = i * (barWidth + barGap);
+                                const { color } = this.getPriceStatus(p, this.pricesToday);
+                                const isCurrent = (displayStartIdx + i) === currentIndex;
+                                return `<rect class="bar" x="${x}" y="${chartHeight - h}" width="${barWidth}" height="${h}" fill="${color}" rx="3" fill-opacity="${isCurrent ? 1 : 0.7}" />`;
+                            }).join('')}
 
-                    <line x1="${xOffset}" y1="120" x2="400" y2="120" stroke="var(--border-color)" stroke-width="0.5" stroke-dasharray="2,4" />
-                    <text x="0" y="124" class="chart-text">${((maxPrice * 1.1) * 0.25).toFixed(0)}</text>
-
-                    <!-- Area Fill -->
-                    <path class="chart-area" d="${this.generateAreaPath(activePrices, 400, 160, maxPrice * 1.1, xOffset)}" />
-                    
-                    <!-- Main Line -->
-                    <path class="chart-line" d="${this.generateLinePath(activePrices, 400, 160, maxPrice * 1.1, xOffset)}" />
-
-                    <!-- Indicator for 'Now' -->
-                    <line class="marker-line" x1="${nowX}" y1="0" x2="${nowX}" y2="160" />
-                </svg>
-            </div>
-
-            <div class="chart-labels">
-                <span>00:00</span>
-                <span>06:00</span>
-                <span>12:00</span>
-                <span>18:00</span>
-                <span>23:00</span>
+                            <!-- Now Indicator line -->
+                            <line class="now-line" x1="${(currentIndex - displayStartIdx + 0.5) * (barWidth + barGap)}" y1="0" x2="${(currentIndex - displayStartIdx + 0.5) * (barWidth + barGap)}" y2="${chartHeight}" />
+                        </svg>
+                        
+                        <div class="chart-labels">
+                            ${(() => {
+                                const startHour = Math.floor(displayStartIdx / pointsPerHour);
+                                const totalHours = numBars / pointsPerHour;
+                                let hourLabels = [];
+                                for (let i = 0; i < totalHours; i++) {
+                                    const h = (startHour + i) % 24;
+                                    const leftPx = i * pointsPerHour * (barWidth + barGap);
+                                    hourLabels.push(`<span class="time-label" style="left: ${leftPx}px">${h < 10 ? '0' + h : h}:00</span>`);
+                                }
+                                return hourLabels.join('');
+                            })()}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        ${this.pricesTomorrow.length > 0 ? `
-            <div style="margin-top: 32px; padding: 20px; background: rgba(91, 127, 166, 0.05); border-radius: var(--radius-lg); border: 1px dashed var(--accent-muted); display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                 <div class="stat-label">I morgon</div>
-                 <div style="font-size: 0.8125rem; font-weight: 500;">Morgondagens priser är tillgängliga</div>
-                 <div style="font-size: 0.75rem; opacity: 0.6; text-align: center;">Snittpris imorgon: ${(this.pricesTomorrow.reduce((a, b) => a + b, 0) / 24).toFixed(1)} öre</div>
+        ${this.renderAdvice(currentHour, pointsPerHour)}
+        `;
+        
+        // Ensure initial scroll after render
+        requestAnimationFrame(() => this.scrollToNow());
+    }
+
+    private renderAdvice(currentHour: number, pointsPerHour: number) {
+        if (!this.pricesToday.length) return '';
+        const windowSize = 3 * pointsPerHour;
+        let bestStartIdx = -1;
+        let minAvg = Infinity;
+        const remainingToday = this.pricesToday.slice(currentHour * pointsPerHour);
+        const allAvailable = [...remainingToday, ...this.pricesTomorrow];
+        if (allAvailable.length < windowSize) return '';
+        for (let i = 0; i <= allAvailable.length - windowSize; i++) {
+            const window = allAvailable.slice(i, i + windowSize);
+            const avg = window.reduce((a, b) => a + b, 0) / windowSize;
+            if (avg < minAvg) {
+                minAvg = avg;
+                bestStartIdx = i;
+            }
+        }
+        const absoluteIdx = (currentHour * pointsPerHour) + bestStartIdx;
+        const startH = Math.floor(absoluteIdx / pointsPerHour) % 24;
+        const endH = (Math.floor((absoluteIdx + windowSize) / pointsPerHour)) % 24;
+        const isTomorrow = absoluteIdx >= (24 * pointsPerHour);
+        const timeLabel = `${startH < 10 ? '0'+startH : startH}:00 - ${endH < 10 ? '0'+endH : endH}:00`;
+        const dayLabel = isTomorrow ? 'imorgon' : 'idag';
+        return `
+            <div class="advice-card">
+                <div class="advice-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <div class="advice-content">
+                    <div class="advice-title">Energispartips</div>
+                    <div class="advice-text">Kör maskiner mellan <strong>${timeLabel}</strong> ${dayLabel} för lägst pris.</div>
+                </div>
             </div>
-        ` : ''}
-        `
+        `;
     }
 }
-
 customElements.define("energy-view", EnergyView)

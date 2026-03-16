@@ -184,6 +184,7 @@ class MealsView extends HTMLElement {
                 padding: 0;
                 font-family: var(--font-main);
                 letter-spacing: -0.01em;
+                line-height: 1.4;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
@@ -218,6 +219,7 @@ class MealsView extends HTMLElement {
                 font-weight: 400;
                 outline: none;
                 font-family: var(--font-main);
+                line-height: 1.4;
             }
             .add-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
 
@@ -246,7 +248,7 @@ class MealsView extends HTMLElement {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                padding: 14px 16px;
+                padding: 10px 16px;
                 transition: background 0.15s ease;
                 cursor: pointer;
             }
@@ -343,10 +345,11 @@ class MealsView extends HTMLElement {
             }
 
             .item-description {
-                font-size: 0.75rem;
+                font-size: 0.6875rem;
                 color: var(--text-secondary);
-                opacity: 0.6;
-                margin-top: 1px;
+                opacity: 0.5;
+                margin-top: 0;
+                line-height: 1.2;
             }
 
             .delete-btn {

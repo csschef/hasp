@@ -55,9 +55,10 @@ body {
     --accent-low: rgba(91, 127, 166, 0.06);
 
     /* Clean Nordic Gold */
-    --yellow-accent: #e4bc0d;
+    --yellow-accent: #ebcb8b;
     --color-success: #a3be8c;
     --color-danger: #bf616a;
+    --energy-glow-opacity: 0.08;
 }
 
 /* ── Dark theme via system preference ──────────────────────────────────── */
@@ -80,9 +81,10 @@ body {
         --accent-muted: rgba(129, 161, 193, 0.15);
         --accent-low: rgba(129, 161, 193, 0.08);
 
-        --yellow-accent: #fadb5f;
+        --yellow-accent: #ebcb8b;
         --color-success: #a3be8c;
         --color-danger: #bf616a;
+        --energy-glow-opacity: 0.18;
     }
 }
 
@@ -104,9 +106,10 @@ body {
     --accent-muted: rgba(129, 161, 193, 0.15);
     --accent-low: rgba(129, 161, 193, 0.08);
 
-    --yellow-accent: #fadb5f;
+    --yellow-accent: #ebcb8b;
     --color-success: #a3be8c;
     --color-danger: #bf616a;
+    --energy-glow-opacity: 0.18;
 }
 
 /* ── Manual light override ──────────────────────────────────────────────── */
@@ -127,7 +130,7 @@ body {
     --accent-muted: rgba(91, 127, 166, 0.12);
     --accent-low: rgba(91, 127, 166, 0.06);
 
-    --yellow-accent: #f2c94c;
+    --yellow-accent: #ebcb8b;
     --color-success: #a3be8c;
     --color-danger: #bf616a;
 }
