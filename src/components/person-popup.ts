@@ -11,6 +11,7 @@ class PersonPopup extends HTMLElement {
     private markers: Map<string, any> = new Map()
     private labelMapping: Record<string, string> = {}
     private leafletLoaded = false
+    private expandedClusters: Set<string> = new Set()
 
     constructor() {
         super()
@@ -180,6 +181,7 @@ class PersonPopup extends HTMLElement {
         }
         setTimeout(() => {
             this.style.display = "none"
+            this.expandedClusters.clear()
             if (this.map) {
                 this.map.remove()
                 this.map = null
@@ -187,6 +189,78 @@ class PersonPopup extends HTMLElement {
             }
         }, 300)
     }
+
+    private getClusterId(lat: number, lon: number): string {
+        return `${lat.toFixed(4)}_${lon.toFixed(4)}`
+    }
+
+    private refreshMarkers() {
+        if (!this.map) return
+
+        // Clear existing markers
+        this.markers.forEach(m => this.map.removeLayer(m))
+        this.markers.clear()
+
+        const people = getEntitiesByDomain("person")
+        const groups = new Map<string, HAEntity[]>()
+
+        people.forEach(p => {
+            const lat = p.attributes.latitude
+            const lon = p.attributes.longitude
+            if (lat !== undefined && lon !== undefined) {
+                const id = this.getClusterId(lat, lon)
+                if (!groups.has(id)) groups.set(id, [])
+                groups.get(id)!.push(p)
+            }
+        })
+
+        groups.forEach((members, clusterId) => {
+            if (members.length > 1 && !this.expandedClusters.has(clusterId)) {
+                // Render Cluster
+                const lat = members[0].attributes.latitude!
+                const lon = members[0].attributes.longitude!
+                
+                const clusterIcon = window.L.divIcon({
+                    className: 'cluster-icon',
+                    html: `<div style="width: 38px; height: 38px; background: var(--accent); border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">${members.length}</div>`,
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                })
+
+                const marker = window.L.marker([lat, lon], { icon: clusterIcon }).addTo(this.map)
+                marker.on('click', (e: any) => {
+                    window.L.DomEvent.stopPropagation(e)
+                    this.expandedClusters.add(clusterId)
+                    this.refreshMarkers()
+                })
+                this.markers.set(`cluster_${clusterId}`, marker)
+            } else {
+                // Render Individuals
+                members.forEach((p, idx) => {
+                    const lat = p.attributes.latitude!
+                    const lon = p.attributes.longitude!
+                    let finalLat = lat
+                    let finalLon = lon
+
+                    if (members.length > 1) {
+                        const offset = 0.00015
+                        const angle = (idx * (360 / members.length) + 45) * Math.PI / 180
+                        finalLat += Math.cos(angle) * offset
+                        finalLon += Math.sin(angle) * offset
+                    }
+
+                    const marker = window.L.marker([finalLat, finalLon]).addTo(this.map)
+                    this.markers.set(p.entity_id, marker)
+                    this.updateMarkerIcon(p.entity_id)
+
+                    if (p.entity_id === this.entityId) {
+                        marker.setZIndexOffset(1000)
+                    }
+                })
+            }
+        })
+    }
+
 
     private initMap() {
         if (!this.leafletLoaded || this.map || !this.entity) return
@@ -210,6 +284,13 @@ class PersonPopup extends HTMLElement {
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
             attribution: '&copy; Google Maps'
         }).addTo(this.map)
+
+        this.map.on('click', () => {
+            if (this.expandedClusters.size > 0) {
+                this.expandedClusters.clear()
+                this.refreshMarkers()
+            }
+        })
 
         // Draw Zones
         const zones = getEntitiesByDomain("zone")
@@ -241,22 +322,7 @@ class PersonPopup extends HTMLElement {
             }
         })
 
-        // Draw All People
-        const people = getEntitiesByDomain("person")
-        people.forEach(p => {
-            const pLat = p.attributes.latitude
-            const pLon = p.attributes.longitude
-            if (pLat !== undefined && pLon !== undefined) {
-                const marker = window.L.marker([pLat, pLon]).addTo(this.map)
-                this.markers.set(p.entity_id, marker)
-                this.updateMarkerIcon(p.entity_id)
-
-                // If this is our main person, bring to front
-                if (p.entity_id === this.entityId) {
-                    marker.setZIndexOffset(1000)
-                }
-            }
-        })
+        this.refreshMarkers()
     }
 
     private updateMarkerIcon(entityId: string) {
@@ -314,13 +380,8 @@ class PersonPopup extends HTMLElement {
         subtitle.textContent = `${state} i ${duration}.`
 
         if (this.map && lat !== undefined && lon !== undefined) {
-            const mainMarker = this.markers.get(this.entityId)
-            if (mainMarker) {
-                const newPos = [lat, lon]
-                mainMarker.setLatLng(newPos)
-                this.map.panTo(newPos)
-                this.updateMarkerIcon(this.entityId)
-            }
+             this.map.panTo([lat, lon])
+             this.refreshMarkers()
         }
     }
 
