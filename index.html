@@ -8,11 +8,13 @@
     <title>HA Dashboard</title>
     <style>
         /* Force font size on all devices, especially HA Companion app */
-        html, body {
+        html,
+        body {
             font-size: 16px !important;
             -webkit-text-size-adjust: none !important;
             text-size-adjust: none !important;
         }
+
         /* Critical: applied synchronously before Vite JS/CSS loads.
            Keeps subviews off-screen from the very first paint — no FOUC flash. */
         .view.subview {
@@ -37,7 +39,7 @@
             </div>
 
             <div style="flex: 1;"></div>
-            
+
             <div class="status-pill" id="statusPill">
                 <div class="status-icon" id="guestModeBtn" title="Gästläge">
                     <iconify-icon icon="ph:users"></iconify-icon>
@@ -45,7 +47,7 @@
                 <div class="status-icon" id="sleepModeBtn" title="Nattläge">
                     <iconify-icon icon="ph:moon"></iconify-icon>
                 </div>
-                <div class="status-icon" id="movieModeBtn" title="Filmläge">
+                <div class="status-icon" id="movieModeBtn" title="Bioläge">
                     <iconify-icon icon="ph:film-strip"></iconify-icon>
                 </div>
                 <div class="status-icon" id="notification-bell-box">
@@ -54,7 +56,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Expanded Tray Area -->
         <div class="topbar-tray" id="notificationTray">
             <div class="tray-section">
@@ -78,7 +80,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="tray-section">
                 <div class="tray-title">Notiser</div>
                 <div id="notificationList" class="notification-list">
@@ -94,249 +96,234 @@
     ════════════════════════════════════════════════════════════ -->
     <div class="main-shell">
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          MAIN HOME VIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view active-tab" id="home">
-        <div class="dashboard">
-            <weather-card></weather-card>
+        <div class="view active-tab" id="home">
+            <div class="dashboard">
+                <weather-card></weather-card>
 
-            <div class="person-row">
-                <person-card person="person.sebastian" battery="sensor.cph2581_battery_level"
-                    label-mapping='{"home": "Hemma", "Sebbes Jobb": "På jobbet", "Saras Jobb": "Vid Saras jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "Filip": "Hos Filip", "not_home": "Borta"}'>
-                </person-card>
-                <person-card person="person.sara" battery="sensor.sara_battery_level"
-                    label-mapping='{"home": "Hemma", "Saras Jobb": "På jobbet", "Sebbes Jobb": "Vid Sebbes jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "not_home": "Borta"}'>
-                </person-card>
+                <div class="person-row">
+                    <person-card person="person.sebastian" battery="sensor.cph2581_battery_level"
+                        label-mapping='{"home": "Hemma", "Sebbes Jobb": "På jobbet", "Saras Jobb": "Vid Saras jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "Filip": "Hos Filip", "not_home": "Borta"}'>
+                    </person-card>
+                    <person-card person="person.sara" battery="sensor.sara_battery_level"
+                        label-mapping='{"home": "Hemma", "Saras Jobb": "På jobbet", "Sebbes Jobb": "Vid Sebbes jobb", "Ann": "Hos Ann", "Ingela": "Hos Ingela", "not_home": "Borta"}'>
+                    </person-card>
+                </div>
+
+                <!-- Entre -->
+                <room-divider title="Entre" temp="sensor.entre_temperatursensor_temperature"
+                    humidity="sensor.entre_temperatursensor_humidity"
+                    motion="binary_sensor.entre_rorelsesensor_occupancy" door="binary_sensor.entre_dorrsensor_contact">
+                </room-divider>
+                <light-card name="Lampor" entity="light.entre" navigate="#entre"></light-card>
+
+                <!-- Leias rum -->
+                <room-divider title="Leias rum" temp="sensor.leias_rum_temperatursensor_temperature"
+                    humidity="sensor.leias_rum_temperatursensor_humidity">
+                </room-divider>
+                <light-card name="Lampor" entity="light.leias_rum" navigate="#leias-rum"></light-card>
+
+                <!-- Elises rum -->
+                <room-divider title="Elises rum" temp="sensor.elises_rum_temperatursensor_temperature"
+                    humidity="sensor.elises_rum_temperatursensor_humidity">
+                </room-divider>
+                <light-card name="Lampor" entity="light.elises_rum" navigate="#elises-rum"></light-card>
+
+                <!-- Vardagsrum -->
+                <room-divider title="Vardagsrum" temp="sensor.vardagsrum_temperatursensor_temperature"
+                    humidity="sensor.vardagsrum_temperatursensor_humidity"
+                    motion="binary_sensor.vardagsrum_rorelsesensor_occupancy"
+                    door="binary_sensor.vardagsrum_dorrsensor_altan_contact">
+                </room-divider>
+                <light-card name="Lampor" entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
+                <tv-card name="TV" entity="media_player.tv_vardagsrum"
+                    media-entity="media_player.android_tv_192_168_50_61" remote="remote.tv_vardagsrum"
+                    power-script="script.android_tv_on_off" soundbar="media_player.lg_soundbar">
+                </tv-card>
+                <pc-card name="Laptop" entity="input_boolean.laptop_av_pa" power-service="button.press"
+                    power-entity="button.bass_laptop_shutdown" no-wol>
+                </pc-card>
+
+                <!-- Kök -->
+                <room-divider title="Kök" temp="sensor.vardagsrum_temperatursensor_temperature"
+                    humidity="sensor.vardagsrum_temperatursensor_humidity"
+                    motion="binary_sensor.kok_rorelsesensor_occupancy">
+                </room-divider>
+                <light-card name="Lampor" entity="light.kok" navigate="#kok"></light-card>
+
+                <!-- Sovrum -->
+                <room-divider title="Sovrum" temp="sensor.sovrum_temperatursensor_temperature"
+                    humidity="sensor.sovrum_temperatursensor_humidity"
+                    motion="binary_sensor.sovrum_rorelsesensor_occupancy">
+                </room-divider>
+                <light-card name="Lampor" entity="light.sovrum" navigate="#sovrum"></light-card>
+
+                <!-- Hobbyrum -->
+                <room-divider title="Hobbyrum" temp="sensor.hobbyrum_temperatursensor_temperature"
+                    humidity="sensor.hobbyrum_temperatursensor_humidity"
+                    motion="binary_sensor.hobbyrum_rorelsesensor_skrivbord_occupancy">
+                </room-divider>
+                <light-card name="Lampor" entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
+                <pc-card name="RGBDreamz" entity="input_boolean.rgbdreamz_startar_stanger_av_sig"
+                    binary-entity="binary_sensor.rgbdreamz_rgbdreamz_av_pa"
+                    steam-entity="sensor.steam_76561197983523031" power-service="script.rgbdreamz_on_off">
+                </pc-card>
+                <pc-card name="Dator" entity="input_boolean.dator_av_pa"
+                    binary-entity="binary_sensor.bassdator_bassdator" steam-entity="sensor.steam_current_game"
+                    power-service="script.bassdator_on_off">
+                </pc-card>
+
             </div>
-
-            <!-- Entre -->
-            <room-divider title="Entre" temp="sensor.entre_temperatursensor_temperature"
-                humidity="sensor.entre_temperatursensor_humidity"
-                motion="binary_sensor.entre_rorelsesensor_occupancy"
-                door="binary_sensor.entre_dorrsensor_contact">
-            </room-divider>
-            <light-card name="Lampor" entity="light.entre" navigate="#entre"></light-card>
-
-            <!-- Leias rum -->
-            <room-divider title="Leias rum" temp="sensor.leias_rum_temperatursensor_temperature"
-                humidity="sensor.leias_rum_temperatursensor_humidity">
-            </room-divider>
-            <light-card name="Lampor" entity="light.leias_rum" navigate="#leias-rum"></light-card>
-
-            <!-- Elises rum -->
-            <room-divider title="Elises rum" temp="sensor.elises_rum_temperatursensor_temperature"
-                humidity="sensor.elises_rum_temperatursensor_humidity">
-            </room-divider>
-            <light-card name="Lampor" entity="light.elises_rum" navigate="#elises-rum"></light-card>
-
-            <!-- Vardagsrum -->
-            <room-divider title="Vardagsrum" temp="sensor.vardagsrum_temperatursensor_temperature"
-                humidity="sensor.vardagsrum_temperatursensor_humidity"
-                motion="binary_sensor.vardagsrum_rorelsesensor_occupancy"
-                door="binary_sensor.vardagsrum_dorrsensor_altan_contact">
-            </room-divider>
-            <light-card name="Lampor" entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
-            <tv-card 
-                name="TV" 
-                entity="media_player.tv_vardagsrum" 
-                media-entity="media_player.android_tv_192_168_50_61"
-                remote="remote.tv_vardagsrum"
-                power-script="script.android_tv_on_off"
-                soundbar="media_player.lg_soundbar">
-            </tv-card>
-            <pc-card 
-                name="Laptop" 
-                entity="input_boolean.laptop_av_pa" 
-                power-service="button.press"
-                power-entity="button.bass_laptop_shutdown"
-                no-wol>
-            </pc-card>
-
-            <!-- Kök -->
-            <room-divider title="Kök" temp="sensor.vardagsrum_temperatursensor_temperature"
-                humidity="sensor.vardagsrum_temperatursensor_humidity"
-                motion="binary_sensor.kok_rorelsesensor_occupancy">
-            </room-divider>
-            <light-card name="Lampor" entity="light.kok" navigate="#kok"></light-card>
-
-            <!-- Sovrum -->
-            <room-divider title="Sovrum" temp="sensor.sovrum_temperatursensor_temperature"
-                humidity="sensor.sovrum_temperatursensor_humidity"
-                motion="binary_sensor.sovrum_rorelsesensor_occupancy">
-            </room-divider>
-            <light-card name="Lampor" entity="light.sovrum" navigate="#sovrum"></light-card>
-
-            <!-- Hobbyrum -->
-            <room-divider title="Hobbyrum" temp="sensor.hobbyrum_temperatursensor_temperature"
-                humidity="sensor.hobbyrum_temperatursensor_humidity"
-                motion="binary_sensor.hobbyrum_rorelsesensor_skrivbord_occupancy">
-            </room-divider>
-            <light-card name="Lampor" entity="light.hobbyrum" navigate="#hobbyrum"></light-card>
-            <pc-card 
-                name="RGBDreamz" 
-                entity="input_boolean.rgbdreamz_startar_stanger_av_sig" 
-                binary-entity="binary_sensor.rgbdreamz_rgbdreamz_av_pa"
-                steam-entity="sensor.steam_76561197983523031"
-                power-service="script.rgbdreamz_on_off">
-            </pc-card>
-            <pc-card 
-                name="Dator" 
-                entity="input_boolean.dator_av_pa" 
-                binary-entity="binary_sensor.bassdator_bassdator"
-                steam-entity="sensor.steam_current_game"
-                power-service="script.bassdator_on_off">
-            </pc-card>
-
         </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          ENTRÉ SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="entre">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="entre">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Entre</span>
             </div>
-            <span class="subview-title">Entre</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.entre"></light-card>
+                <light-card name="Svamplampa" entity="light.entre_svamplampa"></light-card>
+                <light-card name="Spot 1" entity="light.entre_taklampa_spot_1"></light-card>
+                <light-card name="Spot 2" entity="light.entre_taklampa_spot_2"></light-card>
+                <light-card name="Spot 3" entity="light.entre_taklampa_spot_3"></light-card>
+                <light-card name="Spot 4" entity="light.entre_taklampa_spot_4"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.entre"></light-card>
-            <light-card name="Svamplampa" entity="light.entre_svamplampa"></light-card>
-            <light-card name="Spot 1" entity="light.entre_taklampa_spot_1"></light-card>
-            <light-card name="Spot 2" entity="light.entre_taklampa_spot_2"></light-card>
-            <light-card name="Spot 3" entity="light.entre_taklampa_spot_3"></light-card>
-            <light-card name="Spot 4" entity="light.entre_taklampa_spot_4"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          VARDAGSRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="vardagsrum">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="vardagsrum">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Vardagsrum</span>
             </div>
-            <span class="subview-title">Vardagsrum</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.vardagsrum"></light-card>
+                <light-card name="Fönster" entity="light.vardagsrum_fonsterlampa"></light-card>
+                <light-card name="Golvlampa" entity="light.vardagsrum_golvlampa"></light-card>
+                <light-card name="Klotlampa" entity="light.vardagsrum_klotlampa"></light-card>
+                <light-card name="TV-bänk" entity="light.vardagsrum_tv_bank"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.vardagsrum"></light-card>
-            <light-card name="Fönster" entity="light.vardagsrum_fonsterlampa"></light-card>
-            <light-card name="Golvlampa" entity="light.vardagsrum_golvlampa"></light-card>
-            <light-card name="Klotlampa" entity="light.vardagsrum_klotlampa"></light-card>
-            <light-card name="TV-bänk" entity="light.vardagsrum_tv_bank"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          KÖK SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="kok">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="kok">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Kök</span>
             </div>
-            <span class="subview-title">Kök</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.kok"></light-card>
+                <light-card name="Fönster" entity="light.kok_fonster"></light-card>
+                <light-card name="Matbord" entity="light.kok_matbord"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.kok"></light-card>
-            <light-card name="Fönster" entity="light.kok_fonster"></light-card>
-            <light-card name="Matbord" entity="light.kok_matbord"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          SOVRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="sovrum">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="sovrum">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Sovrum</span>
             </div>
-            <span class="subview-title">Sovrum</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.sovrum"></light-card>
+                <light-card name="Saras sänglampa" entity="light.sovrum_saras_sanglampa"></light-card>
+                <light-card name="Sebbes sänglampa" entity="light.sovrum_sebbes_sanglampa"></light-card>
+                <light-card name="Taklampa" entity="light.sovrum_taklampa"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.sovrum"></light-card>
-            <light-card name="Saras sänglampa" entity="light.sovrum_saras_sanglampa"></light-card>
-            <light-card name="Sebbes sänglampa" entity="light.sovrum_sebbes_sanglampa"></light-card>
-            <light-card name="Taklampa" entity="light.sovrum_taklampa"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          ELISES RUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="elises-rum">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="elises-rum">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Elises rum</span>
             </div>
-            <span class="subview-title">Elises rum</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.elises_rum"></light-card>
+                <light-card name="Fönster" entity="light.elises_rum_klotlampa"></light-card>
+                <light-card name="Ljusslinga" entity="light.elises_rum_ljusslinga"></light-card>
+                <light-card name="Skrivbordslampa" entity="light.elises_rum_skrivbordslampa"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.elises_rum"></light-card>
-            <light-card name="Fönster" entity="light.elises_rum_klotlampa"></light-card>
-            <light-card name="Ljusslinga" entity="light.elises_rum_ljusslinga"></light-card>
-            <light-card name="Skrivbordslampa" entity="light.elises_rum_skrivbordslampa"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          LEIAS RUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="leias-rum">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="leias-rum">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Leias rum</span>
             </div>
-            <span class="subview-title">Leias rum</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.leias_rum"></light-card>
+                <light-card name="Fönster" entity="light.leias_rum_fonsterlampa"></light-card>
+                <light-card name="Ljusslinga" entity="light.leias_rum_ljusslinga"></light-card>
+                <light-card name="Taklampa" entity="light.leias_rum_taklampa"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.leias_rum"></light-card>
-            <light-card name="Fönster" entity="light.leias_rum_fonsterlampa"></light-card>
-            <light-card name="Ljusslinga" entity="light.leias_rum_ljusslinga"></light-card>
-            <light-card name="Taklampa" entity="light.leias_rum_taklampa"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          HOBBYRUM SUBVIEW
     ════════════════════════════════════════════════════════════ -->
-    <div class="view subview" id="hobbyrum">
-        <div class="subview-header" onclick="goBack()">
-            <div class="back-btn">
-                <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+        <div class="view subview" id="hobbyrum">
+            <div class="subview-header" onclick="goBack()">
+                <div class="back-btn">
+                    <iconify-icon icon="lucide:chevron-down"></iconify-icon>
+                </div>
+                <span class="subview-title">Hobbyrum</span>
             </div>
-            <span class="subview-title">Hobbyrum</span>
+            <div class="dashboard">
+                <light-card name="Hela rummet" entity="light.hobbyrum"></light-card>
+                <light-card name="Play 1" entity="light.hobbyrum_play_1"></light-card>
+                <light-card name="Play 2" entity="light.hobbyrum_play_2"></light-card>
+                <light-card name="Play 3" entity="light.hobbyrum_play_3"></light-card>
+                <light-card name="Skrivbord" entity="light.hobbyrum_skrivbord"></light-card>
+                <light-card name="Hektor 1" entity="light.hobbyrum_golvlampa_lampa_1"></light-card>
+                <light-card name="Hektor 2" entity="light.hobbyrum_golvlampa_lampa_2"></light-card>
+                <light-card name="Hektor 3" entity="light.hobbyrum_golvlampa_lampa_3"></light-card>
+                <light-card name="Golvlampa" entity="light.hobbyrum_golvlampa_2"></light-card>
+            </div>
         </div>
-        <div class="dashboard">
-            <light-card name="Hela rummet" entity="light.hobbyrum"></light-card>
-            <light-card name="Play 1" entity="light.hobbyrum_play_1"></light-card>
-            <light-card name="Play 2" entity="light.hobbyrum_play_2"></light-card>
-            <light-card name="Play 3" entity="light.hobbyrum_play_3"></light-card>
-            <light-card name="Skrivbord" entity="light.hobbyrum_skrivbord"></light-card>
-            <light-card name="Hektor 1" entity="light.hobbyrum_golvlampa_lampa_1"></light-card>
-            <light-card name="Hektor 2" entity="light.hobbyrum_golvlampa_lampa_2"></light-card>
-            <light-card name="Hektor 3" entity="light.hobbyrum_golvlampa_lampa_3"></light-card>
-            <light-card name="Golvlampa" entity="light.hobbyrum_golvlampa_2"></light-card>
-        </div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          MEALS VIEW (Meals + Shopping)
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="meals">
-        <meals-view></meals-view>
-    </div>
+        <div class="view" id="meals">
+            <meals-view></meals-view>
+        </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════
          ENERGY VIEW (Nordpool)
     ════════════════════════════════════════════════════════════ -->
-    <div class="view" id="energy">
-        <energy-view></energy-view>
-    </div>
+        <div class="view" id="energy">
+            <energy-view></energy-view>
+        </div>
 
     </div> <!-- End .main-shell -->
 
@@ -348,7 +335,8 @@
             <iconify-icon icon="ph:house-fill"></iconify-icon>
             <span>Hem</span>
         </button>
-        <button class="nav-item" data-tab="meals" data-icon-outline="ph:shopping-cart" data-icon-fill="ph:shopping-cart-fill">
+        <button class="nav-item" data-tab="meals" data-icon-outline="ph:shopping-cart"
+            data-icon-fill="ph:shopping-cart-fill">
             <iconify-icon icon="ph:shopping-cart"></iconify-icon>
             <span>Mat</span>
         </button>
