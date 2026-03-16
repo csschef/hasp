@@ -30,6 +30,7 @@ class HistoryPopup extends HTMLElement {
                 this.classList.add("active")
             })
         })
+        window.history.pushState({ type: "popup", id: "historyPopup" }, "")
         this.updateHeader()
 
         const graphContainer = this.shadow.querySelector(".graph-container") as HTMLElement
@@ -39,8 +40,11 @@ class HistoryPopup extends HTMLElement {
         this.drawGraph(history)
     }
 
-    close() {
+    close(fromHistory = false) {
         this.classList.remove("active")
+        if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "historyPopup") {
+            window.history.back()
+        }
         setTimeout(() => {
             this.style.display = "none"
         }, 300)

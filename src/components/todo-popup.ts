@@ -29,10 +29,14 @@ class TodoPopup extends HTMLElement {
         requestAnimationFrame(() => {
             this.classList.add("active")
         })
+        window.history.pushState({ type: "popup", id: "todoPopup" }, "")
     }
 
-    close() {
+    close(fromHistory = false) {
         this.classList.remove("active")
+        if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "todoPopup") {
+            window.history.back()
+        }
         setTimeout(() => {
             this.style.display = "none"
         }, 300)

@@ -53,6 +53,7 @@ class PersonPopup extends HTMLElement {
                 this.classList.add("active")
             })
         })
+        window.history.pushState({ type: "popup", id: "personPopup" }, "")
 
         subscribeEntity(entityId, (e: HAEntity) => {
             this.entity = e
@@ -172,8 +173,11 @@ class PersonPopup extends HTMLElement {
         }).join('')
     }
 
-    close() {
+    close(fromHistory = false) {
         this.classList.remove("active")
+        if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "personPopup") {
+            window.history.back()
+        }
         setTimeout(() => {
             this.style.display = "none"
             if (this.map) {

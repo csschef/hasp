@@ -246,11 +246,41 @@ subscribeEntity("sensor.hacs", updateSystemBadge);
 setInterval(updateSystemBadge, 30000);
 setTimeout(updateSystemBadge, 2000); // Initial check
 
-// ── Global Navigation ──
-const MAIN_TABS = ["home", "meals", "energy"]
+    // ── Global Navigation ──
+    const MAIN_TABS = ["home", "meals", "energy"]
+    window.addEventListener("popstate", (event) => {
+        // 1. Identify which popup (if any) should be open in the NEW state
+        const targetPopupId = (event.state && event.state.type === "popup") ? event.state.id : null
+        const isTrayState = (event.state && event.state.type === "tray")
+
+        // 2. Clear ANY active popups that aren't the target (usually all of them on back)
+        const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup"]
+        popupIds.forEach(id => {
+            if (id !== targetPopupId) {
+                const p = document.getElementById(id) as any
+                if (p && typeof p.close === "function") {
+                    // Check if it's currently open (active class or internal flag)
+                    const isOpen = p.classList.contains("active") || p.isOpen === true
+                    if (isOpen) p.close(true) // Pass true to avoid redundant back() calls
+                }
+            }
+        })
+
+        // 3. Handle Tray: If the new state isn't a tray, ensure it's closed
+        if (!isTrayState) {
+            toggleTray(false, true)
+        }
+
+        // 4. Always update the background view based on current hash
+        handleRoute()
+    })
 
     ; (window as any).goBack = function () {
-        window.location.hash = "#home"
+        if (window.history.length > 1 && !MAIN_TABS.includes(window.location.hash.replace("#", ""))) {
+            window.history.back()
+        } else {
+            window.location.hash = "#home"
+        }
     }
 
 function handleRoute() {
@@ -319,10 +349,16 @@ if (document.readyState === "loading") {
 const topbarEl = document.getElementById("topTrayContainer")
 const backdropEl = document.getElementById("trayBackdrop")
 
-function toggleTray(force?: boolean) {
+function toggleTray(force?: boolean, fromBack = false) {
     const isExpanded = topbarEl?.classList.toggle("expanded", force)
     document.body.style.overflow = isExpanded ? "hidden" : ""
     document.body.classList.toggle("tray-open", isExpanded)
+
+    if (isExpanded && !fromBack) {
+        window.history.pushState({ type: "tray" }, "")
+    } else if (!isExpanded && !fromBack && window.history.state?.type === "tray") {
+        window.history.back()
+    }
 }
 
 topbarEl?.addEventListener("click", (e) => {

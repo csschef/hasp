@@ -14,11 +14,17 @@ class SettingsPopup extends HTMLElement {
 
     public open() {
         this.isOpen = true;
+        this.classList.add("active");
         this.render();
+        window.history.pushState({ type: "popup", id: "settingsPopup" }, "")
     }
 
-    public close() {
+    public close(fromHistory = false) {
         this.isOpen = false;
+        this.classList.remove("active");
+        if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "settingsPopup") {
+            window.history.back()
+        }
         this.render();
     }
 
