@@ -6,79 +6,79 @@ import { connectHA } from "./services/ha-client"
 import { subscribeEntity, getEntity, getEntitiesByDomain } from "./store/entity-store"
 import { callService } from "./services/ha-service"
 
-// ── Build-timestamp cache buster ──────────────────────────────────────────────
-// Vite injects VITE_BUILD_TS at compile time (see vite.config.ts → define).
-// On every page load we compare it to what we last saw in localStorage.
-// If they differ → a new bundle has been deployed → force a hard reload so the
-// WebView discards any cached JS/CSS and fetches the fresh files.
-// This runs BEFORE init() so a stale build is never partially executed.
-// ──────────────────────────────────────────────────────────────────────────────
-;(function bustCache() {
-    const KEY  = "hasp-build-ts"
-    const curr = import.meta.env.VITE_BUILD_TS as string
-    if (!curr) return  // dev mode without the env var — skip
-    const prev = localStorage.getItem(KEY)
+    // ── Build-timestamp cache buster ──────────────────────────────────────────────
+    // Vite injects VITE_BUILD_TS at compile time (see vite.config.ts → define).
+    // On every page load we compare it to what we last saw in localStorage.
+    // If they differ → a new bundle has been deployed → force a hard reload so the
+    // WebView discards any cached JS/CSS and fetches the fresh files.
+    // This runs BEFORE init() so a stale build is never partially executed.
+    // ──────────────────────────────────────────────────────────────────────────────
+    ; (function bustCache() {
+        const KEY = "hasp-build-ts"
+        const curr = import.meta.env.VITE_BUILD_TS as string
+        if (!curr) return  // dev mode without the env var — skip
+        const prev = localStorage.getItem(KEY)
 
-    // Always persist the current timestamp right away
-    localStorage.setItem(KEY, curr)
+        // Always persist the current timestamp right away
+        localStorage.setItem(KEY, curr)
 
-    if (prev && prev !== curr) {
-        // New build detected! Clear any SW / browser caches then hard-reload.
-        console.log(`[HASP] New build detected (${curr}). Reloading…`)
-        const doReload = () => { window.location.reload() }
-        if ("caches" in window) {
-            // Wipe all Cache Storage entries (covers SW caches if any)
-            caches.keys()
-                .then(names => Promise.all(names.map(n => caches.delete(n))))
-                .then(doReload)
-                .catch(doReload)
-        } else {
-            doReload()
+        if (prev && prev !== curr) {
+            // New build detected! Clear any SW / browser caches then hard-reload.
+            console.log(`[HASP] New build detected (${curr}). Reloading…`)
+            const doReload = () => { window.location.reload() }
+            if ("caches" in window) {
+                // Wipe all Cache Storage entries (covers SW caches if any)
+                caches.keys()
+                    .then(names => Promise.all(names.map(n => caches.delete(n))))
+                    .then(doReload)
+                    .catch(doReload)
+            } else {
+                doReload()
+            }
+            // Return early — the reload will re-run the full init
+            return
         }
-        // Return early — the reload will re-run the full init
-        return
-    }
-})()
+    })()
 
-// ── Debug Overlay (triple-tap weather card to show) ───────────────────────────
-;(function setupDebugOverlay() {
-    let tapCount = 0
-    let tapTimer: ReturnType<typeof setTimeout>
+    // ── Debug Overlay (triple-tap weather card to show) ───────────────────────────
+    ; (function setupDebugOverlay() {
+        let tapCount = 0
+        let tapTimer: ReturnType<typeof setTimeout>
 
-    document.addEventListener("click", (e) => {
-        const el = e.target as HTMLElement
-        if (!el.closest("weather-card")) return
-        tapCount++
-        clearTimeout(tapTimer)
-        tapTimer = setTimeout(() => { tapCount = 0 }, 600)
-        if (tapCount < 3) return
-        tapCount = 0
+        document.addEventListener("click", (e) => {
+            const el = e.target as HTMLElement
+            if (!el.closest("weather-card")) return
+            tapCount++
+            clearTimeout(tapTimer)
+            tapTimer = setTimeout(() => { tapCount = 0 }, 600)
+            if (tapCount < 3) return
+            tapCount = 0
 
-        const isIframe = window.parent !== window
-        const parentHistLen = (() => {
-            try { return window.parent.history.length } catch { return "BLOCKED (cross-origin)" }
-        })()
-        const pushResult = (() => {
-            try {
-                window.parent.history.pushState({ test: true }, "")
-                return `OK — parent.history.length = ${window.parent.history.length}`
-            } catch (err: any) { return `FAILED: ${err.message}` }
-        })()
-        const buildTs = import.meta.env.VITE_BUILD_TS || "dev"
+            const isIframe = window.parent !== window
+            const parentHistLen = (() => {
+                try { return window.parent.history.length } catch { return "BLOCKED (cross-origin)" }
+            })()
+            const pushResult = (() => {
+                try {
+                    window.parent.history.pushState({ test: true }, "")
+                    return `OK — parent.history.length = ${window.parent.history.length}`
+                } catch (err: any) { return `FAILED: ${err.message}` }
+            })()
+            const buildTs = import.meta.env.VITE_BUILD_TS || "dev"
 
-        const overlay = document.createElement("div")
-        overlay.style.cssText = `
+            const overlay = document.createElement("div")
+            overlay.style.cssText = `
             position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);
             color:#e8f4f8;font-family:monospace;font-size:13px;padding:24px;
             overflow-y:auto;display:flex;flex-direction:column;gap:8px;
         `
-        const row = (label: string, value: string, ok?: boolean) =>
-            `<div style="padding:8px;background:rgba(255,255,255,0.06);border-radius:6px">
+            const row = (label: string, value: string, ok?: boolean) =>
+                `<div style="padding:8px;background:rgba(255,255,255,0.06);border-radius:6px">
                 <span style="color:#88c0d0">${label}:</span><br>
                 <span style="color:${ok === true ? '#a3be8c' : ok === false ? '#bf616a' : '#eceff4'}">${value}</span>
             </div>`
 
-        overlay.innerHTML = `
+            overlay.innerHTML = `
             <div style="font-size:16px;font-weight:600;margin-bottom:8px">🔍 HASP Debug</div>
             ${row("Build", buildTs)}
             ${row("In iframe (window.parent ≠ window)", String(isIframe), isIframe)}
@@ -88,10 +88,10 @@ import { callService } from "./services/ha-service"
             ${row("Current hash", window.location.hash || "(none)")}
             <button style="margin-top:16px;padding:12px;background:#4c566a;border:none;border-radius:8px;color:#eceff4;font-size:14px;cursor:pointer">Stäng</button>
         `
-        document.body.appendChild(overlay)
-        overlay.querySelector("button")!.onclick = () => overlay.remove()
-    })
-})()
+            document.body.appendChild(overlay)
+            overlay.querySelector("button")!.onclick = () => overlay.remove()
+        })
+    })()
 
     // ── Font size lockdown ────────────────────────────────────────────────────
     // HA injects its theme CSS into same-origin iframes AFTER our stylesheets
@@ -608,8 +608,8 @@ document.addEventListener("click", (e) => {
 // Dark below -3° (horizon + civil twilight buffer)
 // Light above +5° (sun clearly up past morning glow)
 // No change in the buffer zone between −3° and +5°
-const DARK_BELOW = -3
-const LIGHT_ABOVE = 5
+const DARK_BELOW = 0
+const LIGHT_ABOVE = 0
 let lastAutoTheme: "light" | "dark" | null = null
 
 function applyAutoTheme(elevation: number) {
