@@ -2,7 +2,7 @@
 
 A mobile-first, performance-oriented dashboard built for Home Assistant using Vite, TypeScript, and Web Components. Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI.
 
-[![Watch the video](https://img.youtube.com/vi/z9kERnG80_k/maxresdefault.jpg)](https://www.youtube.com/shorts/4s6Lvuro5D0)
+[![Watch the video](https://img.youtube.com/vi/4s6Lvuro5D0/maxresdefault.jpg)](https://www.youtube.com/shorts/4s6Lvuro5D0)
 
 ---
 
@@ -38,7 +38,7 @@ This bypasses HA's internal proxy and all the limitations that come with it, giv
 
 The weather card is collapsible: tapping it expands to reveal the full forecast. It shows:
 - Current temperature and "feels like" (both from Open-Meteo's `apparent_temperature`)
-- Weather condition with custom PNG icons (SVG versions are planned)
+- Weather condition with custommade svgs
 - Location name via reverse geocoding
 - Sunrise and sunset times from HA's `sun.sun` entity
 - Switchable hourly and daily forecast strips with icons, temperatures, and precipitation
