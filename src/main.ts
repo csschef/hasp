@@ -6,6 +6,93 @@ import { connectHA } from "./services/ha-client"
 import { subscribeEntity, getEntity, getEntitiesByDomain } from "./store/entity-store"
 import { callService } from "./services/ha-service"
 
+// ── Build-timestamp cache buster ──────────────────────────────────────────────
+// Vite injects VITE_BUILD_TS at compile time (see vite.config.ts → define).
+// On every page load we compare it to what we last saw in localStorage.
+// If they differ → a new bundle has been deployed → force a hard reload so the
+// WebView discards any cached JS/CSS and fetches the fresh files.
+// This runs BEFORE init() so a stale build is never partially executed.
+// ──────────────────────────────────────────────────────────────────────────────
+;(function bustCache() {
+    const KEY  = "hasp-build-ts"
+    const curr = import.meta.env.VITE_BUILD_TS as string
+    if (!curr) return  // dev mode without the env var — skip
+    const prev = localStorage.getItem(KEY)
+
+    // Always persist the current timestamp right away
+    localStorage.setItem(KEY, curr)
+
+    if (prev && prev !== curr) {
+        // New build detected! Clear any SW / browser caches then hard-reload.
+        console.log(`[HASP] New build detected (${curr}). Reloading…`)
+        const doReload = () => { window.location.reload() }
+        if ("caches" in window) {
+            // Wipe all Cache Storage entries (covers SW caches if any)
+            caches.keys()
+                .then(names => Promise.all(names.map(n => caches.delete(n))))
+                .then(doReload)
+                .catch(doReload)
+        } else {
+            doReload()
+        }
+        // Return early — the reload will re-run the full init
+        return
+    }
+})()
+
+// ── Debug Overlay (triple-tap weather card to show) ───────────────────────────
+;(function setupDebugOverlay() {
+    let tapCount = 0
+    let tapTimer: ReturnType<typeof setTimeout>
+
+    document.addEventListener("click", (e) => {
+        const el = e.target as HTMLElement
+        if (!el.closest("weather-card")) return
+        tapCount++
+        clearTimeout(tapTimer)
+        tapTimer = setTimeout(() => { tapCount = 0 }, 600)
+        if (tapCount < 3) return
+        tapCount = 0
+
+        const isIframe = window.parent !== window
+        const parentHistLen = (() => {
+            try { return window.parent.history.length } catch { return "BLOCKED (cross-origin)" }
+        })()
+        const pushResult = (() => {
+            try {
+                window.parent.history.pushState({ test: true }, "")
+                return `OK — parent.history.length = ${window.parent.history.length}`
+            } catch (err: any) { return `FAILED: ${err.message}` }
+        })()
+        const buildTs = import.meta.env.VITE_BUILD_TS || "dev"
+
+        const overlay = document.createElement("div")
+        overlay.style.cssText = `
+            position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);
+            color:#e8f4f8;font-family:monospace;font-size:13px;padding:24px;
+            overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+        `
+        const row = (label: string, value: string, ok?: boolean) =>
+            `<div style="padding:8px;background:rgba(255,255,255,0.06);border-radius:6px">
+                <span style="color:#88c0d0">${label}:</span><br>
+                <span style="color:${ok === true ? '#a3be8c' : ok === false ? '#bf616a' : '#eceff4'}">${value}</span>
+            </div>`
+
+        overlay.innerHTML = `
+            <div style="font-size:16px;font-weight:600;margin-bottom:8px">🔍 HASP Debug</div>
+            ${row("Build", buildTs)}
+            ${row("In iframe (window.parent ≠ window)", String(isIframe), isIframe)}
+            ${row("Parent history.length (before push)", String(parentHistLen))}
+            ${row("pushState to parent result", pushResult, pushResult.startsWith("OK"))}
+            ${row("Own window.history.length", String(window.history.length))}
+            ${row("Current hash", window.location.hash || "(none)")}
+            <button style="margin-top:16px;padding:12px;background:#4c566a;border:none;border-radius:8px;color:#eceff4;font-size:14px;cursor:pointer">Stäng</button>
+        `
+        document.body.appendChild(overlay)
+        overlay.querySelector("button")!.onclick = () => overlay.remove()
+    })
+})()
+
     // ── Font size lockdown ────────────────────────────────────────────────────
     // HA injects its theme CSS into same-origin iframes AFTER our stylesheets
     // load, winning the cascade even against !important. We fight back by:
@@ -246,34 +333,91 @@ subscribeEntity("sensor.hacs", updateSystemBadge);
 setInterval(updateSystemBadge, 30000);
 setTimeout(updateSystemBadge, 2000); // Initial check
 
-    // ── Global Navigation ──
-    const MAIN_TABS = ["home", "meals", "energy"]
-    window.addEventListener("popstate", (event) => {
-        // 1. Identify which popup (if any) should be open in the NEW state
-        const targetPopupId = (event.state && event.state.type === "popup") ? event.state.id : null
-        const isTrayState = (event.state && event.state.type === "tray")
+// ── Global Navigation ──
+const MAIN_TABS = ["home", "meals", "energy"]
 
-        // 2. Clear ANY active popups that aren't the target (usually all of them on back)
-        const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup"]
-        popupIds.forEach(id => {
-            if (id !== targetPopupId) {
-                const p = document.getElementById(id) as any
-                if (p && typeof p.close === "function") {
-                    // Check if it's currently open (active class or internal flag)
-                    const isOpen = p.classList.contains("active") || p.isOpen === true
-                    if (isOpen) p.close(true) // Pass true to avoid redundant back() calls
-                }
+// ── History Sentinel ──────────────────────────────────────────────────────────
+// The HA Companion App closes when its WebViewActivity.onBackPressed() is
+// called and the TOP-LEVEL WebView has no history left.
+//
+// CRITICAL: This dashboard runs inside an <iframe> in HA's WebView.
+// Android monitors the PARENT window's history, NOT this iframe's history.
+// Pushing a sentinel to window.parent.history is what actually prevents the
+// app from closing on an edge-swipe when the user hasn't navigated anywhere.
+// ──────────────────────────────────────────────────────────────────────────────
+const SENTINEL_STATE = { type: "hasp-sentinel" }
+
+// Target: parent window if in iframe (HA production), self if standalone (dev)
+const topWin: Window = (window.parent !== window) ? window.parent : window
+
+function pushSentinel() {
+    try {
+        topWin.history.pushState(SENTINEL_STATE, "")
+    } catch {
+        // Same-origin error shouldn't happen in HA, but fall back gracefully
+        window.history.pushState(SENTINEL_STATE, "")
+    }
+}
+
+// Push ONE sentinel on load as a baseline.
+pushSentinel()
+
+// ── User-activation sentinel ──────────────────────────────────────────────────
+// Theory: pushState to window.parent from an iframe may only register with
+// Android's gesture dispatcher when called during a "user activation" context
+// (i.e. during or just after a touch event). Our page-load push (no activation)
+// appears to not count. The debug overlay worked because it pushed AFTER the
+// user triple-tapped (= had user activation).
+//
+// Fix: push another sentinel on the FIRST touchend the user fires anywhere,
+// which is always in user-activation context. The user will always touch
+// something (a card, a tab) before they could edge-swipe, so this fires
+// naturally and invisibly before any problematic back gesture.
+// ──────────────────────────────────────────────────────────────────────────────
+document.addEventListener("touchend", function activationPush() {
+    document.removeEventListener("touchend", activationPush)
+    pushSentinel()
+    pushSentinel() // Two extra for safety buffer
+}, { passive: true })
+
+// Listen on the PARENT for popstate. If Android fires back and consumes the
+// sentinel, we immediately re-push it so the stack never truly empties.
+topWin.addEventListener("popstate", (event: PopStateEvent) => {
+    if (event.state && event.state.type === "hasp-sentinel") {
+        pushSentinel()
+    }
+})
+
+
+window.addEventListener("popstate", (event) => {
+    // Iframe's own popstate: handle popup/tray close and routing.
+    // (The sentinel lives in the parent window, not here, so no sentinel check needed.)
+
+    // 1. Identify which popup (if any) should be open in the NEW state
+    const targetPopupId = (event.state && event.state.type === "popup") ? event.state.id : null
+    const isTrayState = (event.state && event.state.type === "tray")
+
+    // 2. Clear ANY active popups that aren't the target (usually all of them on back)
+    const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup"]
+    popupIds.forEach(id => {
+        if (id !== targetPopupId) {
+            const p = document.getElementById(id) as any
+            if (p && typeof p.close === "function") {
+                // Check if it's currently open (active class or internal flag)
+                const isOpen = p.classList.contains("active") || p.isOpen === true
+                if (isOpen) p.close(true) // Pass true to avoid redundant back() calls
             }
-        })
-
-        // 3. Handle Tray: If the new state isn't a tray, ensure it's closed
-        if (!isTrayState) {
-            toggleTray(false, true)
         }
-
-        // 4. Always update the background view based on current hash
-        handleRoute()
     })
+
+    // 3. Handle Tray: If the new state isn't a tray, ensure it's closed
+    if (!isTrayState) {
+        toggleTray(false, true)
+    }
+
+    // 4. Always update the background view based on current hash
+    handleRoute()
+})
 
     ; (window as any).goBack = function () {
         if (window.history.length > 1 && !MAIN_TABS.includes(window.location.hash.replace("#", ""))) {
