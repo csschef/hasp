@@ -372,6 +372,8 @@ room-divider {
     grid-column: 1 / -1;
 }
 
+boolean-card { display: block; }
+
 /* ── Main shell ─────────────────────────────────────────────── */
 .main-shell {
     position: relative;

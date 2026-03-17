@@ -154,6 +154,7 @@ import "./components/meals-view"
 import "./components/energy-view"
 import "./components/todo-popup"
 import "./components/pc-card"
+import "./components/boolean-card"
 
 /* ── TRAY & NOTIFICATIONS ── */
 
