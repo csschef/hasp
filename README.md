@@ -2,7 +2,7 @@
 
 A mobile-first, performance-oriented dashboard built for Home Assistant using Vite, TypeScript, and Web Components. Designed to be a fast, beautiful, and highly personal alternative to the default Home Assistant UI.
 
-[![Watch the video](https://img.youtube.com/vi/4s6Lvuro5D0/maxresdefault.jpg)](https://www.youtube.com/shorts/4s6Lvuro5D0)
+
 
 ---
 
