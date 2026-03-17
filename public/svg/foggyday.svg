@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+
+  <defs>
+    <linearGradient id="sunGradient" x1="175" y1="175" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fdc015"/>
+      <stop offset="100%" stop-color="#f3d87c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sun -->
+  <circle cx="90.625" cy="89.125" r="87.625" fill="url(#sunGradient)" />
+
+  <!-- Fog lines -->
+  <rect x="35.625" y="110.555" width="110.875" height="16.219" rx="6" fill="#efefef" />
+  <rect x="85.3" y="136.555" width="93.188" height="16.219" rx="6" fill="#efefef" />
+  <rect x="0.959" y="136.555" width="71.531" height="16.219" rx="6" fill="#efefef" />
+  <rect x="68.956" y="162.555" width="89.187" height="16.219" rx="6" fill="#efefef" />
+  <rect x="13.625" y="162.562" width="43.531" height="16.219" rx="6" fill="#efefef" />
+
+</svg>

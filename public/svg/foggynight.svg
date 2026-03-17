@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+
+  <defs>
+    <!-- Moon gradient -->
+    <linearGradient id="moonGradient" x1="174" y1="174" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fdd76c"/>
+      <stop offset="100%" stop-color="#f9e095"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Moon -->
+  <path
+    d="M76.651,3.232s-22.937,43.2,10.871,88.7c38.208,40.768,89.575,13.915,89.575,13.915s-7.711,50.571-57.832,66.528C64.106,189.538,27.95,151.074,27.95,151.074S-10.375,115,7.948,61.5C26,8.8,76.651,3.232,76.651,3.232Z"
+    fill="url(#moonGradient)"
+    fill-rule="evenodd"
+  />
+
+  <!-- Fog (ALL med samma radius) -->
+  <rect x="35.625" y="110.555" width="110.875" height="16.219" rx="8" fill="#efefef" />
+  <rect x="85.3" y="136.555" width="93.188" height="16.219" rx="8" fill="#efefef" />
+  <rect x="0.959" y="136.555" width="71.531" height="16.219" rx="8" fill="#efefef" />
+  <rect x="68.956" y="162.555" width="89.187" height="16.219" rx="8" fill="#efefef" />
+  <rect x="13.625" y="162.562" width="43.531" height="16.219" rx="8" fill="#efefef" />
+
+</svg>

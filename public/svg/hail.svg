@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+
+  <defs>
+    <!-- Cloud gradient -->
+    <linearGradient id="cloudGradient" x1="148" y1="120" x2="28" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a4a4a5"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cloud -->
+  <path
+    d="M34.613,40.657S46.084,1.145,92.175,1.273c48.588,3.409,54.965,45.011,54.965,45.011s30,3.919,30.729,36.355c0.228,40.779-45.877,37.221-45.877,37.221l-83.1.865S3.858,120.278,2.153,80.042C3.419,42.159,34.613,40.657,34.613,40.657Z"
+    fill="url(#cloudGradient)"
+    fill-rule="evenodd"
+  />
+
+  <!-- Hail stones -->
+  <path d="M132.72,125.387L111.9,135.8l3.471,22.56,23.139,4.628,10.412-20.825Z" fill="#efefef"/>
+  <path d="M85.72,138.387L64.9,148.8l3.471,22.56L91.5,175.988l10.412-20.825Z" fill="#efefef"/>
+  <path d="M38.72,125.387L17.9,135.8l3.471,22.56L44.5,162.988l10.412-20.825Z" fill="#efefef"/>
+
+</svg>

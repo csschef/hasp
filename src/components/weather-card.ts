@@ -20,23 +20,25 @@ class WeatherCard extends HTMLElement {
     private viewMode: 'hourly' | 'daily' = (localStorage.getItem("weather_view_mode") as 'hourly' | 'daily') || 'daily'
 
     private imageMap: Record<string, string> = {
-        "sunny": "Soligt.png",
-        "clear-night": "Mone.png",
-        "cloudy": "Molnigt2.png",
-        "fog": "Dimmadag.png",
-        "fog_night": "Dimmanatt.png",
-        "hail": "Hagel.png",
-        "lightning": "Aska.png",
-        "lightning-rainy": "Askaochregn.png",
-        "partlycloudy": "Delvismolnigtdag2.png",
-        "partlycloudy_night": "Delvismolnigtnatt.png",
-        "pouring": "Osregn.png",
-        "rainy": "Regn3.png",
-        "snowy": "Sno.png",
-        "snowy-rainy": "Snoregn.png",
-        "windy": "Molnigt2.png",
-        "windy-variant": "Molnigt2.png",
-        "exceptional": "Aska.png"
+        // ── Dina SVG-ikoner ──────────────────────────────────
+        "sunny":             "sun.svg",
+        "clear-night":       "clearnight.svg",
+        "cloudy":            "cloudy.svg",
+        "fog":               "foggyday.svg",
+        "fog_night":         "foggynight.svg",
+        "hail":              "hail.svg",
+        "lightning":         "thunder.svg",
+        "lightning-rainy":   "thunderandrain.svg",
+        "partlycloudy":      "partlycloudyday.svg",
+        "partlycloudy_night": "partlycloudynight.svg",
+        "rainy":             "rainy.svg",
+        "snowy":             "snowy.svg",
+        "snowy-rainy":       "snowyrainy.svg",
+        // ── Fallbacks (ingen unik ikon) ──────────────────────
+        "pouring":           "rainy.svg",
+        "windy":             "cloudy.svg",
+        "windy-variant":     "cloudy.svg",
+        "exceptional":       "thunder.svg"
     }
 
     constructor() {
@@ -614,13 +616,12 @@ class WeatherCard extends HTMLElement {
         const fileName = this.imageMap[finalKey] || this.imageMap[stateKey]
 
         if (fileName) {
-            // Use Vite's built-in detection to handle paths correctly in both environments
-            const iconUrl = `weather/${fileName}`
+            const iconUrl = `svg/${fileName}`
 
             return `
                 <div class="icon-wrapper" style="width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
-                    <img src="${iconUrl}" 
-                         style="width: 100%; height: 100%; object-fit: contain;" 
+                    <img src="${iconUrl}"
+                         style="width: 100%; height: 100%; object-fit: contain;"
                          loading="lazy"
                     />
                 </div>`

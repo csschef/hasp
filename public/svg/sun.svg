@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="sunGradient" x1="180" y1="180" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fdc015"/>
+      <stop offset="100%" stop-color="#f3d87c"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="90" cy="90" r="87" fill="url(#sunGradient)" />
+</svg>
