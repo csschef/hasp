@@ -39,7 +39,7 @@ This bypasses HA's internal proxy and all the limitations that come with it, giv
 
 The weather card is collapsible: tapping it expands to reveal the full forecast. It shows:
 - Current temperature and "feels like" (both from Open-Meteo's `apparent_temperature`)
-- Weather condition with custommade svgs
+- Weather condition with custom made animated svg icons.
 - Location name via reverse geocoding
 - Sunrise and sunset times from HA's `sun.sun` entity
 - Switchable hourly and daily forecast strips with icons, temperatures, and precipitation
@@ -118,7 +118,7 @@ A notification bell in the top bar shows a count badge and lights up when any co
 - Cat litter counters (triggers when the `counter` entity exceeds a threshold)
 - Mail in the mailbox (triggers when a boolean is `on`)
 
-Each notification shows its current value and has inline action buttons that call HA services directly (increment/decrement for counters, turn off for booleans). The same top bar also slides down a tray with quick-toggle tiles for Guest Mode, Sleep Mode, and Movie Mode (each backed by HA `input_boolean` entities), plus a light/dark theme toggle.
+Each notification shows its current value and has support for inline action buttons that call HA services directly (increment/decrement for counters, turn off for booleans). The same top bar also slides down a tray with quick-toggle tiles for Guest Mode, Sleep Mode, and Movie Mode (each backed by HA `input_boolean` entities), plus a light/dark theme toggle.
 
 There's also a separate system update badge that monitors HACS and all `update.*` entities and shows a dot when updates are available.
 
@@ -166,7 +166,7 @@ Every `npm run build` stamps a build timestamp into the bundle via a `VITE_BUILD
 
 ### Auto Theme Based on Sun Elevation
 
-The theme switches automatically based on the sun's elevation: dark mode kicks in below -3° (civil twilight), light mode returns above +5°. A buffer zone between these values prevents rapid toggling at dusk and dawn.
+The theme switches automatically based on the sun's elevation and can be customized: dark mode kicks in at sunset, light mode returns at sunrise.
 
 ---
 
@@ -194,7 +194,7 @@ npm run dev -- --host
 npm run build
 ```
 
-Copy the contents of `dist/` to your Home Assistant `www/` directory. Then add a `panel_custom` entry in your HA configuration to load it as a full-screen panel.
+Copy the contents of `dist/` to your Home Assistant `www/` directory. Then add the internal url as a `webpage dashboard`.
 
 ---
 
