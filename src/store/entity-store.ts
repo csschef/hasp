@@ -107,6 +107,7 @@ export function setActivePerson(personId: string) {
     activePerson = personId
     localStorage.setItem("ha_active_person", personId)
     personListeners.forEach(cb => cb(personId))
+    window.dispatchEvent(new CustomEvent("person-changed", { detail: personId }))
 }
 
 export function subscribeActivePerson(callback: (personId: string) => void) {

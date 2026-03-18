@@ -10,7 +10,7 @@ export const HA_URL = (port >= 5173 && port <= 5179)
     ? rawUrl 
     : window.location.origin
 
-const HA_TOKEN = import.meta.env.VITE_HA_TOKEN
+export const HA_TOKEN = import.meta.env.VITE_HA_TOKEN
 
 let socket: WebSocket | null = null
 let messageId = 1
@@ -94,6 +94,11 @@ export function connectHA() {
                 setEntities(msg.result);
             }
             return
+        }
+
+        // Catch-all debug for calendar troubleshooting
+        if (msg.type === "result") {
+            console.log("[ha-client] result msg id:", msg.id, "success:", msg.success, "result keys:", msg.result ? Object.keys(msg.result) : "null/undefined")
         }
     }
 

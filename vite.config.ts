@@ -5,6 +5,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+  },
+  server: {
+    proxy: {
+      '/api/calendars': {
+        target: 'http://homeassistant.local:8123',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
 });
 

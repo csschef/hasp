@@ -337,6 +337,13 @@
             <energy-view></energy-view>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════
+          CALENDAR VIEW
+    ════════════════════════════════════════════════════════════ -->
+        <div class="view" id="calendar">
+            <calendar-view></calendar-view>
+        </div>
+
     </div> <!-- End .main-shell -->
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -356,6 +363,10 @@
             <iconify-icon icon="ph:lightning"></iconify-icon>
             <span>Energi</span>
         </button>
+        <button class="nav-item" data-tab="calendar" data-icon-outline="ph:calendar-blank" data-icon-fill="ph:calendar-fill">
+            <iconify-icon icon="ph:calendar-blank"></iconify-icon>
+            <span>Kalender</span>
+        </button>
     </nav>
     <light-popup id="lightPopup"></light-popup>
     <tv-popup id="tvPopup"></tv-popup>
@@ -363,6 +374,7 @@
     <person-popup id="personPopup"></person-popup>
     <settings-popup id="settingsPopup"></settings-popup>
     <todo-popup id="todoPopup"></todo-popup>
+    <calendar-popup id="calendarPopup"></calendar-popup>
     <script type="module" src="/src/main.ts"></script>
 
 </body>

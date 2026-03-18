@@ -155,6 +155,8 @@ import "./components/energy-view"
 import "./components/todo-popup"
 import "./components/pc-card"
 import "./components/boolean-card"
+import "./components/calendar-view"
+import "./components/calendar-popup"
 
 /* ── TRAY & NOTIFICATIONS ── */
 
@@ -335,7 +337,7 @@ setInterval(updateSystemBadge, 30000);
 setTimeout(updateSystemBadge, 2000); // Initial check
 
 // ── Global Navigation ──
-const MAIN_TABS = ["home", "meals", "energy"]
+const MAIN_TABS = ["home", "meals", "energy", "calendar"]
 
 // ── History Sentinel ──────────────────────────────────────────────────────────
 // The HA Companion App closes when its WebViewActivity.onBackPressed() is
@@ -399,7 +401,7 @@ window.addEventListener("popstate", (event) => {
     const isTrayState = (event.state && event.state.type === "tray")
 
     // 2. Clear ANY active popups that aren't the target (usually all of them on back)
-    const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup"]
+    const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
     popupIds.forEach(id => {
         if (id !== targetPopupId) {
             const p = document.getElementById(id) as any
