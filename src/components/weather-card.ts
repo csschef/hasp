@@ -2,6 +2,7 @@ import { getEntity, subscribeEntity, subscribeUser, getActivePerson, setActivePe
 import { callService } from "../services/ha-service"
 import type { HAEntity } from "../types/homeassistant"
 import type { HAUser } from "../store/entity-store"
+import "./svg-icon"
 
 class WeatherCard extends HTMLElement {
     private weatherEntity = "weather.smhi_home"
@@ -21,24 +22,24 @@ class WeatherCard extends HTMLElement {
 
     private imageMap: Record<string, string> = {
         // ── Dina SVG-ikoner ──────────────────────────────────
-        "sunny":             "sun.svg",
-        "clear-night":       "clearnight.svg",
-        "cloudy":            "cloudy.svg",
-        "fog":               "foggyday.svg",
-        "fog_night":         "foggynight.svg",
-        "hail":              "hail.svg",
-        "lightning":         "thunder.svg",
-        "lightning-rainy":   "thunderandrain.svg",
-        "partlycloudy":      "partlycloudyday.svg",
+        "sunny": "sun.svg",
+        "clear-night": "clearnight.svg",
+        "cloudy": "cloudy.svg",
+        "fog": "foggyday.svg",
+        "fog_night": "foggynight.svg",
+        "hail": "hail.svg",
+        "lightning": "thunder.svg",
+        "lightning-rainy": "thunderandrain.svg",
+        "partlycloudy": "partlycloudyday.svg",
         "partlycloudy_night": "partlycloudynight.svg",
-        "rainy":             "rainy.svg",
-        "snowy":             "snowy.svg",
-        "snowy-rainy":       "snowyrainy.svg",
+        "rainy": "rainy.svg",
+        "snowy": "snowy.svg",
+        "snowy-rainy": "snowyrainy.svg",
         // ── Fallbacks (ingen unik ikon) ──────────────────────
-        "pouring":           "rainy.svg",
-        "windy":             "cloudy.svg",
-        "windy-variant":     "cloudy.svg",
-        "exceptional":       "thunder.svg"
+        "pouring": "rainy.svg",
+        "windy": "cloudy.svg",
+        "windy-variant": "cloudy.svg",
+        "exceptional": "thunder.svg"
     }
 
     constructor() {
@@ -100,11 +101,11 @@ class WeatherCard extends HTMLElement {
             if (geoRes.ok) {
                 const geoData = await geoRes.json();
                 let location = geoData.locality || geoData.city || "Okänd";
-                
+
                 // Premium cleanup
                 location = location.replace(/ stadsdelsområde$/i, "").replace(/ kommun$/i, "");
                 this.localLocation = location;
-                
+
                 // Hard override for home
                 const distToHome = Math.sqrt(Math.pow(lat - 56.726, 2) + Math.pow(lon - 16.326, 2));
                 if (distToHome < 0.01) this.localLocation = "Lindsdal";
@@ -112,17 +113,17 @@ class WeatherCard extends HTMLElement {
 
             // 2. Get Weather via Open-Meteo (Zero restrictions / Zero blocks)
             const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code&hourly=temperature_2m,weather_code,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=ms&timezone=auto`)
-            
+
             if (!weatherRes.ok) throw new Error(`Weather error ${weatherRes.status}`);
-            
+
             this.localWeather = await weatherRes.json();
             this.setAttribute("loaded", "");
             this.fetchError = "";
         } catch (e: any) {
             console.error("Weather fetch failed:", e);
-            this.fetchError = "Anslutningsfel"; 
+            this.fetchError = "Anslutningsfel";
         }
-        
+
         this.render()
     }
 
@@ -477,14 +478,14 @@ class WeatherCard extends HTMLElement {
                 const d = new Date(timeStr);
                 return { d, i };
             }).filter((item: any) => item.d.getTime() > now)
-              .slice(0, 24)
-              .map((item: any) => {
-                const i = item.i;
-                const d = item.d;
-                const cond = this.getWmoState(h.weather_code[i]);
-                const isNight = d.getHours() > 20 || d.getHours() < 6;
-                
-                return `
+                .slice(0, 24)
+                .map((item: any) => {
+                    const i = item.i;
+                    const d = item.d;
+                    const cond = this.getWmoState(h.weather_code[i]);
+                    const isNight = d.getHours() > 20 || d.getHours() < 6;
+
+                    return `
                     <div class="item">
                         <span class="label">${d.getHours()}:00</span>
                         ${this.getWeatherIcon(cond, 24, isNight)}
@@ -492,7 +493,7 @@ class WeatherCard extends HTMLElement {
                         <span class="precip">${h.precipitation[i] > 0 ? h.precipitation[i].toFixed(1) + ' mm' : '&nbsp;'}</span>
                     </div>
                 `
-            }).join("")
+                }).join("")
         }
 
         const forecast = entity?.attributes.forecast || []
@@ -517,12 +518,12 @@ class WeatherCard extends HTMLElement {
         if (this.localWeather && this.localWeather.daily) {
             const d = this.localWeather.daily;
             const days = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
-            
+
             return d.time.map((timeStr: string, i: number) => {
                 const date = new Date(timeStr);
                 const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()];
                 const cond = this.getWmoState(d.weather_code[i]);
-                
+
                 return `
                     <div class="item">
                         <span class="label">${dayName}</span>
@@ -624,10 +625,11 @@ class WeatherCard extends HTMLElement {
 
             return `
                 <div class="icon-wrapper" style="width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
-                    <img src="${iconUrl}"
-                         style="width: 100%; height: 100%; object-fit: contain;"
-                         loading="lazy"
-                    />
+                    <svg-icon 
+                        src="${iconUrl}" 
+                        condition="${finalKey}"
+                        style="width: 100%; height: 100%;"
+                    ></svg-icon>
                 </div>`
         }
 
