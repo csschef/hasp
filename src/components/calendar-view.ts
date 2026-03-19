@@ -4,7 +4,7 @@ import { fetchCalendarEvents } from "../services/ha-service"
 class CalendarView extends HTMLElement {
     private calendars = [
         { id: "calendar.saras_kalender", label: "Sara", color: "#bf8686" },
-        { id: "calendar.sebbes_kalender", label: "Sebastian", color: "#7b96b2" },
+        { id: "calendar.sebbes_kalender", label: "Sebbe", color: "#7b96b2" },
         { id: "calendar.sebastian_privat_kalender", label: "Privat", color: "#9497ad", private: true }
     ]
     private events: any[] = []
@@ -33,45 +33,47 @@ class CalendarView extends HTMLElement {
         this.isLoading = true
         this.render()
 
-        const now = new Date()
-        // Broaden range to 30 days and use local-style ISO without TZ if needed, 
-        // but let's try a very clean format: YYYY-MM-DDTHH:MM:SS
-        const start = now.toISOString().split('.')[0] + "Z"
-        const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('.')[0] + "Z"
-
-        console.log(`[Calendar View] Fetching range: ${start} to ${end}`)
-
-        const activePerson = getActivePerson()
-        const allFetched: any[] = []
-
-        for (const cal of this.calendars) {
-            // Skip private if not Sebbe
-            if (cal.private && activePerson !== 'person.sebastian') continue
-
-            try {
-                const res = await fetchCalendarEvents(cal.id, start, end)
-                if (Array.isArray(res)) {
-                    allFetched.push(...res.map(e => ({ ...e, calendarId: cal.id, calendarColor: cal.color, calendarLabel: cal.label })))
-                }
-            } catch (e) {
-                console.error("Failed to fetch calendar", cal.id, e)
+        // Safety net: if the whole load takes more than 15 s, stop showing the spinner
+        const safetyTimer = setTimeout(() => {
+            if (this.isLoading) {
+                this.isLoading = false
+                this.render()
             }
+        }, 15_000)
+
+        try {
+            const now = new Date()
+            const start = now.toISOString().split('.')[0] + "Z"
+            const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('.')[0] + "Z"
+
+            const activePerson = getActivePerson()
+            const allFetched: any[] = []
+
+            for (const cal of this.calendars) {
+                // Skip private if not Sebbe
+                if (cal.private && activePerson !== 'person.sebastian') continue
+
+                try {
+                    const res = await fetchCalendarEvents(cal.id, start, end)
+                    if (Array.isArray(res)) {
+                        allFetched.push(...res.map(e => ({ ...e, calendarId: cal.id, calendarColor: cal.color, calendarLabel: cal.label })))
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch calendar", cal.id, e)
+                }
+            }
+
+            // Sort by start time
+            this.events = allFetched.sort((a, b) => {
+                const dateA = new Date(typeof a.start === 'string' ? a.start : (a.start?.dateTime || a.start?.date || 0)).getTime()
+                const dateB = new Date(typeof b.start === 'string' ? b.start : (b.start?.dateTime || b.start?.date || 0)).getTime()
+                return dateA - dateB
+            })
+        } finally {
+            clearTimeout(safetyTimer)
+            this.isLoading = false
+            this.render()
         }
-
-        // Sort by start time — HA returns start as a plain string (e.g. "2026-03-21T10:00:00+01:00")
-        this.events = allFetched.sort((a, b) => {
-            const dateA = new Date(typeof a.start === 'string' ? a.start : (a.start?.dateTime || a.start?.date || 0)).getTime()
-            const dateB = new Date(typeof b.start === 'string' ? b.start : (b.start?.dateTime || b.start?.date || 0)).getTime()
-            return dateA - dateB
-        })
-
-        if (allFetched.length > 0) {
-            console.log("[Calendar View] Sample event:", JSON.stringify(allFetched[0]))
-        }
-        console.log("[Calendar View] Total events:", allFetched.length)
-
-        this.isLoading = false
-        this.render()
     }
 
     // Extract the date string regardless of HA format (plain string or {dateTime/date} object)
@@ -141,11 +143,29 @@ class CalendarView extends HTMLElement {
                 to { opacity: 1; transform: translateY(0); }
             }
 
+            .today-date {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                letter-spacing: 0.01em;
+                margin: 28px 0 2px;
+                opacity: 0.85;
+            }
+            .today-date-sub {
+                font-size: 0.6875rem;
+                font-weight: 400;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                opacity: 0.55;
+                margin-bottom: 20px;
+            }
+
             .header { 
                 display: flex; 
                 justify-content: space-between; 
                 align-items: center; 
-                margin: 28px 0 16px; 
+                margin: 0 0 16px; 
             }
             
             h2 { 
@@ -158,6 +178,7 @@ class CalendarView extends HTMLElement {
                 opacity: 0.8;
             }
             
+            .header-actions { display: flex; gap: 10px; }
             .add-btn {
                 background: var(--color-success); 
                 border: 1px solid var(--color-success); 
@@ -169,45 +190,34 @@ class CalendarView extends HTMLElement {
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 box-shadow: var(--shadow-sm);
             }
-            .add-btn:active { transform: scale(0.9); background: var(--color-card-alt); }
+            .add-btn:active { transform: scale(0.9); opacity: 0.8; }
             .add-btn iconify-icon { font-size: 1.2rem; }
 
-            .day-group { margin-bottom: 28px; }
+            .day-group { margin-bottom: 24px; }
             
             .day-title { 
-                font-size: 0.6875rem; 
-                font-weight: 500; 
+                font-size: 0.625rem; 
+                font-weight: 600; 
                 color: var(--text-secondary); 
                 text-transform: uppercase; 
-                letter-spacing: 0.06em; 
-                margin-bottom: 12px; 
-                padding-left: 4px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                opacity: 0.8;
-            }
-            .day-title::after {
-                content: '';
-                flex: 1;
-                height: 1px;
-                background: var(--border-color);
-                opacity: 0.2;
+                letter-spacing: 0.05em; 
+                margin-bottom: 8px; 
+                padding-left: 2px;
+                opacity: 0.6;
             }
             
             .event-card {
                 background: var(--color-card); 
-                border-radius: var(--radius-md); 
-                padding: 14px 16px; 
-                margin-bottom: 10px;
+                border-radius: var(--radius-md, 12px); 
+                padding: 12px 16px; 
+                margin-bottom: 8px;
                 border: 1px solid var(--border-color); 
                 display: flex; gap: 16px; align-items: center;
                 position: relative; 
                 overflow: hidden;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                box-shadow: var(--shadow-sm);
+                transition: transform 0.1s ease;
             }
-            .event-card:active { transform: scale(0.985); }
+            .event-card:active { transform: scale(0.98); }
             
             .event-card::before {
                 content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cal-color);
@@ -261,6 +271,7 @@ class CalendarView extends HTMLElement {
                 gap: 4px;
                 opacity: 0.8;
             }
+            .event-location iconify-icon { color: var(--cal-color); font-size: 0.8rem; }
 
             .empty-state { 
                 padding: 120px 20px; 
@@ -275,11 +286,16 @@ class CalendarView extends HTMLElement {
             .empty-text { font-size: 0.9375rem; opacity: 0.6; }
         </style>
 
+        <div class="today-date">${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}</div>
+        <div class="today-date-sub">${new Date().toLocaleDateString('sv-SE', { weekday: 'long', year: 'numeric' })}</div>
+
         <div class="header">
             <h2>KALENDER</h2>
-            <button class="add-btn" id="addEventBtn">
-                <iconify-icon icon="ph:plus-bold"></iconify-icon>
-            </button>
+            <div class="header-actions">
+                <button class="add-btn" id="addEventBtn">
+                    <iconify-icon icon="ph:plus-bold"></iconify-icon>
+                </button>
+            </div>
         </div>
 
         <div class="agenda">
@@ -293,7 +309,8 @@ class CalendarView extends HTMLElement {
                 <div class="day-group">
                     <div class="day-title">${this.formatDay(day)}</div>
                     ${grouped[day].map(e => `
-                        <div class="event-card" style="--cal-color: ${e.calendarColor}">
+                        <div class="event-card" style="--cal-color: ${e.calendarColor}" 
+                             data-summary="${e.summary}" data-start="${this.getStartStr(e.start)}">
                             <div class="event-time">
                                 <span class="event-time-val">${this.formatTime(e.start, e.end)}</span>
                                 <span class="event-cal-name">${e.calendarLabel}</span>
@@ -321,10 +338,13 @@ class CalendarView extends HTMLElement {
         })
 
         // Click events for existing cards
-        this.shadowRoot!.querySelectorAll(".event-card").forEach((card, idx) => {
+        this.shadowRoot!.querySelectorAll(".event-card").forEach((card) => {
             card.addEventListener("click", () => {
+                const summary = (card as HTMLElement).dataset.summary
+                const start = (card as HTMLElement).dataset.start
+                const event = this.events.find(e => e.summary === summary && this.getStartStr(e.start) === start)
                 const popup = document.getElementById("calendarPopup") as any
-                if (popup) popup.open(this.events[idx])
+                if (popup) popup.open(event)
             })
         })
     }

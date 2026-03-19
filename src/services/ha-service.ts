@@ -152,75 +152,112 @@ export function callTodoService(service: string, entityId: string, data: any = {
     })
 }
 
-export async function fetchCalendarEvents(entityId: string, start: string, end: string): Promise<any[]> {
-    try {
-        // We use the proxy we set up in vite.config.ts to avoid CORS issues
-        const url = `/api/calendars/${entityId}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
-        
-        const response = await fetch(url, {
-            headers: {
-                "Authorization": `Bearer ${HA_TOKEN}`,
-                "Content-Type": "application/json"
-            }
-        })
+// --- Helpers ---
 
-        const text = await response.text()
-        
-        if (!response.ok) {
-            console.error(`[Calendar REST] HTTP Error ${response.status}:`, text.slice(0, 200))
-            throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        let rawEvents
-        try {
-            rawEvents = JSON.parse(text)
-        } catch (err) {
-            console.error("[Calendar REST] Failed to parse JSON. Raw response (first 200 chars):", text.slice(0, 200))
-            throw err
-        }
-        
-        console.log(`[Calendar REST] Fetched ${rawEvents.length} events for ${entityId}`)
-        
-        if (rawEvents.length > 0) {
-            console.log(`[Calendar REST] First event keys:`, Object.keys(rawEvents[0]))
-            // Look for anything that looks like an ID
-            const first = rawEvents[0]
-            const idKey = ['uid', 'id', 'event_id', 'iCalUID'].find(k => first[k])
-            if (idKey) console.log(`[Calendar REST] Found ID in field: "${idKey}"`)
-        }
-
-        return rawEvents.map((e: any) => ({
-            ...e,
-            // Map any found ID to 'uid' for our delete logic
-            uid: e.uid || e.id || e.event_id || e.iCalUID
-        }))
-    } catch (e) {
-        console.error(`[Calendar REST] Failed to fetch ${entityId}:`, e)
-        return []
-    }
-}
-
-export function createCalendarEvent(entityId: string, eventData: any) {
-    return callService("calendar", "create_event", {
-        entity_id: entityId,
-        ...eventData
+// Safe REST fetch: uses relative URL so Vite proxy handles dev CORS,
+// same-origin HA handles production. Safely parses empty bodies.
+function haFetch(path: string, method: string, body?: any): Promise<any> {
+    return fetch(path, {
+        method,
+        headers: {
+            "Authorization": `Bearer ${HA_TOKEN}`,
+            ...(body ? { "Content-Type": "application/json" } : {})
+        },
+        ...(body ? { body: JSON.stringify(body) } : {})
+    }).then(async r => {
+        // Some endpoints return 204 No Content or empty body — don't try to JSON-parse those
+        const text = await r.text()
+        const data = text.length > 0 ? JSON.parse(text) : {}
+        if (!r.ok) return Promise.reject(data)
+        return data
     })
 }
 
-export function deleteCalendarEvent(entityId: string, uid?: string, fingerprint?: any) {
-    const serviceData: any = { entity_id: entityId }
-    
-    if (uid) {
-        serviceData.uid = uid
-    } else {
-        // Without a UID, deletion is likely to fail in newer HA versions
-        console.warn("[Calendar Service] Attempting deletion without UID for", entityId)
-        if (fingerprint) {
-            serviceData.summary = fingerprint.summary
-            serviceData.start_date_time = fingerprint.start
-            serviceData.end_date_time = fingerprint.end
-        }
-    }
+// --- Calendar event fetching ---
+// Primary: HA REST GET /api/calendars/{entity_id} — this returns `uid` per event.
+// Fetch calendar events via WebSocket (REST always fails in this setup due to auth redirect)
+export function fetchCalendarEvents(entityId: string, start: string, end: string): Promise<any[]> {
+    return fetchCalendarEventsWS(entityId, start, end)
+}
 
-    return callService("calendar", "delete_event", serviceData)
-}
+
+// WebSocket fallback for fetching calendar events
+// Wait until socket is open, or give up after `maxWaitMs`
+function waitForSocket(maxWaitMs = 10_000): Promise<boolean> {
+    return new Promise((resolve) => {
+        const deadline = Date.now() + maxWaitMs
+        function poll() {
+            if (socket && socket.readyState === WebSocket.OPEN) return resolve(true)
+            if (Date.now() >= deadline) return resolve(false)
+            setTimeout(poll, 300)
+        }
+        poll()
+    })
+}
+
+function fetchCalendarEventsWS(entityId: string, start: string, end: string): Promise<any[]> {
+    return new Promise(async (resolve) => {
+        const ready = await waitForSocket(10_000)
+        if (!ready || !socket || socket.readyState !== WebSocket.OPEN) {
+            console.error("[Calendar] Socket not available, skipping WS fetch for", entityId)
+            return resolve([])
+        }
+
+        const reqId = nextId()
+        let settled = false
+
+        // Timeout: if HA never replies to this message, bail out after 10 s
+        const timeout = setTimeout(() => {
+            if (!settled) {
+                settled = true
+                socket!.removeEventListener("message", handler)
+                console.warn("[Calendar WS] Timed out waiting for response for", entityId)
+                resolve([])
+            }
+        }, 10_000)
+
+        const handler = (event: MessageEvent) => {
+            const response = JSON.parse(event.data)
+            if (response.id === reqId) {
+                if (settled) return
+                settled = true
+                clearTimeout(timeout)
+                socket!.removeEventListener("message", handler)
+                if (response.success) {
+                    const res = response.result?.response || response.result || {}
+                    const entityData = res[entityId] || {}
+                    const rawEvents = entityData.events || []
+                    resolve(rawEvents.map((e: any) => ({
+                        ...e,
+                        uid: e.uid || e.id || e.event_id || e.iCalUID
+                    })))
+                } else {
+                    console.error("[Calendar WS] get_events failed:", response.error)
+                    resolve([])
+                }
+            }
+        }
+
+        socket.addEventListener("message", handler)
+        socket.send(JSON.stringify({
+            id: reqId, type: "call_service",
+            domain: "calendar", service: "get_events",
+            service_data: { entity_id: entityId, start_date_time: start, end_date_time: end },
+            return_response: true
+        }))
+    })
+}
+
+// --- Calendar create/delete ---
+// Create via REST POST /api/services/calendar/create_event
+export function createCalendarEvent(entityId: string, eventData: any) {
+    return haFetch(`/api/services/calendar/create_event`, "POST", {
+        entity_id: entityId,
+        summary: eventData.summary,
+        description: eventData.description || "",
+        location: eventData.location || "",
+        start_date_time: eventData.start_date_time,
+        end_date_time: eventData.end_date_time
+    })
+}
+
