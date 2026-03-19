@@ -134,7 +134,7 @@ class MealsView extends HTMLElement {
 
         this.shadowRoot!.innerHTML = `
         <style>
-            :host { display: block; padding: 0 var(--space-md) 24px; color: var(--text-primary); font-family: var(--font-main); }
+            :host { display: block; padding: var(--space-md) var(--space-md) 24px; color: var(--text-primary); font-family: var(--font-main); }
 
             h2 {
                 font-size: 0.6875rem;
@@ -155,7 +155,7 @@ class MealsView extends HTMLElement {
                 border-radius: var(--radius-md);
                 overflow: hidden;
                 border: 1px solid var(--border-color);
-                margin-bottom: 32px;
+                margin-bottom: var(--space-md);
             }
             .meal-card {
                 background: var(--color-card);
@@ -167,10 +167,10 @@ class MealsView extends HTMLElement {
                 border-left: 3px solid transparent;
             }
             .meal-card.today {
-                border-left-color: var(--color-success);
+                border-left-color: var(--accent);
             }
             .meal-card.today .day-label, .meal-card.today .meal-input {
-                color: var(--color-success);
+                color: var(--accent);
                 opacity: 1;
             }
             .day-label {
@@ -215,7 +215,7 @@ class MealsView extends HTMLElement {
                 background: var(--color-card);
                 border-radius: var(--radius-md);
                 border: 1px solid var(--border-color);
-                margin-bottom: 24px;
+                margin-bottom: var(--space-md);
             }
 
             .add-input {
@@ -379,7 +379,7 @@ class MealsView extends HTMLElement {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin: 32px 0 12px;
+                margin: var(--space-md) 0 12px;
                 background: none;
                 border: none;
                 padding: 0;

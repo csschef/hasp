@@ -192,7 +192,7 @@ class CalendarView extends HTMLElement {
             .add-btn:active { transform: scale(0.9); opacity: 0.8; }
             .add-btn iconify-icon { font-size: 1.2rem; }
 
-            .day-group { margin-bottom: 24px; }
+            .day-group { margin-bottom: var(--space-md); }
             
             .day-title { 
                 font-size: 0.625rem; 
@@ -209,7 +209,7 @@ class CalendarView extends HTMLElement {
                 background: var(--color-card); 
                 border-radius: var(--radius-md, 12px); 
                 padding: 14px 16px; 
-                margin-bottom: 8px;
+                margin-bottom: var(--space-md);
                 border: 1px solid var(--border-color); 
                 display: flex; 
                 justify-content: space-between;

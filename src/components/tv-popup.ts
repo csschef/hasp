@@ -124,9 +124,7 @@ class TvPopup extends HTMLElement {
     width: 260px;
     max-height: 92vh;
     overflow-y: auto;
-    background: var(--color-card);
-    
-    
+    background: #e5e5e5;
     border-radius: var(--radius-xl, 28px);
     padding: 20px;
     display: flex;

@@ -119,7 +119,7 @@ class EnergyView extends HTMLElement {
 
         this.shadowRoot!.innerHTML = `
         <style>
-            :host { display: block; padding: 0 var(--space-md) 24px; font-family: var(--font-main); color: var(--text-primary); }
+            :host { display: block; padding: var(--space-md) var(--space-md) 24px; font-family: var(--font-main); color: var(--text-primary); }
             
             h2 { 
                 font-size: 0.6875rem; 
@@ -142,12 +142,12 @@ class EnergyView extends HTMLElement {
             .price-unit { font-size: 0.875rem; color: var(--text-secondary); opacity: 0.6; font-weight: 400; z-index: 1; }
             .status-pill { padding: 6px 16px; border-radius: 100px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; z-index: 1; }
 
-            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); margin-top: var(--space-md); }
             .stat-item { background: var(--color-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 10px; text-align: center; }
             .stat-label { font-size: 0.6875rem; text-transform: uppercase; color: var(--text-secondary); opacity: 0.6; font-weight: 500; margin-bottom: 4px; letter-spacing: 0.05em; }
             .stat-value { font-size: 0.9rem; font-weight: 600; }
 
-            .chart-view { background: var(--color-card); border-radius: var(--radius-xl); padding: 24px 0 20px; border: 1px solid var(--border-color); margin-top: 12px; overflow: hidden; }
+            .chart-view { background: var(--color-card); border-radius: var(--radius-xl); padding: 24px 0 20px; border: 1px solid var(--border-color); margin-top: var(--space-md); overflow: hidden; }
             .chart-header { font-size: 0.6875rem; font-weight: 500; text-transform: uppercase; color: var(--text-secondary); opacity: 0.6; margin: 0 20px 8px; letter-spacing: 0.05em; }
             
             .chart-layout { display: flex; position: relative; }
@@ -182,7 +182,7 @@ class EnergyView extends HTMLElement {
             .advice-card {
                 background: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 15%, transparent) 0%, color-mix(in srgb, var(--color-success) 5%, transparent) 100%);
                 border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent); border-radius: var(--radius-xl);
-                padding: 18px 20px; margin-top: 24px; display: flex; align-items: center; gap: 16px;
+                padding: 18px 20px; margin-top: var(--space-md); display: flex; align-items: center; gap: 16px;
             }
             .advice-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: var(--color-success); flex-shrink: 0; }
             .advice-content { flex-grow: 1; }
