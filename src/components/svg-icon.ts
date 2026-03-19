@@ -63,7 +63,7 @@ export class SvgIcon extends HTMLElement {
                         50% { transform: translateX(10px); }
                     }
 
-                    .cloud {
+                    .cloud, path[fill*="cloudGradient"], path[d^="M34.613"] {
                         animation: cloud-slide 6s ease-in-out infinite;
                         transform-box: fill-box;
                     }

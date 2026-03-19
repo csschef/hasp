@@ -164,6 +164,14 @@ class MealsView extends HTMLElement {
                 grid-template-columns: 80px 1fr;
                 align-items: center;
                 gap: 12px;
+                border-left: 3px solid transparent;
+            }
+            .meal-card.today {
+                border-left-color: var(--color-success);
+            }
+            .meal-card.today .day-label, .meal-card.today .meal-input {
+                color: var(--color-success);
+                opacity: 1;
             }
             .day-label {
                 font-size: 0.6875rem;
@@ -406,10 +414,15 @@ class MealsView extends HTMLElement {
 
         <h2>Veckans Meny</h2>
         <div class="meal-list">
-            ${this.days.map(day => {
+            ${this.days.map((day, index) => {
                 const entity = getEntity(`input_text.meny_${day.id}`)
+                // JS getDay() is 0=Sun, 1=Mon... our array is 0=Mon, 1=Tue...
+                const todayJs = new Date().getDay() 
+                const todayIdx = todayJs === 0 ? 6 : todayJs - 1
+                const isToday = index === todayIdx
+
                 return `
-                <div class="meal-card">
+                <div class="meal-card ${isToday ? 'today' : ''}">
                     <div class="day-label">${day.label}</div>
                     <input class="meal-input"
                            placeholder="Ej planerat..."

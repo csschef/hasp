@@ -49,6 +49,7 @@ class PersonPopup extends HTMLElement {
         this.entity = getEntity(entityId)
 
         this.style.display = "block"
+        document.body.classList.add("popup-open")
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.classList.add("active")
@@ -176,6 +177,12 @@ class PersonPopup extends HTMLElement {
 
     close(fromHistory = false) {
         this.classList.remove("active")
+        
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "personPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "personPopup") {
             window.history.back()
         }
@@ -412,11 +419,13 @@ class PersonPopup extends HTMLElement {
     opacity: 0;
     width: calc(100% - 32px);
     max-width: 480px;
-    background: color-mix(in srgb, var(--color-card) 85%, transparent);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    max-height: calc(100dvh - 104px);
+    overflow-y: auto;
+    background: var(--color-card);
+    
+    
     border-radius: var(--radius-xl);
-    padding: 2.2rem 1.4rem 1.4rem;
+    padding: 2.2rem 1.4rem 2.2rem;
     border: 1px solid var(--border-color);
     box-shadow: 0 24px 64px rgba(0,0,0,0.2);
     box-sizing: border-box;
@@ -425,6 +434,8 @@ class PersonPopup extends HTMLElement {
     flex-direction: column;
     gap: 1.25rem;
 }
+.sheet::-webkit-scrollbar { display: none; }
+.sheet { scrollbar-width: none; }
 :host(.active) .sheet {
     transform: translate(-50%, 0);
     opacity: 1;
@@ -495,8 +506,7 @@ class PersonPopup extends HTMLElement {
 .history-content {
     display: flex;
     flex-direction: column;
-    max-height: 240px;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 .history-content::-webkit-scrollbar { width: 0; }
 .history-item {

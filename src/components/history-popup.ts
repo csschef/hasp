@@ -25,6 +25,7 @@ class HistoryPopup extends HTMLElement {
         this.entity = getEntity(entityId)
 
         this.style.display = "block"
+        document.body.classList.add("popup-open")
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.classList.add("active")
@@ -42,6 +43,12 @@ class HistoryPopup extends HTMLElement {
 
     close(fromHistory = false) {
         this.classList.remove("active")
+        
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "historyPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "historyPopup") {
             window.history.back()
         }
@@ -181,15 +188,17 @@ class HistoryPopup extends HTMLElement {
 .sheet {
     position: absolute; top: 52px; left: 50%; transform: translate(-50%, 16px);
     opacity: 0; width: calc(100% - 32px); max-width: 480px;
-    background: color-mix(in srgb, var(--color-card) 85%, transparent);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    background: var(--color-card);
+    
+    
     border-radius: var(--radius-xl);
     padding: 24px; border: 1px solid var(--border-color);
     box-shadow: 0 24px 64px rgba(0,0,0,0.2); box-sizing: border-box;
-    max-height: calc(100dvh - 76px); overflow-y: auto;
+    max-height: calc(100dvh - 104px); overflow-y: auto;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.sheet::-webkit-scrollbar { display: none; }
+.sheet { scrollbar-width: none; }
 :host(.active) .sheet { transform: translate(-50%, 0); opacity: 1; }
 
 .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }

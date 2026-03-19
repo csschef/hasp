@@ -523,7 +523,6 @@ const backdropEl = document.getElementById("trayBackdrop")
 
 function toggleTray(force?: boolean, fromBack = false) {
     const isExpanded = topbarEl?.classList.toggle("expanded", force)
-    document.body.style.overflow = isExpanded ? "hidden" : ""
     document.body.classList.toggle("tray-open", isExpanded)
 
     if (isExpanded && !fromBack) {

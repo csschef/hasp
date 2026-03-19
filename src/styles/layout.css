@@ -285,8 +285,18 @@ body.tray-open .bottom-dock {
     transition: color 0.2s ease;
 }
 
+/* ── Tray Labels ── */
 .tray-tile span {
-    display: none;
+    font-size: 0.625rem;
+    font-weight: 300;
+    margin-top: 5px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+/* Global scroll lock when any overlay is active */
+body.tray-open, body.popup-open {
+    overflow: hidden !important;
 }
 
 .tray-tile.active {

@@ -51,6 +51,7 @@ class CalendarPopup extends HTMLElement {
 
         this.style.display = "block"
         this.render()
+        document.body.classList.add("popup-open")
         // Double rAF so the CSS transition actually fires (same pattern as light-popup)
         requestAnimationFrame(() => requestAnimationFrame(() => this.classList.add("active")))
         window.history.pushState({ type: "popup", id: "calendarPopup" }, "")
@@ -63,11 +64,21 @@ class CalendarPopup extends HTMLElement {
             this.render()
             return
         }
+
         this.isOpen = false; this.editingEvent = null
         this.classList.remove("active")
+        
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "calendarPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        if (!otherPopups) document.body.classList.remove("popup-open");
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "calendarPopup")
             window.history.back()
         this.render()
+    }
+
+    disconnectedCallback() {
+        if (this.isOpen) document.body.style.overflow = ""
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -126,15 +137,14 @@ class CalendarPopup extends HTMLElement {
                 transform: translate(-50%, 16px);
                 opacity: 0;
                 width: calc(100% - 32px); max-width: 420px;
-                background: color-mix(in srgb, var(--color-card) 85%, transparent);
-                backdrop-filter: blur(24px) saturate(150%);
-                -webkit-backdrop-filter: blur(24px) saturate(150%);
-                border-radius: var(--radius-xl, 24px);
+                background: var(--color-card);
+                border-radius: var(--radius-xl, 28px);
                 padding: 20px 22px 26px;
                 border: 1px solid var(--border-color);
                 box-shadow: 0 24px 64px rgba(0,0,0,0.2);
                 max-height: calc(100dvh - 80px); overflow-y: auto;
                 box-sizing: border-box;
+                overflow: hidden;
                 transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1);
             }
             :host(.active) .sheet { transform: translate(-50%, 0); opacity: 1; }
@@ -175,7 +185,6 @@ class CalendarPopup extends HTMLElement {
             input[readonly], textarea[readonly] {
                 background: transparent; border-color: transparent; padding-left: 0;
                 font-weight: 500; cursor: default;
-                border-bottom: 1px solid var(--border-color); border-radius: 0;
             }
 
             /* ── Calendar chip selector ── */
@@ -185,11 +194,11 @@ class CalendarPopup extends HTMLElement {
                 cursor: pointer; border: 2px solid transparent;
                 background: var(--color-bg); color: var(--text-secondary); transition: all 0.15s;
             }
-            .chip.on { border-color: var(--cc); color: var(--text-primary); background: color-mix(in srgb, var(--cc) 13%, var(--color-bg)); }
+            .chip.on { border-color: var(--cc); color: var(--text-primary); background: var(--color-card); }
             .badge {
                 display: inline-flex; align-items: center; padding: 5px 12px;
                 border-radius: 12px; font-size: 0.75rem; font-weight: 600;
-                background: color-mix(in srgb, var(--cc) 10%, var(--color-bg));
+                background: var(--color-card);
                 border: 1px solid var(--cc); color: var(--text-primary); margin-bottom: 18px;
             }
 
@@ -199,7 +208,7 @@ class CalendarPopup extends HTMLElement {
                 flex: 1; background: var(--color-bg); border: 1.5px solid var(--border-color);
                 border-radius: 12px; padding: 10px 12px; cursor: pointer; text-align: left; transition: border-color 0.15s;
             }
-            .dt-btn.lit { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--color-bg)); }
+            .dt-btn.lit { border-color: var(--accent); background: var(--color-card); }
             .dt-lbl { font-size: 0.6rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.8; margin-bottom: 3px; }
             .dt-val { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
 
@@ -212,8 +221,8 @@ class CalendarPopup extends HTMLElement {
                 font-size: 0.875rem; font-weight: 500; cursor: pointer;
                 font-family: var(--font-main, inherit); transition: opacity 0.15s, transform 0.15s;
             }
-            .btn-cancel { background: var(--color-card-alt); color: var(--text-primary); border: 1px solid var(--border-color); }
-            .btn-save   { background: var(--accent); color: white; }
+            .btn-cancel { background: var(--color-danger); color: white; }
+            .btn-save   { background: var(--color-success); color: white; }
             .btn:active { transform: scale(0.97); opacity: 0.85; }
 
             /* ══ SUB-SHEET (date / time picker) ════════════════════════════ */
@@ -227,13 +236,13 @@ class CalendarPopup extends HTMLElement {
                 animation: fi 0.2s ease-out;
             }
             .sub-card {
-                background: color-mix(in srgb, var(--color-card) 90%, transparent);
-                backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+                background: var(--color-card);
                 width: 100%; max-width: 360px;
-                border-radius: var(--radius-xl, 24px);
+                border-radius: var(--radius-xl, 28px);
                 padding: 20px 20px 24px;
                 border: 1px solid var(--border-color);
                 box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+                overflow: hidden;
                 animation: su 0.28s cubic-bezier(0.16,1,0.3,1);
             }
             .sub-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -273,7 +282,7 @@ class CalendarPopup extends HTMLElement {
             .drum-hl {
                 position: absolute; left: 16px; right: 16px;
                 top: 50%; transform: translateY(-50%); height: ${IH}px;
-                background: color-mix(in srgb, var(--accent) 12%, var(--color-bg));
+                background: var(--color-card);
                 border: 1.5px solid color-mix(in srgb, var(--accent) 35%, transparent);
                 border-radius: 12px; pointer-events: none; z-index: 1;
             }
@@ -429,7 +438,19 @@ class CalendarPopup extends HTMLElement {
 
         const isViewing   = !!this.editingEvent
         const activePerson = getActivePerson()
-        const availCals   = this.calendars.filter(c => !c.private || activePerson === "person.sebastian")
+        
+        // Strict filtering based on active user
+        const availCals = this.calendars.filter(c => {
+            if (activePerson === "person.sara") return c.id === "calendar.saras_kalender"
+            if (activePerson === "person.sebastian") return c.id === "calendar.sebbes_kalender" || c.id === "calendar.sebastian_privat_kalender"
+            return !c.private
+        })
+
+        // Ensure selectedCalendar is still valid for current user, otherwise pick first available
+        if (!availCals.find(c => c.id === this.selectedCalendar) && availCals.length > 0) {
+            this.selectedCalendar = availCals[0].id
+        }
+
         const currentCal  = this.calendars.find(c  => c.id === this.selectedCalendar)
 
         let summary = "", desc = "", loc = "", sLabel = "", eLabel = ""
@@ -459,15 +480,13 @@ class CalendarPopup extends HTMLElement {
                 </div>
             </div>
 
-            ${isViewing ? `
-                <div class="badge" style="--cc:${currentCal?.color}">${currentCal?.label}</div>
-            ` : `
+            ${!isViewing ? `
                 <div class="cs">
                     ${availCals.map(c => `
                         <div class="chip ${this.selectedCalendar === c.id ? "on" : ""}" data-id="${c.id}" style="--cc:${c.color}">${c.label}</div>
                     `).join("")}
                 </div>
-            `}
+            ` : ""}
 
             <div class="fg">
                 <label>Vad händer?</label>
@@ -482,7 +501,11 @@ class CalendarPopup extends HTMLElement {
                 <div class="divider"></div>
                 <div class="fg"><label>Start</label><div style="font-size:.875rem;font-weight:500;padding:3px 0;color:var(--text-primary)">${sLabel}</div></div>
                 <div class="fg"><label>Slut</label><div style="font-size:.875rem;font-weight:500;padding:3px 0;color:var(--text-primary)">${eLabel}</div></div>
-                ${desc ? `<div class="divider"></div><div class="fg"><label>Beskrivning</label><textarea id="desc" readonly>${desc}</textarea></div>` : ""}
+                <div class="divider"></div>
+                <div class="fg">
+                    <label>Beskrivning</label>
+                    <textarea id="desc" placeholder="Ingen beskrivning" readonly>${desc}</textarea>
+                </div>
             ` : `
                 <div class="divider"></div>
                 <div class="dt-row">
@@ -511,10 +534,12 @@ class CalendarPopup extends HTMLElement {
                 </div>
             `}
 
-            <div class="actions">
-                <button class="btn btn-cancel" id="cancelBtn">Stäng</button>
-                ${!isViewing ? `<button class="btn btn-save" id="saveBtn">Spara</button>` : ""}
-            </div>
+            ${!isViewing ? `
+                <div class="actions">
+                    <button class="btn btn-cancel" id="cancelBtn">Avbryt</button>
+                    <button class="btn btn-save" id="saveBtn">Spara</button>
+                </div>
+            ` : ""}
         </div>
 
         ${subSheet}
@@ -591,12 +616,17 @@ class CalendarPopup extends HTMLElement {
                 this.pickerMonth = new Date(this.pickerMonth.getFullYear(), this.pickerMonth.getMonth() + 1, 1)
                 this.render()
             })
-            // Tap day → highlight only (pending), don’t auto-close
+            // Tap day → highlight only (pending), don’t auto-close (manual DOM update to prevent jumping)
             root.querySelectorAll(".gc[data-date]").forEach(cell =>
                 cell.addEventListener("click", e => {
                     e.stopPropagation()
-                    this.pendingDate = cell.getAttribute("data-date")!
-                    this.render()
+                    const dateVal = cell.getAttribute("data-date")!
+                    this.pendingDate = dateVal
+                    
+                    root.querySelectorAll(".gc[data-date]").forEach(c => {
+                        if (c.getAttribute("data-date") === dateVal) c.classList.add("sel")
+                        else c.classList.remove("sel")
+                    })
                 })
             )
             // Confirm: apply pending → close

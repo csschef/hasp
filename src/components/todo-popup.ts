@@ -19,6 +19,7 @@ class TodoPopup extends HTMLElement {
         this.entityId = entityId
         this.item = item
         this.style.display = "block"
+        document.body.classList.add("popup-open")
         
         // Populate inputs
         const nameInput = this.shadow.querySelector("#nameInput") as HTMLInputElement
@@ -34,6 +35,13 @@ class TodoPopup extends HTMLElement {
 
     close(fromHistory = false) {
         this.classList.remove("active")
+        
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "todoPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "todoPopup") {
             window.history.back()
         }
@@ -104,24 +112,28 @@ class TodoPopup extends HTMLElement {
 
             .sheet {
                 position: absolute;
-                top: 50%;
+                top: 52px;
                 left: 50%;
-                transform: translate(-50%, calc(-50% + 20px));
+                transform: translate(-50%, 20px);
                 opacity: 0;
                 width: calc(100% - 32px);
                 max-width: 400px;
-                background: color-mix(in srgb, var(--color-card) 85%, transparent);
-                backdrop-filter: blur(24px) saturate(150%);
-                -webkit-backdrop-filter: blur(24px) saturate(150%);
-                border-radius: var(--radius-xl);
+                max-height: calc(100dvh - 104px);
+                overflow-y: auto;
+                background: var(--color-card);
+                
+                
+                border-radius: var(--radius-xl, 28px);
                 padding: 24px;
                 border: 1px solid var(--border-color);
                 box-shadow: 0 24px 64px rgba(0,0,0,0.4);
                 box-sizing: border-box;
                 transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             }
+            .sheet::-webkit-scrollbar { display: none; }
+            .sheet { scrollbar-width: none; }
             :host(.active) .sheet {
-                transform: translate(-50%, -50%);
+                transform: translate(-50%, 0);
                 opacity: 1;
             }
 

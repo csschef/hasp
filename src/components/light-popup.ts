@@ -24,11 +24,10 @@ class LightPopup extends HTMLElement {
     }
 
     open(entityId: string) {
-
         this.entityId = entityId
         this.entity = getEntity(entityId)
-
         this.style.display = "block"
+        document.body.classList.add("popup-open")
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.classList.add("active")
@@ -46,6 +45,12 @@ class LightPopup extends HTMLElement {
 
     close(fromHistory = false) {
         this.classList.remove("active")
+        
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "lightPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "lightPopup") {
             window.history.back()
         }
@@ -345,9 +350,9 @@ transform:translate(-50%, 16px);
 opacity: 0;
 width:calc(100% - 32px);
 max-width:420px;
-background: color-mix(in srgb, var(--color-card) 80%, transparent);
-backdrop-filter: blur(24px) saturate(150%);
--webkit-backdrop-filter: blur(24px) saturate(150%);
+background: var(--color-card);
+
+
 border-radius:var(--radius-xl);
 padding:24px;
 border: 1px solid var(--border-color);

@@ -251,7 +251,7 @@ function fetchCalendarEventsWS(entityId: string, start: string, end: string): Pr
 // --- Calendar create/delete ---
 // Create via REST POST /api/services/calendar/create_event
 export function createCalendarEvent(entityId: string, eventData: any) {
-    return haFetch(`/api/services/calendar/create_event`, "POST", {
+    return callService("calendar", "create_event", {
         entity_id: entityId,
         summary: eventData.summary,
         description: eventData.description || "",

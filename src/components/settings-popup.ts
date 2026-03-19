@@ -15,6 +15,7 @@ class SettingsPopup extends HTMLElement {
     public open() {
         this.isOpen = true;
         this.classList.add("active");
+        document.body.classList.add("popup-open");
         this.render();
         window.history.pushState({ type: "popup", id: "settingsPopup" }, "")
     }
@@ -22,6 +23,14 @@ class SettingsPopup extends HTMLElement {
     public close(fromHistory = false) {
         this.isOpen = false;
         this.classList.remove("active");
+        
+        // Check if any OTHER popups are still open before unlocking scroll
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "settingsPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "settingsPopup") {
             window.history.back()
         }
@@ -59,15 +68,14 @@ class SettingsPopup extends HTMLElement {
                 animation: fadeIn 0.3s ease;
             }
             .content {
-                background: color-mix(in srgb, #1c1c1e 85%, transparent);
-                backdrop-filter: blur(24px) saturate(150%);
-                -webkit-backdrop-filter: blur(24px) saturate(150%);
+                background: var(--color-card);
                 width: 100%;
                 max-width: 340px;
-                border-radius: 28px;
+                border-radius: var(--radius-xl, 28px);
                 padding: 24px;
                 box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-                border: 1px solid rgba(255,255,255,0.1);
+                border: 1px solid var(--border-color);
+                overflow: hidden;
             }
             h2 { margin: 0 0 8px 0; font-size: 1.25rem; color: #fff; text-align: center; }
             p { margin: 0 0 24px 0; font-size: 0.875rem; color: #8e8e93; text-align: center; }

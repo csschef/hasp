@@ -25,6 +25,7 @@ class TvPopup extends HTMLElement {
         this.soundbarEntity = config.soundbarId ? getEntity(config.soundbarId) : undefined
 
         this.style.display = "block"
+        document.body.classList.add("popup-open")
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.classList.add("active")
@@ -56,6 +57,12 @@ class TvPopup extends HTMLElement {
 
     close(fromHistory = false) {
         this.classList.remove("active")
+
+        const otherPopups = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup"]
+            .filter(id => id !== "tvPopup")
+            .some(id => document.getElementById(id)?.classList.contains("active"));
+        if (!otherPopups) document.body.classList.remove("popup-open");
+
         if (!fromHistory && window.history.state?.type === "popup" && window.history.state?.id === "tvPopup") {
             window.history.back()
         }
@@ -117,14 +124,16 @@ class TvPopup extends HTMLElement {
     width: 260px;
     max-height: 92vh;
     overflow-y: auto;
-    background: color-mix(in srgb, #e5e5e7 85%, transparent);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    border-radius: 46px;
+    background: var(--color-card);
+    
+    
+    border-radius: var(--radius-xl, 28px);
     padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .sheet::-webkit-scrollbar { display: none; }
