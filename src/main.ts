@@ -227,21 +227,21 @@ const notifications = [
     {
         id: "counter.kattlada",
         msg: "Dags att tömma kattlådan",
-        icon: "lucide:cat",
+        image: "img/cat2.png",
         type: "counter",
         check: (state: any) => parseInt(state?.state) > 3
     },
     {
         id: "counter.kattlada_2",
         msg: "Töm kattlådan i källaren",
-        icon: "lucide:cat",
+        image: "img/cat2.png",
         type: "counter",
         check: (state: any) => parseInt(state?.state) > 3
     },
     {
         id: "input_boolean.posten_har_kommit",
         msg: "Det finns post i brevlådan",
-        icon: "lucide:mail",
+        icon: "ph:envelope-simple-thin",
         type: "boolean",
         check: (state: any) => state?.state === "on"
     }
@@ -251,13 +251,23 @@ const notifications = [
     ; (window as any).notifAction = (action: string, entityId: string) => {
         const domain = entityId.split('.')[0];
         if (domain === 'counter') {
-            if (action === 'plus') callService("counter", "increment", { entity_id: entityId });
-            if (action === 'minus') callService("counter", "decrement", { entity_id: entityId });
             if (action === 'reset') callService("counter", "reset", { entity_id: entityId });
         } else if (domain === 'input_boolean') {
             if (action === 'off') callService("input_boolean", "turn_off", { entity_id: entityId });
         }
     };
+
+// Dismissal tracking
+const dismissedNotifs = new Set<string>();
+const lastNotifStates = new Map<string, string>();
+
+// Force undismiss the post notification specifically so it reappears with the new icon
+dismissedNotifs.delete("input_boolean.posten_har_kommit");
+
+(window as any).dismissNotif = (id: string) => {
+    dismissedNotifs.add(id);
+    updateNotifications();
+};
 
 function updateSystemBadge() {
     const badge = document.getElementById("systemBadge");
@@ -283,7 +293,16 @@ function updateNotifications() {
 
     const active = notifications.filter(n => {
         const entity = getEntity(n.id)
-        return n.check(entity)
+        const currentState = entity?.state || "unknown";
+        
+        // If state changed since last seen, auto-undismiss it
+        if (lastNotifStates.has(n.id) && lastNotifStates.get(n.id) !== currentState) {
+            dismissedNotifs.delete(n.id);
+        }
+        lastNotifStates.set(n.id, currentState);
+
+        // Filter: Must pass existence check AND not be dismissed
+        return n.check(entity) && !dismissedNotifs.has(n.id);
     })
 
     if (badge) {
@@ -304,24 +323,30 @@ function updateNotifications() {
             const val = entity?.state || "0";
 
             return `
-            <div class="notif-card" style="background: var(--color-card); padding: 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--color-card-alt); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <iconify-icon icon="${n.icon}" style="color: var(--text-primary); font-size: 18px;"></iconify-icon>
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.msg}</div>
-                        ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 1px;">Antal besök: ${val} st</div>` : ''}
-                    </div>
+            <div class="notif-card" style="background: var(--color-card); padding: 14px; border-radius: var(--radius-md); margin-bottom: 8px; border: 1px solid var(--border-color); display: flex; gap: 16px; align-items: flex-start; position: relative;">
+                <!-- Dismiss button (Popup style) -->
+                <button onclick="event.stopPropagation(); dismissNotif('${n.id}')" style="position: absolute; top: 12px; right: 12px; background: var(--color-card-alt); border: none; color: var(--text-secondary); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;"><iconify-icon icon="ph:x-bold" style="font-size: 14px;"></iconify-icon></button>
+
+                <!-- Bild eller Ikon -->
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--color-card-alt); border: 1px solid var(--border-color); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                    ${(n as any).image 
+                        ? `<img src="${(n as any).image}" style="width: 100%; height: 100%; object-fit: cover;">` 
+                        : `<div style="width: 32px; height: 32px; background-color: var(--text-primary); -webkit-mask: url('https://api.iconify.design/${((n as any).icon || 'ph:bell').replace(':', '/')}.svg') no-repeat center; mask: url('https://api.iconify.design/${((n as any).icon || 'ph:bell').replace(':', '/')}.svg') no-repeat center; -webkit-mask-size: contain; mask-size: contain;"></div>`
+                    }
                 </div>
-                <div class="notif-actions" onclick="event.stopPropagation()" style="margin-top: 12px; display: flex; gap: 8px;">
-                    ${n.type === 'counter' ? `
-                        <button class="action-btn" onclick="notifAction('minus', '${n.id}')" style="flex: 0 0 40px; height: 32px;"><iconify-icon icon="lucide:minus" style="font-size:14px;"></iconify-icon></button>
-                        <button class="action-btn" onclick="notifAction('plus', '${n.id}')" style="flex: 0 0 40px; height: 32px;"><iconify-icon icon="lucide:plus" style="font-size:14px;"></iconify-icon></button>
-                        <button class="action-btn primary" onclick="notifAction('reset', '${n.id}')" style="flex: 1; border-radius: 10px; height: 32px; font-size: 12px;">Klar</button>
-                    ` : `
-                        <button class="action-btn primary" onclick="notifAction('off', '${n.id}')" style="width: 100%; border-radius: 10px; height: 32px; font-size: 12px;">Tömd</button>
-                    `}
+                
+                <!-- Text och Knappar -->
+                <div style="flex: 1; min-width: 0; padding-top: 4px;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;">${n.msg}</div>
+                    ${n.type === 'counter' ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Antal besök: ${val} st</div>` : ''}
+                    
+                    <div class="notif-actions" onclick="event.stopPropagation()" style="margin-top: 14px; display: flex; gap: 8px;">
+                        ${n.type === 'counter' ? `
+                            <button class="action-btn success" onclick="notifAction('reset', '${n.id}')" style="padding: 0 28px; border-radius: 10px; height: 32px; font-size: 12px;">Tömd</button>
+                        ` : `
+                            <button class="action-btn success" onclick="notifAction('off', '${n.id}')" style="padding: 0 28px; border-radius: 10px; height: 32px; font-size: 12px;">Tömd</button>
+                        `}
+                    </div>
                 </div>
             </div>`
         }).join('')
@@ -663,7 +688,7 @@ function initHAModeButton(
 
 initHAModeButton("guestModeBtn", "input_boolean.gast", "active", "ph:users", "ph:users")
 initHAModeButton("sleepModeBtn", "input_boolean.sovlage", "active", "ph:moon", "ph:moon")
-initHAModeButton("movieModeBtn", "input_boolean.biolage", "active", "ph:film-strip", "ph:film-strip")
+initHAModeButton("movieModeBtn", "input_boolean.biolage", "active", "ph:film-reel", "ph:film-reel-fill")
 
 document.addEventListener("show-history", (e: any) => {
     const pop = document.getElementById("historyPopup") as any

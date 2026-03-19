@@ -254,22 +254,24 @@ body.tray-open .bottom-dock {
 }
 
 .tray-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
 }
 
 .tray-tile {
     background: var(--color-card);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 14px 10px;
+    border-radius: 50%;
+    width: 68px;
+    height: 68px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .tray-tile:active {
@@ -284,9 +286,7 @@ body.tray-open .bottom-dock {
 }
 
 .tray-tile span {
-    font-size: 0.6875rem;
-    font-weight: 400;
-    color: var(--text-secondary);
+    display: none;
 }
 
 .tray-tile.active {
@@ -485,7 +485,6 @@ body.subview-active .bottom-dock {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    flex: 1;
     letter-spacing: 0;
 }
 
@@ -498,4 +497,15 @@ body.subview-active .bottom-dock {
     background: var(--accent);
     color: #fff;
     border-color: var(--accent);
+}
+
+.action-btn.success {
+    background: var(--color-success);
+    color: #fff;
+    border-color: var(--color-success);
+}
+
+.action-btn.round {
+    border-radius: 50% !important;
+    padding: 0 !important;
 }
