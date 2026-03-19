@@ -205,13 +205,14 @@ class HistoryPopup extends HTMLElement {
 .title-wrap { display: flex; flex-direction: column; gap: 4px; }
 .title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary); }
 .subtitle { font-size: 0.6875rem; color: var(--text-secondary); opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-
 .close {
-    width: 32px; height: 32px; border-radius: 50%; background: var(--color-card-alt);
-    border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-secondary); transition: all 0.2s ease;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+    border: none; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--color-danger); font-size: 0.875rem; transition: all 0.2s ease;
 }
 .close:active { transform: scale(0.9); background: var(--border-color); }
+
 
 .current-value { font-size: 2.25rem; font-weight: 200; color: var(--text-primary); margin-bottom: 24px; letter-spacing: -0.02em; }
 

@@ -385,14 +385,14 @@ color:var(--text-primary);
 width: 28px;
 height: 28px;
 border-radius: 50%;
-background: var(--color-card-alt);
-border: 1px solid var(--border-color);
+background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+border: none;
 display: flex;
 align-items: center;
 justify-content: center;
 cursor:pointer;
-color: var(--text-secondary);
-font-size: 1rem;
+color: var(--color-danger);
+font-size: 0.875rem;
 line-height: 1;
 transition: background 0.15s ease;
 }
