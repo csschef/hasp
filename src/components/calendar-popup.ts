@@ -159,9 +159,10 @@ class CalendarPopup extends HTMLElement {
             }
             .close-btn {
                 width: 28px; height: 28px; border-radius: 50%;
-                background: var(--color-card-alt); border: 1px solid var(--border-color);
+                background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+                border: none;
                 display: flex; align-items: center; justify-content: center;
-                cursor: pointer; color: var(--text-secondary); transition: background 0.15s;
+                cursor: pointer; color: var(--color-danger); font-size: 0.875rem; transition: background 0.15s;
             }
             .close-btn:active { background: var(--border-color); }
 

@@ -345,21 +345,21 @@ body.tray-open, body.popup-open {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: var(--color-card-alt);
-    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+    color: var(--color-danger);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 12px;
     cursor: pointer;
-    border: 1px solid var(--border-color);
+    border: none;
     transition: background 0.2s ease;
     flex-shrink: 0;
 }
 
 .back-btn iconify-icon {
-    font-size: 1rem;
-    color: var(--text-secondary);
+    font-size: 0.875rem;
+    color: var(--color-danger);
 }
 
 .back-btn iconify-icon svg {

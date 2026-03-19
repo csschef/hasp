@@ -420,7 +420,7 @@ class PersonPopup extends HTMLElement {
     width: calc(100% - 32px);
     max-width: 480px;
     max-height: calc(100dvh - 104px);
-    overflow-y: auto;
+    overflow: hidden;
     background: var(--color-card);
     
     
@@ -465,13 +465,13 @@ class PersonPopup extends HTMLElement {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: var(--color-card-alt);
-    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--color-danger);
     font-size: 0.875rem;
     transition: background 0.15s ease;
     flex-shrink: 0;
@@ -493,6 +493,8 @@ class PersonPopup extends HTMLElement {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1;
+    min-height: 0;
 }
 .history-title {
     font-size: 0.6875rem;
@@ -506,7 +508,9 @@ class PersonPopup extends HTMLElement {
 .history-content {
     display: flex;
     flex-direction: column;
-    overflow-y: visible;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: none;
 }
 .history-content::-webkit-scrollbar { width: 0; }
 .history-item {
