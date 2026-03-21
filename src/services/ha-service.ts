@@ -133,7 +133,11 @@ export function fetchTodoItems(entityId: string): Promise<any[]> {
             const msg = JSON.parse(event.data)
             if (msg.id === reqId) {
                 socket!.removeEventListener("message", handler)
-                resolve(msg.result?.items || [])
+                const items = (msg.result?.items || []).map((item: any) => ({
+                    ...item,
+                    uid: item.uid || item.id || item.summary // Ensure we have a unique identifier for move/update
+                }))
+                resolve(items)
             }
         }
         socket.addEventListener("message", handler)
@@ -150,6 +154,34 @@ export function callTodoService(service: string, entityId: string, data: any = {
         entity_id: entityId,
         ...data
     })
+}
+
+export function moveTodoItem(entityId: string, uid: string, previousUid: string | null = null): Promise<any> {
+    return new Promise((resolve, reject) => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            return reject("Socket not open");
+        }
+        const reqId = nextId();
+        const handler = (event: MessageEvent) => {
+            const msg = JSON.parse(event.data);
+            if (msg.id === reqId) {
+                socket!.removeEventListener("message", handler);
+                if (msg.success) resolve(msg.result);
+                else reject(msg.error);
+            }
+        };
+        socket.addEventListener("message", handler);
+        const payload: any = { 
+            id: reqId, 
+            type: "todo/item/move",
+            entity_id: entityId,
+            uid: uid
+        };
+        if (previousUid) {
+            payload.previous_uid = previousUid;
+        }
+        socket.send(JSON.stringify(payload));
+    });
 }
 
 // --- Helpers ---
@@ -183,7 +215,7 @@ export function fetchCalendarEvents(entityId: string, start: string, end: string
 
 // WebSocket fallback for fetching calendar events
 // Wait until socket is open, or give up after `maxWaitMs`
-function waitForSocket(maxWaitMs = 10_000): Promise<boolean> {
+function waitForSocket(maxWaitMs = 2000): Promise<boolean> {
     return new Promise((resolve) => {
         const deadline = Date.now() + maxWaitMs
         function poll() {
@@ -206,7 +238,7 @@ function fetchCalendarEventsWS(entityId: string, start: string, end: string): Pr
         const reqId = nextId()
         let settled = false
 
-        // Timeout: if HA never replies to this message, bail out after 10 s
+        // Timeout: if HA never replies to this message, bail out after 4 s
         const timeout = setTimeout(() => {
             if (!settled) {
                 settled = true
@@ -214,7 +246,7 @@ function fetchCalendarEventsWS(entityId: string, start: string, end: string): Pr
                 console.warn("[Calendar WS] Timed out waiting for response for", entityId)
                 resolve([])
             }
-        }, 10_000)
+        }, 4000)
 
         const handler = (event: MessageEvent) => {
             const response = JSON.parse(event.data)

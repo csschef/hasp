@@ -1,5 +1,5 @@
 import { getEntity, subscribeEntity } from "../store/entity-store"
-import { callService, fetchTodoItems } from "../services/ha-service"
+import { callService, fetchTodoItems, moveTodoItem } from "../services/ha-service"
 
 class MealsView extends HTMLElement {
     private days = [
@@ -15,6 +15,7 @@ class MealsView extends HTMLElement {
     private todoItems: any[] = []
     private isConfirmingClear = false
     private guestModeId = "input_boolean.gast"
+    private updateTimer: any = null
 
     constructor() {
         super()
@@ -33,16 +34,30 @@ class MealsView extends HTMLElement {
         // Subscribe to guest mode for color sync
         subscribeEntity(this.guestModeId, () => this.render())
 
-        // Subscribe to todo list
+        // Subscribe to todo list entity changes
         subscribeEntity(this.todoEntityId, () => this.updateTodoItems())
         
+        // Subscribe to global shopping list changes (e.g., from other integrations)
+        window.addEventListener("ha-shopping-list-updated", () => this.updateTodoItems())
+        
         // Initial fetch
-        await this.updateTodoItems()
+        await this.updateTodoItems(true)
     }
 
-    private async updateTodoItems() {
-        this.todoItems = await fetchTodoItems(this.todoEntityId)
-        this.render()
+    private async updateTodoItems(immediate = false) {
+        if (this.updateTimer) clearTimeout(this.updateTimer)
+        
+        const fetchAndUpdate = async () => {
+            this.todoItems = await fetchTodoItems(this.todoEntityId)
+            this.render()
+        }
+
+        if (immediate) {
+            await fetchAndUpdate()
+        } else {
+            // Debounce to avoid rapid re-renders on bulk updates
+            this.updateTimer = setTimeout(fetchAndUpdate, 250)
+        }
     }
 
     private updateMeal(dayId: string, value: string) {
@@ -54,6 +69,16 @@ class MealsView extends HTMLElement {
 
     private addItem(summary: string) {
         if (!summary.trim()) return
+        
+        // Optimistic update
+        const tempUid = `temp_${Date.now()}`
+        this.todoItems.unshift({
+            uid: tempUid,
+            summary: summary,
+            status: "needs_action"
+        })
+        this.render()
+
         callService("todo", "add_item", {
             entity_id: this.todoEntityId,
             item: summary
@@ -62,30 +87,31 @@ class MealsView extends HTMLElement {
 
     private toggleItem(item: any) {
         const newStatus = item.status === "completed" ? "needs_action" : "completed"
+        
+        // Optimistic update
+        item.status = newStatus
+        this.render()
+
         callService("todo", "update_item", {
             entity_id: this.todoEntityId,
-            item: item.uid || item.summary,
+            item: item.uid,
             status: newStatus
         })
     }
 
     private deleteItem(item: any) {
+        // Optimistic update
+        this.todoItems = this.todoItems.filter(i => i.uid !== item.uid)
+        this.render()
+
         callService("todo", "remove_item", {
             entity_id: this.todoEntityId,
-            item: [item.uid || item.summary]
+            item: [item.uid]
         })
     }
 
     private moveItem(uid: string, previousUid: string | null) {
-        const data: any = {
-            entity_id: this.todoEntityId,
-            uid: uid,
-        }
-        if (previousUid) {
-            data.previous_uid = previousUid
-        }
-        
-        callService("todo", "move_item", data)
+        moveTodoItem(this.todoEntityId, uid, previousUid)
         
         // Optimistically update local order for smoothness
         const itemIdx = this.todoItems.findIndex(i => i.uid === uid)
@@ -107,15 +133,20 @@ class MealsView extends HTMLElement {
             .map(i => i.uid || i.summary)
         
         if (completedUids.length > 0) {
+            // Optimistic update
+            this.todoItems = this.todoItems.filter(i => i.status !== 'completed')
+            this.isConfirmingClear = false
+            this.render()
+
             await callService("todo", "remove_item", {
                 entity_id: this.todoEntityId,
                 item: completedUids
             })
-            setTimeout(() => this.updateTodoItems(), 400)
+            // Don't need explicit update here as WebSocket event will trigger it
+        } else {
+            this.isConfirmingClear = false
+            this.render()
         }
-        
-        this.isConfirmingClear = false
-        this.render()
     }
 
     private openEditPopup(item: any) {
@@ -502,7 +533,11 @@ class MealsView extends HTMLElement {
         })
 
         root.querySelectorAll(".shopping-item").forEach(row => {
-            row.addEventListener("click", () => {
+            row.addEventListener("click", (e) => {
+                // Prevent click if we are clicking a drag-handle or its children
+                if ((e.target as HTMLElement).closest('.drag-handle')) {
+                    return;
+                }
                 const uid = row.getAttribute("data-uid")
                 const item = this.todoItems.find(i => i.uid === uid)
                 if (item) this.openEditPopup(item)

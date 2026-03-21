@@ -44,24 +44,29 @@ class CalendarView extends HTMLElement {
         try {
             const now = new Date()
             const start = now.toISOString().split('.')[0] + "Z"
-            const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('.')[0] + "Z"
+            const end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('.')[0] + "Z"
 
             const activePerson = getActivePerson()
             const allFetched: any[] = []
 
-            for (const cal of this.calendars) {
-                // Skip private if not Sebbe
-                if (cal.private && activePerson !== 'person.sebastian') continue
-
+            const fetchPromises = this.calendars.map(async (cal) => {
+                if (cal.private && activePerson !== 'person.sebastian') return []
                 try {
                     const res = await fetchCalendarEvents(cal.id, start, end)
-                    if (Array.isArray(res)) {
-                        allFetched.push(...res.map(e => ({ ...e, calendarId: cal.id, calendarColor: cal.color, calendarLabel: cal.label })))
-                    }
+                    return Array.isArray(res) ? res.map(e => ({ 
+                        ...e, 
+                        calendarId: cal.id, 
+                        calendarColor: cal.color, 
+                        calendarLabel: cal.label 
+                    })) : []
                 } catch (e) {
                     console.error("Failed to fetch calendar", cal.id, e)
+                    return []
                 }
-            }
+            })
+
+            const results = await Promise.all(fetchPromises)
+            results.forEach(res => allFetched.push(...res))
 
             // Sort by start time
             this.events = allFetched.sort((a, b) => {

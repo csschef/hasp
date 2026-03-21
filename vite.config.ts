@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   base: './', // Ensures paths work correctly in HA subfolders like /local/dashboard/
@@ -14,6 +15,10 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  test: {
+    environment: 'happy-dom',
+    globals: true,
   }
 });
 

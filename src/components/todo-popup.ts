@@ -61,7 +61,7 @@ class TodoPopup extends HTMLElement {
 
         await callService("todo", "update_item", {
             entity_id: this.entityId,
-            item: this.item.uid || this.item.summary,
+            item: this.item.uid,
             rename: summary,
             description: description
         })
@@ -77,7 +77,7 @@ class TodoPopup extends HTMLElement {
     private delete() {
         callService("todo", "remove_item", {
             entity_id: this.entityId,
-            item: [this.item.uid || this.item.summary]
+            item: [this.item.uid]
         })
         
         setTimeout(() => {

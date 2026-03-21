@@ -51,7 +51,7 @@ export function connectHA() {
             console.log("Authenticated with Home Assistant")
 
             subscribeStateChanges()
-            getStates()
+            getStatesViaREST().catch(() => getStatesViaWS())
             
             // Requesting current user (works for everyone)
             socket?.send(JSON.stringify({
@@ -80,25 +80,30 @@ export function connectHA() {
 
         if (msg.type === "event" && msg.event?.event_type === "entity_registry_updated") {
             console.log("HA Registry Updated - Fetching fresh states!")
-            getStates()
+            getStatesViaREST().catch(() => getStatesViaWS())
             return
         }
 
-        if (msg.type === "result" && Array.isArray(msg.result)) {
-            // CRITICAL FIX: Only treat the result as entities if they actually are entities.
-            // An empty array or a list without entity_id properties must NOT wipe the store.
-            const isEntityList = msg.result.length > 0 && msg.result[0].hasOwnProperty('entity_id');
-            
-            if (isEntityList) {
-                console.log("Received all states:", msg.result.length);
+        if (msg.type === "event" && msg.event?.event_type === "shopping_list_updated") {
+            console.log("Shopping list updated from HA")
+            window.dispatchEvent(new CustomEvent("ha-shopping-list-updated"))
+            return
+        }
+
+        if (msg.type === "result" && msg.id === getStatesReqId) {
+            console.log("[ha-client] get_states WS response received. Success:", msg.success)
+            if (msg.success && Array.isArray(msg.result)) {
+                console.log("Received all states via WS:", msg.result.length);
                 setEntities(msg.result);
+            } else if (!msg.success) {
+                console.error("[ha-client] get_states via WS failed:", msg.error)
             }
             return
         }
 
         // Catch-all debug for calendar troubleshooting
         if (msg.type === "result") {
-            console.log("[ha-client] result msg id:", msg.id, "success:", msg.success, "result keys:", msg.result ? Object.keys(msg.result) : "null/undefined")
+            // console.log("[ha-client] result msg id:", msg.id, "success:", msg.success, "result keys:", msg.result ? Object.keys(msg.result) : "null/undefined")
         }
     }
 
@@ -107,10 +112,22 @@ export function connectHA() {
     }
 
     socket.onclose = () => {
-        console.log("WebSocket closed. Reconnecting in 3 seconds...")
-        setTimeout(() => connectHA(), 3000)
+        // Shorter delay if it was already open (likely a sleep/wake or quick drop)
+        const delay = 500 
+        console.log(`WebSocket closed. Reconnecting in ${delay}ms...`)
+        setTimeout(() => connectHA(), delay)
     }
 }
+
+// Reconnect immediately when the app becomes visible (e.g. phone wake)
+window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            console.log("[ha-client] Visibility changed to visible — reconnecting immediately")
+            connectHA()
+        }
+    }
+})
 
 function subscribeStateChanges() {
     socket?.send(
@@ -131,16 +148,49 @@ function subscribeStateChanges() {
         })
     )
 
-    console.log("Subscribed to HA events")
-}
-
-function getStates() {
+    // Listen to shopping list specific updates
     socket?.send(
         JSON.stringify({
             id: nextId(),
-            type: "get_states"
+            type: "subscribe_events",
+            event_type: "shopping_list_updated"
         })
     )
 
-    console.log("Requesting all entity states")
+    console.log("Subscribed to HA events")
+}
+
+// REST fallback for massive state payloads on Nabu Casa
+async function getStatesViaREST() {
+    console.log("Requesting ali entity states via REST /api/states")
+    
+    let url = "/api/states"
+    if (HA_URL && !HA_URL.startsWith(window.location.origin)) {
+        url = `${HA_URL}/api/states`
+    }
+
+    const headers: Record<string, string> = {}
+    if (HA_TOKEN) headers["Authorization"] = `Bearer ${HA_TOKEN}`
+
+    const res = await fetch(url, { headers })
+    if (!res.ok) throw new Error("REST states fetch failed")
+    
+    const states = await res.json()
+    if (Array.isArray(states) && states.length > 0) {
+        console.log("Received all states via REST:", states.length)
+        setEntities(states)
+    }
+}
+
+let getStatesReqId: number | null = null
+
+function getStatesViaWS() {
+    getStatesReqId = nextId()
+    socket?.send(
+        JSON.stringify({
+            id: getStatesReqId,
+            type: "get_states"
+        })
+    )
+    console.log("Requesting all entity states via WS with ID:", getStatesReqId)
 }

@@ -52,3 +52,7 @@ src/config/local-config.js
 # Lovelace config
 # -----------------------------
 lovelace.yaml
+
+tests
+
+package-lock.json
