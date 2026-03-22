@@ -150,7 +150,8 @@ export function getCardColor(entity: HAEntity): { r: number; g: number; b: numbe
     const minMF = 153
     const maxMF = 500
     const tFallback = (FALLBACK_MIRED - minMF) / (maxMF - minMF)
-    const [fr, fg, fb] = lerpGradient(tFallback)
+    const isIosFallback = document.documentElement.getAttribute("data-theme-color") === "ios"
+    const [fr, fg, fb] = lerpGradient(tFallback, isIosFallback)
     return { r: fr, g: fg, b: fb }
 }
 

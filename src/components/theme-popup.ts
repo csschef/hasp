@@ -38,6 +38,7 @@ class ThemePopup extends HTMLElement {
     private selectThemeColor(colorId: string) {
         localStorage.setItem("ha-theme-color", colorId);
         document.documentElement.setAttribute("data-theme-color", colorId);
+        window.dispatchEvent(new Event("theme-changed"));
         this.render();
     }
 

@@ -47,6 +47,11 @@ class LightCard extends BaseCard {
             this.update()
         })
 
+        // Re-calculate complex inline gradients when the user switches themes
+        window.addEventListener("theme-changed", () => {
+            if (!this.isToggling) this.update()
+        })
+
     }
 
     /** Subscribe to all child entities of a light group so getEntity() works for them */
@@ -201,13 +206,21 @@ class LightCard extends BaseCard {
             card.style.setProperty("--card-icon-fill", isLight ? "#2e3440" : "#eceff4")
             card.style.setProperty("border-color", isLight ? "rgba(46, 52, 64, 0.1)" : "rgba(255, 255, 255, 0.15)")
 
+        } else if (isOn) {
+            // On without known color -> fallback to active device style
+            card.style.setProperty("--card-bg", "var(--active-device-bg)");
+            card.style.setProperty("--card-text-primary", "var(--active-device-text)");
+            card.style.setProperty("--card-text-secondary", "var(--active-device-text-dim)");
+            card.style.setProperty("--card-icon-fill", "var(--active-device-text)");
+            card.style.setProperty("border-color", "transparent");
         } else {
 
-            // Off state, or on without known colour — restore card defaults
+            // Off state — restore card defaults
             card.style.removeProperty("--card-bg")
             card.style.removeProperty("--card-text-primary")
             card.style.removeProperty("--card-text-secondary")
             card.style.removeProperty("--card-icon-fill")
+            card.style.removeProperty("border-color")
 
         }
 
