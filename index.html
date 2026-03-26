@@ -143,9 +143,10 @@
                 </room-divider>
                 <light-card name="Lampor" entity="light.vardagsrum" navigate="#vardagsrum"></light-card>
                 <tv-card name="TV" entity="media_player.tv_vardagsrum"
-                    media-entity="media_player.android_tv_192_168_50_61" remote="remote.tv_vardagsrum"
-                    power-script="script.android_tv_on_off" soundbar="media_player.lg_soundbar">
+                media-entity="media_player.android_tv_192_168_50_61" remote="remote.tv_vardagsrum"
+                power-script="script.android_tv_on_off" soundbar="media_player.lg_soundbar">
                 </tv-card>
+                <climate-card name="Luftvärmepump" entity="climate.panasonic_ac"></climate-card>
                 <pc-card name="Laptop" entity="input_boolean.laptop_av_pa" power-service="button.press"
                     power-entity="button.bass_laptop_shutdown" no-wol>
                 </pc-card>
@@ -226,6 +227,9 @@
                 <room-divider title="Automatik"></room-divider>
                 <boolean-card name="Smart belysning"
                     entity="input_boolean.automatisk_tandning_slackning_vardagsrum"></boolean-card>
+                
+                <room-divider title="Klimat"></room-divider>
+                <climate-card name="Luftvärmepump" entity="climate.panasonic_ac"></climate-card>
             </div>
         </div>
 
@@ -374,6 +378,7 @@
     </nav>
     <light-popup id="lightPopup"></light-popup>
     <tv-popup id="tvPopup"></tv-popup>
+    <climate-popup id="climatePopup"></climate-popup>
     <history-popup id="historyPopup"></history-popup>
     <person-popup id="personPopup"></person-popup>
     <settings-popup id="settingsPopup"></settings-popup>
