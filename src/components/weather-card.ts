@@ -19,6 +19,8 @@ class WeatherCard extends HTMLElement {
     private showDebug: boolean = false
     private fetchError: string = ""
     private viewMode: 'hourly' | 'daily' = (localStorage.getItem("weather_view_mode") as 'hourly' | 'daily') || 'daily'
+    private static readonly DAY_START_HOUR = 6
+    private static readonly DAY_END_HOUR = 21
 
     private imageMap: Record<string, string> = {
         // ── Dina SVG-ikoner ──────────────────────────────────
@@ -270,6 +272,7 @@ class WeatherCard extends HTMLElement {
 
         const scroll = this.shadowRoot!.getElementById("forecast-scroll")!;
         scroll.innerHTML = isDaily ? this.renderDaily(daily) : this.renderHourly(hourly);
+        if (isDaily) this.bindDailyItemEvents()
     }
 
     private getStyles() {
@@ -332,6 +335,8 @@ class WeatherCard extends HTMLElement {
             .scroll::-webkit-scrollbar { display: none; }
 
             .item { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 54px; scroll-snap-align: start; }
+            .daily-item { cursor: pointer; }
+            .daily-item:active { transform: scale(0.98); }
             .label { font-size: 0.75rem; color: var(--text-secondary); }
             .f-temp { font-size: 0.9375rem; font-weight: 500; }
             .f-temps { display: flex; gap: 6px; }
@@ -457,10 +462,10 @@ class WeatherCard extends HTMLElement {
             return d.time.map((timeStr: string, i: number) => {
                 const date = new Date(timeStr);
                 const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()];
-                const cond = this.getWmoState(d.weather_code[i]);
+                const cond = this.getRepresentativeDailyCondition(timeStr, d.weather_code[i]);
 
                 return `
-                    <div class="item">
+                    <div class="item daily-item" data-day="${timeStr.slice(0, 10)}" data-label="${dayName}">
                         <span class="label">${dayName}</span>
                         ${this.getWeatherIcon(cond, 26, false)}
                         <div class="f-temps">
@@ -478,8 +483,9 @@ class WeatherCard extends HTMLElement {
         return forecast.slice(0, 8).map((f: any, i: number) => {
             const date = new Date(f.datetime)
             const dayName = i === 0 ? "Idag" : i === 1 ? "Imorgon" : days[date.getDay()]
+            const dayKey = this.getDateKey(String(f.datetime || ""))
             return `
-                <div class="item">
+                <div class="item daily-item" data-day="${dayKey}" data-label="${dayName}">
                     <span class="label">${dayName}</span>
                     ${this.getWeatherIcon(f.condition, 26, false)}
                     <div class="f-temps">
@@ -490,6 +496,145 @@ class WeatherCard extends HTMLElement {
                 </div>
             `
         }).join("")
+    }
+
+    private bindDailyItemEvents() {
+        const nodes = this.shadowRoot?.querySelectorAll(".daily-item")
+        if (!nodes?.length) return
+
+        nodes.forEach(node => {
+            node.addEventListener("click", (e) => {
+                e.stopPropagation()
+
+                const target = e.currentTarget as HTMLElement
+                const dayKey = target.dataset.day
+                const dayLabel = target.dataset.label || "Vald dag"
+                if (!dayKey) return
+
+                const items = this.getHourlyItemsForDay(dayKey)
+                if (!items.length) return
+
+                const popup = document.getElementById("weatherForecastPopup") as any
+                popup?.open({ dayLabel, dateKey: dayKey, items })
+            })
+        })
+    }
+
+    private getDateKey(datetimeIso: string): string {
+        if (!datetimeIso) return ""
+        if (datetimeIso.includes("T")) return datetimeIso.slice(0, 10)
+        const d = new Date(datetimeIso)
+        if (Number.isNaN(d.getTime())) return ""
+        return d.toISOString().slice(0, 10)
+    }
+
+    private getHourlyItemsForDay(dayKey: string): Array<{ timeLabel: string; condition: string; temperature: number; precipitation: number; isNight: boolean }> {
+        const fromLocal = this.getLocalHourlyItemsForDay(dayKey)
+        if (fromLocal.length) return fromLocal
+        return this.getHaHourlyItemsForDay(dayKey)
+    }
+
+    private getLocalHourlyItemsForDay(dayKey: string): Array<{ timeLabel: string; condition: string; temperature: number; precipitation: number; isNight: boolean }> {
+        const hourly = this.localWeather?.hourly
+        if (!hourly?.time || !hourly?.weather_code || !hourly?.temperature_2m || !hourly?.precipitation) {
+            return []
+        }
+
+        const out: Array<{ timeLabel: string; condition: string; temperature: number; precipitation: number; isNight: boolean }> = []
+        for (let i = 0; i < hourly.time.length; i++) {
+            const timeStr = hourly.time[i]
+            if (!timeStr?.startsWith(dayKey)) continue
+
+            const d = new Date(timeStr)
+            const hour = d.getHours()
+            let condition = this.getWmoState(hourly.weather_code[i])
+            const isNight = hour < WeatherCard.DAY_START_HOUR || hour > WeatherCard.DAY_END_HOUR
+            if (isNight && condition.toLowerCase().trim() === "sunny") {
+                condition = "clear-night"
+            }
+
+            out.push({
+                timeLabel: `${hour.toString().padStart(2, "0")}:00`,
+                condition,
+                temperature: Number(hourly.temperature_2m[i]) || 0,
+                precipitation: Number(hourly.precipitation[i]) || 0,
+                isNight
+            })
+        }
+
+        return out
+    }
+
+    private getHaHourlyItemsForDay(dayKey: string): Array<{ timeLabel: string; condition: string; temperature: number; precipitation: number; isNight: boolean }> {
+        const hourlySensor = getEntity(this.hourlySensor)
+        const forecast = hourlySensor?.attributes?.forecast
+        if (!Array.isArray(forecast)) return []
+
+        return forecast
+            .filter((f: any) => this.getDateKey(String(f?.datetime || "")) === dayKey)
+            .map((f: any) => {
+                const d = new Date(f.datetime)
+                const hour = d.getHours()
+                const isNight = hour < WeatherCard.DAY_START_HOUR || hour > WeatherCard.DAY_END_HOUR
+                let condition = String(f.condition || "cloudy")
+                if (isNight && condition.toLowerCase().trim() === "sunny") {
+                    condition = "clear-night"
+                }
+
+                return {
+                    timeLabel: `${hour.toString().padStart(2, "0")}:00`,
+                    condition,
+                    temperature: Number(f.temperature) || 0,
+                    precipitation: Number(f.precipitation) || 0,
+                    isNight
+                }
+            })
+    }
+
+    private getRepresentativeDailyCondition(dayIso: string, fallbackCode: number): string {
+        const hourly = this.localWeather?.hourly
+        if (!hourly?.time || !hourly?.weather_code) {
+            return this.getWmoState(fallbackCode)
+        }
+
+        const dayKey = dayIso.slice(0, 10)
+        const dayCounts = new Map<string, number>()
+
+        for (let i = 0; i < hourly.time.length; i++) {
+            const timeStr = hourly.time[i]
+            if (!timeStr?.startsWith(dayKey)) continue
+
+            const hour = new Date(timeStr).getHours()
+            if (hour < WeatherCard.DAY_START_HOUR || hour > WeatherCard.DAY_END_HOUR) continue
+
+            const condition = this.getWmoState(hourly.weather_code[i])
+            dayCounts.set(condition, (dayCounts.get(condition) || 0) + 1)
+        }
+
+        // Fallback to all hours if no daytime data was available for the date.
+        if (dayCounts.size === 0) {
+            for (let i = 0; i < hourly.time.length; i++) {
+                const timeStr = hourly.time[i]
+                if (!timeStr?.startsWith(dayKey)) continue
+                const condition = this.getWmoState(hourly.weather_code[i])
+                dayCounts.set(condition, (dayCounts.get(condition) || 0) + 1)
+            }
+        }
+
+        if (dayCounts.size === 0) {
+            return this.getWmoState(fallbackCode)
+        }
+
+        let bestCondition = this.getWmoState(fallbackCode)
+        let maxCount = -1
+        for (const [condition, count] of dayCounts.entries()) {
+            if (count > maxCount) {
+                maxCount = count
+                bestCondition = condition
+            }
+        }
+
+        return bestCondition
     }
 
     private getWmoState(code: number): string {

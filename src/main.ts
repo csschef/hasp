@@ -160,6 +160,7 @@ import "./components/climate-popup"
 import "./components/calendar-view"
 import "./components/calendar-popup"
 import "./components/theme-popup"
+import "./components/weather-forecast-popup"
 
 /* ── TRAY & NOTIFICATIONS ── */
 
@@ -440,7 +441,7 @@ window.addEventListener("popstate", (event) => {
     const isTrayState = (event.state && event.state.type === "tray")
 
     // 2. Clear ANY active popups that aren't the target (usually all of them on back)
-    const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup", "themePopup"]
+    const popupIds = ["lightPopup", "historyPopup", "tvPopup", "personPopup", "settingsPopup", "todoPopup", "calendarPopup", "themePopup", "weatherForecastPopup"]
     popupIds.forEach(id => {
         if (id !== targetPopupId) {
             const p = document.getElementById(id) as any
