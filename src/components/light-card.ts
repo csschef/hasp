@@ -101,7 +101,10 @@ class LightCard extends BaseCard {
             this.update()
         }, 2000)
 
-        callService("light", "toggle", { entity_id: this.entityId })
+        // Derive the domain from the entity id so on/off `switch` entities
+        // (e.g. a ljusslinga shown with light-card styling) toggle correctly.
+        const domain = this.entityId.split(".")[0] || "light"
+        callService(domain as any, "toggle", { entity_id: this.entityId })
 
     }
 

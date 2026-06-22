@@ -128,12 +128,14 @@
                     humidity="sensor.leias_rum_temperatursensor_humidity">
                 </room-divider>
                 <light-card name="Lampor" entity="light.leias_rum" navigate="#leias-rum"></light-card>
+                <fan-card name="Fläkt" entity="switch.leias_rum_flakt"></fan-card>
 
                 <!-- Elises rum -->
                 <room-divider title="Elises rum" temp="sensor.elises_rum_temperatursensor_temperature"
                     humidity="sensor.elises_rum_temperatursensor_humidity">
                 </room-divider>
                 <light-card name="Lampor" entity="light.elises_rum" navigate="#elises-rum"></light-card>
+                <fan-card name="Fläkt" entity="switch.elises_rum_flakt"></fan-card>
 
                 <!-- Vardagsrum -->
                 <room-divider title="Vardagsrum" temp="sensor.vardagsrum_temperatursensor_temperature"
@@ -301,6 +303,7 @@
                 <light-card name="Hela rummet" entity="light.leias_rum"></light-card>
                 <light-card name="Fönster" entity="light.leias_rum_fonsterlampa"></light-card>
                 <light-card name="Ljusslinga" entity="light.leias_rum_ljusslinga"></light-card>
+                <light-card name="Ljusslinga säng" entity="switch.leias_rum_ljusslinga_sang"></light-card>
                 <light-card name="Taklampa" entity="light.leias_rum_taklampa"></light-card>
             </div>
         </div>
